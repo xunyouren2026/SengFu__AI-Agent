@@ -1,0 +1,263 @@
+{
+  "name": "agi-framework",
+  "displayName": "AGI Framework",
+  "description": "VS Code extension for AGI Unified Framework - Model management, training monitoring, and code assistance",
+  "version": "1.0.0",
+  "publisher": "agi-framework",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Machine Learning",
+    "Data Science",
+    "Snippets",
+    "Debuggers"
+  ],
+  "keywords": [
+    "agi",
+    "ai",
+    "llm",
+    "machine-learning",
+    "model-management",
+    "training"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "agiFramework.showModelManager",
+        "title": "Show Model Manager",
+        "category": "AGI Framework",
+        "icon": "$(symbol-class)"
+      },
+      {
+        "command": "agiFramework.showTrainingMonitor",
+        "title": "Show Training Monitor",
+        "category": "AGI Framework",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "agiFramework.showAgentPanel",
+        "title": "Show Agent Panel",
+        "category": "AGI Framework",
+        "icon": "$(remote)"
+      },
+      {
+        "command": "agiFramework.deployModel",
+        "title": "Deploy Model",
+        "category": "AGI Framework",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "agiFramework.trainModel",
+        "title": "Train Model",
+        "category": "AGI Framework",
+        "icon": "$(play)"
+      },
+      {
+        "command": "agiFramework.stopTraining",
+        "title": "Stop Training",
+        "category": "AGI Framework",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "agiFramework.openSettings",
+        "title": "Open Settings",
+        "category": "AGI Framework",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "agiFramework.refreshModels",
+        "title": "Refresh Models",
+        "category": "AGI Framework",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "agiFramework.createAgent",
+        "title": "Create New Agent",
+        "category": "AGI Framework",
+        "icon": "$(add)"
+      },
+      {
+        "command": "agiFramework.runInference",
+        "title": "Run Inference",
+        "category": "AGI Framework",
+        "icon": "$(run)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "agiFramework",
+          "title": "AGI Framework",
+          "icon": "$(symbol-class)"
+        }
+      ]
+    },
+    "views": {
+      "agiFramework": [
+        {
+          "id": "agiFramework.modelManager",
+          "name": "Model Manager",
+          "when": "agiFramework.enabled"
+        },
+        {
+          "id": "agiFramework.trainingMonitor",
+          "name": "Training Monitor",
+          "when": "agiFramework.enabled"
+        },
+        {
+          "id": "agiFramework.agentExplorer",
+          "name": "Agent Explorer",
+          "when": "agiFramework.enabled"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "agiFramework.modelManager",
+        "contents": "No models found.\n[Connect to AGI Framework](command:agiFramework.openSettings)"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "agiFramework.showModelManager",
+          "when": "agiFramework.enabled"
+        },
+        {
+          "command": "agiFramework.showTrainingMonitor",
+          "when": "agiFramework.enabled"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "agiFramework.refreshModels",
+          "when": "view == agiFramework.modelManager",
+          "group": "navigation"
+        },
+        {
+          "command": "agiFramework.createAgent",
+          "when": "view == agiFramework.agentExplorer",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "agiFramework.deployModel",
+          "when": "view == agiFramework.modelManager && viewItem == model",
+          "group": "inline"
+        },
+        {
+          "command": "agiFramework.trainModel",
+          "when": "view == agiFramework.modelManager && viewItem == model",
+          "group": "inline"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "AGI Framework",
+      "properties": {
+        "agiFramework.apiUrl": {
+          "type": "string",
+          "default": "http://localhost:8000",
+          "description": "AGI Framework API URL"
+        },
+        "agiFramework.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API Key for authentication"
+        },
+        "agiFramework.wsUrl": {
+          "type": "string",
+          "default": "ws://localhost:8000/ws",
+          "description": "WebSocket URL for real-time updates"
+        },
+        "agiFramework.timeout": {
+          "type": "number",
+          "default": 30000,
+          "description": "Request timeout in milliseconds"
+        },
+        "agiFramework.enableAutoComplete": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable AI-powered code completion"
+        },
+        "agiFramework.enableInlineHints": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable inline code hints"
+        },
+        "agiFramework.logLevel": {
+          "type": "string",
+          "enum": ["debug", "info", "warn", "error"],
+          "default": "info",
+          "description": "Log level for the extension"
+        },
+        "agiFramework.modelCachePath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to model cache directory"
+        }
+      }
+    },
+    "snippets": [
+      {
+        "language": "python",
+        "path": "./snippets/python.json"
+      },
+      {
+        "language": "json",
+        "path": "./snippets/json.json"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "agiFramework.showModelManager",
+        "key": "ctrl+shift+a ctrl+shift+m",
+        "mac": "cmd+shift+a cmd+shift+m"
+      },
+      {
+        "command": "agiFramework.showTrainingMonitor",
+        "key": "ctrl+shift+a ctrl+shift+t",
+        "mac": "cmd+shift+a cmd+shift+t"
+      },
+      {
+        "command": "agiFramework.runInference",
+        "key": "ctrl+shift+enter",
+        "mac": "cmd+shift+enter",
+        "when": "editorTextFocus"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/node": "20.x",
+    "@types/vscode": "^1.85.0",
+    "@types/ws": "^8.5.10",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "eslint": "^8.56.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.3",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "axios": "^1.6.2",
+    "ws": "^8.16.0"
+  }
+}

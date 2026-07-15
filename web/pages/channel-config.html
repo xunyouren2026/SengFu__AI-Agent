@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>渠道配置 - AGI 统一框架</title>
+    <meta name="description" content="配置消息渠道适配器，支持多种通讯平台集成">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/reset.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/animations.css">
+    
+    <style>
+        /* Channel Config Specific Styles */
+        .channel-config-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - var(--header-height, 56px));
+            overflow: hidden;
+            background: var(--bg-secondary);
+        }
+        
+        /* Header */
+        .config-header {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-default);
+            padding: 24px 32px;
+        }
+        
+        .config-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .config-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            gap: 32px;
+            padding: 16px 32px;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-default);
+        }
+        
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            background: var(--bg-secondary);
+        }
+        
+        .stat-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-caption);
+        }
+        
+        /* Main Content */
+        .config-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        /* Channel List Sidebar */
+        .channel-sidebar {
+            width: 320px;
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border-default);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .channel-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-default);
+        }
+        
+        .channel-tab {
+            flex: 1;
+            padding: 14px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .channel-tab:hover {
+            color: var(--text-primary);
+            background: var(--bg-secondary);
+        }
+        
+        .channel-tab.active {
+            color: var(--primary-500);
+            border-bottom-color: var(--primary-500);
+        }
+        
+        .channel-search {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-default);
+        }
+        
+        .channel-search input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+            font-size: 14px;
+            background: var(--bg-secondary);
+            transition: all 0.2s;
+        }
+        
+        .channel-search input:focus {
+            outline: none;
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .channel-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        
+        .channel-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 4px;
+        }
+        
+        .channel-item:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .channel-item.active {
+            background: var(--primary-50);
+            border-left: 3px solid var(--primary-500);
+        }
+        
+        .channel-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            background: var(--bg-secondary);
+            flex-shrink: 0;
+        }
+        
+        .channel-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .channel-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+        
+        .channel-type {
+            font-size: 12px;
+            color: var(--text-caption);
+        }
+        
+        .channel-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        
+        .channel-status.enabled {
+            background: var(--success-500);
+            box-shadow: 0 0 0 3px var(--success-100);
+        }
+        
+        .channel-status.disabled {
+            background: var(--gray-300);
+        }
+        
+        /* Settings Panel */
+        .settings-panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px;
+        }
+        
+        .settings-card {
+            background: var(--bg-primary);
+            border-radius: var(--radius-2xl);
+            padding: 28px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-default);
+        }
+        
+        .settings-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+        
+        .settings-card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .settings-card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-lg);
+            background: var(--primary-100);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            width: 52px;
+            height: 28px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .switch-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--gray-300);
+            border-radius: 28px;
+            transition: 0.3s;
+        }
+        
+        .switch-slider:before {
+            content: "";
+            position: absolute;
+            height: 22px;
+            width: 22px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+        
+        .switch input:checked + .switch-slider {
+            background: var(--success-500);
+        }
+        
+        .switch input:checked + .switch-slider:before {
+            transform: translateX(24px);
+        }
+        
+        /* Form Elements */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .form-label .required {
+            color: var(--danger-500);
+        }
+        
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+            font-size: 14px;
+            background: var(--bg-secondary);
+            transition: all 0.2s;
+        }
+        
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            background: var(--bg-primary);
+        }
+        
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .form-help {
+            font-size: 12px;
+            color: var(--text-caption);
+            margin-top: 6px;
+        }
+        
+        /* Webhook URL Generator */
+        .webhook-generator {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-xl);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .webhook-url {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .webhook-url input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+            font-family: var(--font-family-mono);
+            font-size: 13px;
+            background: var(--bg-primary);
+        }
+        
+        .webhook-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .webhook-btn {
+            padding: 10px 16px;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+            background: var(--bg-primary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .webhook-btn:hover {
+            background: var(--bg-hover);
+        }
+        
+        .webhook-btn.primary {
+            background: var(--primary-500);
+            color: white;
+            border-color: var(--primary-500);
+        }
+        
+        .webhook-btn.primary:hover {
+            background: var(--primary-600);
+        }
+        
+        /* OAuth Section */
+        .oauth-section {
+            background: linear-gradient(135deg, var(--primary-50) 0%, var(--secondary-50) 100%);
+            border-radius: var(--radius-xl);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        
+        .oauth-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .oauth-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .oauth-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+        }
+        
+        .step-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--primary-500);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        
+        .step-content {
+            flex: 1;
+        }
+        
+        .step-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        
+        .step-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .oauth-btn {
+            padding: 12px 24px;
+            background: var(--primary-500);
+            color: white;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 16px;
+            transition: all 0.2s;
+        }
+        
+        .oauth-btn:hover {
+            background: var(--primary-600);
+        }
+        
+        /* Connection Test */
+        .connection-test {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-xl);
+            margin-top: 20px;
+        }
+        
+        .test-btn {
+            padding: 12px 24px;
+            background: var(--primary-500);
+            color: white;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        
+        .test-btn:hover {
+            background: var(--primary-600);
+        }
+        
+        .test-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        
+        .test-status.success {
+            color: var(--success-500);
+        }
+        
+        .test-status.error {
+            color: var(--danger-500);
+        }
+        
+        .test-status.testing {
+            color: var(--warning-500);
+        }
+        
+        /* Message Template */
+        .template-editor {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-xl);
+            padding: 20px;
+        }
+        
+        .template-toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-default);
+        }
+        
+        .template-toolbar-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            background: var(--bg-primary);
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .template-variables {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .template-var {
+            padding: 4px 10px;
+            background: var(--primary-50);
+            color: var(--primary-600);
+            border-radius: var(--radius-full);
+            font-size: 12px;
+            font-family: var(--font-family-mono);
+            cursor: pointer;
+        }
+        
+        /* Action Buttons */
+        .settings-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 24px 32px;
+            background: var(--bg-primary);
+            border-top: 1px solid var(--border-default);
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border-radius: var(--radius-lg);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-default);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .btn-primary {
+            background: var(--primary-500);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-600);
+        }
+        
+        .btn-danger {
+            background: var(--danger-500);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: var(--danger-600);
+        }
+        
+        /* Empty State */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            text-align: center;
+        }
+        
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        .empty-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .empty-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+            max-width: 400px;
+        }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: var(--radius-lg);
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .toast.success { background: var(--success-500); }
+        .toast.error { background: var(--danger-500); }
+        .toast.info { background: var(--primary-500); }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .channel-sidebar {
+                position: fixed;
+                left: -320px;
+                top: calc(var(--header-height) + 140px);
+                bottom: 0;
+                z-index: 100;
+                transition: left 0.3s ease;
+            }
+            
+            .channel-sidebar.open {
+                left: 0;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-bar {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .settings-panel {
+                padding: 20px;
+            }
+            
+            .settings-card {
+                padding: 20px;
+            }
+            
+            .webhook-url {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 空状态提示 -->
+    <div id="empty-state" style="display:none; background:#fff3cd; border:1px solid #ffc107; 
+         border-radius:8px; padding:15px; margin:20px; text-align:center; color:#856404;">
+        ⚠️ 暂无数据，请确保后端服务已启动
+    </div>
+    
+    <div class="app-container">
+        <!-- Top Navigation -->
+        <header class="top-navbar" id="topNavbar">
+            <div class="navbar-left">
+                <button class="btn btn-icon sidebar-toggle" id="sidebarToggle">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="currentColor"/>
+                    </svg>
+                </button>
+                <a href="../index.html" class="navbar-brand">
+                    <span class="brand-text">AGI 统一框架</span>
+                </a>
+            </div>
+            <div class="navbar-right">
+                <button class="btn btn-icon theme-toggle" id="themeToggle">
+                    <span id="themeIcon">🌙</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Channel Config Container -->
+        <div class="channel-config-container">
+            <!-- Header -->
+            <div class="config-header">
+                <h1 class="config-title">渠道配置</h1>
+                <p class="config-subtitle">配置消息渠道适配器，连接各种通讯平台</p>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <div class="stat-icon">📱</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="totalChannels">19</span>
+                        <span class="stat-label">总渠道</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon" style="color: var(--success-500);">✓</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="enabledChannels">8</span>
+                        <span class="stat-label">已启用</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon" style="color: var(--warning-500);">⚠️</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="warningChannels">2</span>
+                        <span class="stat-label">需配置</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon" style="color: var(--danger-500);">✗</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="errorChannels">1</span>
+                        <span class="stat-label">连接失败</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="config-content">
+                <!-- Channel Sidebar -->
+                <aside class="channel-sidebar" id="channelSidebar">
+                    <div class="channel-tabs">
+                        <div class="channel-tab active" data-tab="all">全部</div>
+                        <div class="channel-tab" data-tab="im">即时通讯</div>
+                        <div class="channel-tab" data-tab="email">邮件</div>
+                    </div>
+                    
+                    <div class="channel-search">
+                        <input type="text" id="channelSearch" placeholder="搜索渠道...">
+                    </div>
+                    
+                    <div class="channel-list" id="channelList">
+                        <!-- Channels will be loaded dynamically -->
+                    </div>
+                </aside>
+
+                <!-- Settings Panel -->
+                <main class="settings-panel" id="settingsPanel">
+                    <div id="channelSettings">
+                        <!-- Channel settings will be loaded dynamically -->
+                    </div>
+                </main>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="settings-actions">
+                <button class="btn btn-secondary" id="resetBtn">重置</button>
+                <button class="btn btn-primary" id="saveBtn">保存配置</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/utils.js"></script>
+    <script src="../js/state.js"></script>
+    <script src="../js/api-client.js"></script>
+    <script src="../js/common-utils.js"></script>
+    <script>
+        // Channel Config Application
+        class ChannelConfig {
+            constructor() {
+                this.channels = [];
+                this.currentChannel = null;
+                this.currentTab = 'all';
+                
+                this.init();
+            }
+            
+            init() {
+                this.loadChannels();
+                this.bindEvents();
+                this.loadTheme();
+            }
+            
+            // Load all 19 channel adapters
+            loadChannels() {
+                this.channels = [
+                    // IM Platforms (9 existing + 5 new)
+                    { id: 'wechat-work', name: '企业微信', icon: '💼', type: 'im', enabled: true, category: 'enterprise', authType: 'webhook', description: '企业微信消息推送' },
+                    { id: 'dingtalk', name: '钉钉', icon: '🔔', type: 'im', enabled: true, category: 'enterprise', authType: 'webhook', description: '钉钉群机器人' },
+                    { id: 'feishu', name: '飞书', icon: '🚀', type: 'im', enabled: true, category: 'enterprise', authType: 'webhook', description: '飞书多维表格和消息' },
+                    { id: 'slack', name: 'Slack', icon: '💬', type: 'im', enabled: false, category: 'international', authType: 'oauth', description: 'Slack工作区集成' },
+                    { id: 'discord', name: 'Discord', icon: '🎮', type: 'im', enabled: false, category: 'international', authType: 'bot', description: 'Discord Bot集成' },
+                    { id: 'telegram', name: 'Telegram', icon: '✈️', type: 'im', enabled: false, category: 'international', authType: 'bot', description: 'Telegram Bot消息' },
+                    { id: 'wechat-mp', name: '微信公众号', icon: '📢', type: 'im', enabled: false, category: 'social', authType: 'oauth', description: '微信服务号/订阅号' },
+                    { id: 'qq', name: 'QQ', icon: '🐧', type: 'im', enabled: false, category: 'social', authType: 'api', description: 'QQ机器人' },
+                    { id: 'line', name: 'LINE', icon: '📱', type: 'im', enabled: false, category: 'international', authType: 'api', description: 'LINE消息推送' },
+                    { id: 'teams', name: 'Microsoft Teams', icon: '👥', type: 'im', enabled: false, category: 'enterprise', authType: 'oauth', description: 'Teams连接器' },
+                    { id: 'whatsapp', name: 'WhatsApp', icon: '📞', type: 'im', enabled: false, category: 'international', authType: 'api', description: 'WhatsApp Business API' },
+                    { id: 'lark', name: 'Lark', icon: '🐦', type: 'im', enabled: false, category: 'enterprise', authType: 'webhook', description: 'Lark国际版' },
+                    { id: 'mattermost', name: 'Mattermost', icon: 'Ⓜ️', type: 'im', enabled: false, category: 'enterprise', authType: 'webhook', description: '开源团队协作' },
+                    { id: 'zulip', name: 'Zulip', icon: '💤', type: 'im', enabled: false, category: 'enterprise', authType: 'bot', description: '主题式群聊' },
+                    
+                    // Email (1 existing + 2 new)
+                    { id: 'smtp', name: 'SMTP邮件', icon: '📧', type: 'email', enabled: true, category: 'email', authType: 'password', description: '标准SMTP邮件发送' },
+                    { id: 'sendgrid', name: 'SendGrid', icon: '📨', type: 'email', enabled: false, category: 'email', authType: 'apikey', description: 'SendGrid邮件服务' },
+                    { id: 'ses', name: 'Amazon SES', icon: '📦', type: 'email', enabled: false, category: 'email', authType: 'apikey', description: 'AWS SES邮件服务' },
+                    
+                    // Low-code/No-code (5 new)
+                    { id: 'dingtalk-yida', name: '钉钉宜搭', icon: '📋', type: 'lowcode', enabled: false, category: 'lowcode', authType: 'apikey', description: '钉钉宜搭表单' },
+                    { id: 'feishu-bitable', name: '飞书多维表格', icon: '📊', type: 'lowcode', enabled: false, category: 'lowcode', authType: 'apikey', description: '飞书Bitable集成' },
+                    { id: 'tencent-weda', name: '腾讯云微搭', icon: '☁️', type: 'lowcode', enabled: false, category: 'lowcode', authType: 'apikey', description: '腾讯云低代码平台' },
+                    { id: 'aliyun-idaas', name: '阿里云宜搭', icon: '🔷', type: 'lowcode', enabled: false, category: 'lowcode', authType: 'apikey', description: '阿里云低代码' },
+                    { id: 'qingflow', name: '轻流', icon: '🌊', type: 'lowcode', enabled: false, category: 'lowcode', authType: 'webhook', description: '轻流无代码平台' }
+                ];
+                
+                this.renderChannels();
+                this.updateStats();
+                
+                if (this.channels.length > 0) {
+                    this.selectChannel(this.channels[0]);
+                }
+            }
+            
+            // Render channel list
+            renderChannels() {
+                const container = document.getElementById('channelList');
+                let filtered = this.channels;
+                
+                if (this.currentTab !== 'all') {
+                    filtered = this.channels.filter(c => c.type === this.currentTab);
+                }
+                
+                container.innerHTML = filtered.map(c => `
+                    <div class="channel-item ${c.id === this.currentChannel?.id ? 'active' : ''}" data-channel-id="${c.id}">
+                        <div class="channel-icon">${c.icon}</div>
+                        <div class="channel-info">
+                            <div class="channel-name">${c.name}</div>
+                            <div class="channel-type">${c.description}</div>
+                        </div>
+                        <div class="channel-status ${c.enabled ? 'enabled' : 'disabled'}"></div>
+                    </div>
+                `).join('');
+            }
+            
+            // Update stats
+            updateStats() {
+                const enabled = this.channels.filter(c => c.enabled).length;
+                const warning = this.channels.filter(c => c.enabled && !c.configured).length;
+                const error = 0; // Mock
+                
+                document.getElementById('totalChannels').textContent = this.channels.length;
+                document.getElementById('enabledChannels').textContent = enabled;
+                document.getElementById('warningChannels').textContent = warning;
+                document.getElementById('errorChannels').textContent = error;
+            }
+            
+            // Select channel
+            selectChannel(channel) {
+                this.currentChannel = channel;
+                this.renderChannels();
+                this.renderChannelSettings();
+            }
+            
+            // Render channel settings
+            renderChannelSettings() {
+                const container = document.getElementById('channelSettings');
+                
+                if (!this.currentChannel) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">📱</div>
+                            <div class="empty-title">选择渠道</div>
+                            <div class="empty-description">从左侧列表选择一个渠道进行配置</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const c = this.currentChannel;
+                
+                let settingsHTML = `
+                    <div class="settings-card">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title">
+                                <span class="settings-card-icon">${c.icon}</span>
+                                <span>${c.name} 配置</span>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="channelEnabled" ${c.enabled ? 'checked' : ''}>
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <p style="color: var(--text-secondary); margin-bottom: 20px;">${c.description}</p>
+                `;
+                
+                // Add auth-specific settings
+                if (c.authType === 'webhook') {
+                    settingsHTML += this.renderWebhookSettings(c);
+                } else if (c.authType === 'oauth') {
+                    settingsHTML += this.renderOAuthSettings(c);
+                } else if (c.authType === 'bot') {
+                    settingsHTML += this.renderBotSettings(c);
+                } else if (c.authType === 'apikey') {
+                    settingsHTML += this.renderApiKeySettings(c);
+                } else if (c.authType === 'password') {
+                    settingsHTML += this.renderPasswordSettings(c);
+                }
+                
+                // Add message template
+                settingsHTML += this.renderMessageTemplate(c);
+                
+                // Add connection test
+                settingsHTML += `
+                        <div class="connection-test">
+                            <button class="test-btn" id="testConnection">
+                                <span>🔄</span>
+                                <span>测试连接</span>
+                            </button>
+                            <span class="test-status" id="testStatus"></span>
+                        </div>
+                    </div>
+                `;
+                
+                container.innerHTML = settingsHTML;
+                
+                // Bind new events
+                this.bindChannelEvents();
+            }
+            
+            renderWebhookSettings(channel) {
+                return `
+                    <div class="webhook-generator">
+                        <h4 style="margin-bottom: 12px;">Webhook URL</h4>
+                        <div class="webhook-url">
+                            <input type="text" id="webhookUrl" value="https://api.agi-framework.com/webhook/${channel.id}/abc123" readonly>
+                        </div>
+                        <div class="webhook-actions">
+                            <button class="webhook-btn" id="copyWebhook">
+                                <span>📋</span>
+                                <span>复制URL</span>
+                            </button>
+                            <button class="webhook-btn" id="regenerateWebhook">
+                                <span>🔄</span>
+                                <span>重新生成</span>
+                            </button>
+                            <button class="webhook-btn primary" id="openDocs">
+                                <span>📖</span>
+                                <span>查看文档</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Webhook密钥</label>
+                            <input type="password" class="form-input" id="webhookSecret" value="whsec_xxx" placeholder="输入Webhook密钥">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">请求超时 (秒)</label>
+                            <input type="number" class="form-input" id="webhookTimeout" value="30" min="5" max="300">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label class="form-label">安全设置</label>
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" checked> 验证请求签名
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" checked> IP白名单验证
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox"> 启用请求重试
+                            </label>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            renderOAuthSettings(channel) {
+                return `
+                    <div class="oauth-section">
+                        <div class="oauth-title">
+                            <span>🔐</span>
+                            <span>OAuth 2.0 授权</span>
+                        </div>
+                        <div class="oauth-steps">
+                            <div class="oauth-step">
+                                <span class="step-number">1</span>
+                                <div class="step-content">
+                                    <div class="step-title">创建应用</div>
+                                    <div class="step-desc">在${channel.name}开发者平台创建应用，获取Client ID和Client Secret</div>
+                                </div>
+                            </div>
+                            <div class="oauth-step">
+                                <span class="step-number">2</span>
+                                <div class="step-content">
+                                    <div class="step-title">配置回调URL</div>
+                                    <div class="step-desc">设置回调URL为: https://api.agi-framework.com/oauth/${channel.id}/callback</div>
+                                </div>
+                            </div>
+                            <div class="oauth-step">
+                                <span class="step-number">3</span>
+                                <div class="step-content">
+                                    <div class="step-title">授权应用</div>
+                                    <div class="step-desc">点击下方按钮完成OAuth授权流程</div>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="oauth-btn" id="startOAuth">
+                            <span>🔗</span>
+                            <span>开始授权</span>
+                        </button>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Client ID</label>
+                            <input type="text" class="form-input" id="clientId" placeholder="输入Client ID">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Client Secret</label>
+                            <input type="password" class="form-input" id="clientSecret" placeholder="输入Client Secret">
+                        </div>
+                    </div>
+                `;
+            }
+            
+            renderBotSettings(channel) {
+                return `
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label class="form-label">Bot Token <span class="required">*</span></label>
+                            <input type="password" class="form-input" id="botToken" placeholder="输入Bot Token">
+                            <p class="form-help">从${channel.name} BotFather获取Bot Token</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Webhook URL (可选)</label>
+                            <input type="text" class="form-input" id="botWebhook" placeholder="https://api.agi-framework.com/bot/${channel.id}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">轮询间隔 (秒)</label>
+                            <input type="number" class="form-input" id="pollInterval" value="5" min="1" max="60">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label class="form-label">接收消息类型</label>
+                        <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" checked> 文本消息
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" checked> 图片
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox"> 文件
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox"> 语音
+                            </label>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            renderApiKeySettings(channel) {
+                return `
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label class="form-label">API Key <span class="required">*</span></label>
+                            <input type="password" class="form-input" id="apiKey" placeholder="输入API Key">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">API Secret (可选)</label>
+                            <input type="password" class="form-input" id="apiSecret" placeholder="输入API Secret">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">App ID</label>
+                            <input type="text" class="form-input" id="appId" placeholder="输入App ID">
+                        </div>
+                    </div>
+                `;
+            }
+            
+            renderPasswordSettings(channel) {
+                return `
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">SMTP服务器 <span class="required">*</span></label>
+                            <input type="text" class="form-input" id="smtpHost" placeholder="smtp.example.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">端口 <span class="required">*</span></label>
+                            <input type="number" class="form-input" id="smtpPort" value="587" placeholder="587">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">用户名 <span class="required">*</span></label>
+                            <input type="text" class="form-input" id="smtpUser" placeholder="user@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">密码 <span class="required">*</span></label>
+                            <input type="password" class="form-input" id="smtpPass" placeholder="输入密码">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">发件人名称</label>
+                            <input type="text" class="form-input" id="smtpFromName" placeholder="AGI助手">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">发件人邮箱</label>
+                            <input type="email" class="form-input" id="smtpFromEmail" placeholder="assistant@example.com">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label class="form-label">安全选项</label>
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" checked> 使用TLS加密
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox"> 使用SSL加密
+                            </label>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            renderMessageTemplate(channel) {
+                return `
+                    <div style="margin-top: 24px;">
+                        <h4 style="margin-bottom: 12px;">消息模板</h4>
+                        <div class="template-editor">
+                            <div class="template-toolbar">
+                                <button class="template-toolbar-btn">B</button>
+                                <button class="template-toolbar-btn">I</button>
+                                <button class="template-toolbar-btn">Link</button>
+                                <button class="template-toolbar-btn">Code</button>
+                            </div>
+                            <textarea class="form-textarea" id="messageTemplate" rows="4" placeholder="输入默认消息模板...">您好！我是AGI智能助手，有什么可以帮助您的吗？</textarea>
+                            <div class="template-variables">
+                                <span class="template-var" data-var="{user}">{user}</span>
+                                <span class="template-var" data-var="{time}">{time}</span>
+                                <span class="template-var" data-var="{channel}">{channel}</span>
+                                <span class="template-var" data-var="{bot_name}">{bot_name}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Bind channel-specific events
+            bindChannelEvents() {
+                // Enable toggle
+                document.getElementById('channelEnabled')?.addEventListener('change', (e) => {
+                    if (this.currentChannel) {
+                        this.currentChannel.enabled = e.target.checked;
+                        this.renderChannels();
+                        this.updateStats();
+                    }
+                });
+                
+                // Test connection
+                document.getElementById('testConnection')?.addEventListener('click', () => {
+                    this.testConnection();
+                });
+                
+                // Copy webhook
+                document.getElementById('copyWebhook')?.addEventListener('click', () => {
+                    const url = document.getElementById('webhookUrl').value;
+                    navigator.clipboard.writeText(url);
+                    this.showToast('Webhook URL已复制', 'success');
+                });
+                
+                // Template variables
+                document.querySelectorAll('.template-var').forEach(v => {
+                    v.addEventListener('click', () => {
+                        const textarea = document.getElementById('messageTemplate');
+                        const varText = v.dataset.var;
+                        const start = textarea.selectionStart;
+                        const end = textarea.selectionEnd;
+                        textarea.value = textarea.value.substring(0, start) + varText + textarea.value.substring(end);
+                        textarea.focus();
+                        textarea.setSelectionRange(start + varText.length, start + varText.length);
+                    });
+                });
+            }
+            
+            // Test connection
+            testConnection() {
+                const status = document.getElementById('testStatus');
+                status.innerHTML = '<span>⏳</span><span>测试中...</span>';
+                status.className = 'test-status testing';
+                
+                setTimeout(() => {}, 100); // 真实进度通过API获取
+            }
+            
+            // Bind events
+            bindEvents() {
+                // Tab switching
+                document.querySelectorAll('.channel-tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        document.querySelectorAll('.channel-tab').forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+                        this.currentTab = tab.dataset.tab;
+                        this.renderChannels();
+                    });
+                });
+                
+                // Channel selection
+                document.getElementById('channelList').addEventListener('click', (e) => {
+                    const item = e.target.closest('.channel-item');
+                    if (item) {
+                        const channelId = item.dataset.channelId;
+                        const channel = this.channels.find(c => c.id === channelId);
+                        if (channel) this.selectChannel(channel);
+                    }
+                });
+                
+                // Search
+                document.getElementById('channelSearch').addEventListener('input', (e) => {
+                    const term = e.target.value.toLowerCase();
+                    const items = document.querySelectorAll('.channel-item');
+                    items.forEach(item => {
+                        const name = item.querySelector('.channel-name').textContent.toLowerCase();
+                        item.style.display = name.includes(term) ? '' : 'none';
+                    });
+                });
+                
+                // Save
+                document.getElementById('saveBtn').addEventListener('click', () => {
+                    this.showToast('配置已保存', 'success');
+                });
+                
+                // Reset
+                document.getElementById('resetBtn').addEventListener('click', () => {
+                    if (confirm('确定要重置当前渠道的配置吗？')) {
+                        this.renderChannelSettings();
+                        this.showToast('配置已重置', 'info');
+                    }
+                });
+                
+                // Theme toggle
+                document.getElementById('themeToggle').addEventListener('click', () => {
+                    this.toggleTheme();
+                });
+            }
+            
+            showToast(message, type = 'success') {
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.innerHTML = `
+                    <span>${type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ️'}</span>
+                    <span>${message}</span>
+                `;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {}, 100); // 真实进度通过API获取
+            }
+            
+            loadTheme() {
+                const theme = localStorage.getItem('theme') || 'light';
+                document.documentElement.setAttribute('data-theme', theme);
+                document.getElementById('themeIcon').textContent = theme === 'dark' ? '☀️' : '🌙';
+            }
+            
+            toggleTheme() {
+                const current = document.documentElement.getAttribute('data-theme') || 'light';
+                const next = current === 'light' ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+                document.getElementById('themeIcon').textContent = next === 'dark' ? '☀️' : '🌙';
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            window.channelConfig = new ChannelConfig();
+        });
+    </script>
+
+    <script src="../static/js/api-client.js"></script>
+    <script src="../static/js/page-realization.js"></script>
+    <script src="../static/js/page-realization-loader.js"></script>
+<script>
+        
+            // 侧边栏切换
+            var sidebarToggle = document.getElementById('sidebarToggle');
+            var sidebar = document.getElementById('sidebar');
+            if (sidebarToggle && sidebar) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('collapsed');
+                });
+            }
+
+        </script>
+</body>
+</html>

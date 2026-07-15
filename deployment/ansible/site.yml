@@ -1,0 +1,160 @@
+---
+- name: AGI Unified Framework Deployment
+  hosts: all
+  become: yes
+  gather_facts: yes
+  vars:
+    docker_version: "24.0"
+    docker_compose_version: "v2.20"
+    app_name: agi_unified
+    app_dir: /opt/agi_unified
+    data_dir: /data/agi_unified
+    log_dir: /var/log/agi_unified
+    env_file: "{{ app_dir }}/.env"
+    rollback_enabled: yes
+  tasks:
+    - name: Update apt cache
+      apt: update_cache=yes cache_valid_time=3600
+      when: ansible_os_family == "Debian"
+    - name: Install prerequisites
+      package:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+          - python3
+          - python3-pip
+          - python3-docker
+          - virtualenv
+        state: present
+    - name: Create application directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+        owner: root
+        group: root
+      loop:
+        - "{{ app_dir }}"
+        - "{{ data_dir }}"
+        - "{{ log_dir }}"
+    - name: Check if Docker is installed
+      command: docker --version
+      register: docker_check
+      ignore_errors: yes
+      changed_when: no
+    - name: Install Docker
+      shell: |
+        curl -fsSL https://get.docker.com -o get-docker.sh
+        sh get-docker.sh
+        rm get-docker.sh
+      when: docker_check.rc != 0
+      notify: Start and enable Docker
+    - name: Install Docker Compose
+      get_url:
+        url: https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-linux-x86_64
+        dest: /usr/local/bin/docker-compose
+        mode: "0755"
+      when: docker_check.rc != 0
+    - name: Create docker group
+      group:
+        name: docker
+        state: present
+      when: docker_check.rc != 0
+    - name: Add user to docker group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+      when: ansible_user is defined
+    - name: Copy environment file
+      template:
+        src: templates/env.j2
+        dest: "{{ env_file }}"
+        mode: "0600"
+        owner: root
+        group: root
+      notify: Restart application
+    - name: Pull Docker images
+      docker_image:
+        name: "{{ item.name }}"
+        source: pull
+        force_source: yes
+      loop:
+        - { name: "agi-unified/core:{{ docker_version }}" }
+        - { name: "agi-unified/api:{{ docker_version }}" }
+        - { name: "agi-unified/worker:{{ docker_version }}" }
+      ignore_errors: yes
+    - name: Create Docker network
+      docker_network:
+        name: agi_network
+        driver: bridge
+        ipam_config:
+          - subnet: 172.28.0.0/16
+    - name: Start application containers
+      docker_container:
+        name: "{{ item.name }}"
+        image: "{{ item.image }}"
+        state: started
+        restart_policy: always
+        networks:
+          - name: agi_network
+        env:
+          APP_NAME: "{{ app_name }}"
+          APP_DIR: "{{ app_dir }}"
+        volumes:
+          - "{{ data_dir }}:/data"
+          - "{{ log_dir }}:/logs"
+        memory: "{{ item.memory | default('2g') }}"
+        cpu_shares: "{{ item.cpu | default(1024) }}"
+      loop:
+        - { name: "agi-api", image: "agi-unified/api:{{ docker_version }}", memory: "4g", cpu: 2048 }
+        - { name: "agi-worker", image: "agi-unified/worker:{{ docker_version }}", memory: "8g", cpu: 4096 }
+      ignore_errors: yes
+      notify: Verify deployment
+    - name: Check API health
+      uri:
+        url: "http://localhost:8000/health"
+        method: GET
+        status_code: 200
+      register: api_health
+      until: api_health.status == 200
+      retries: 10
+      delay: 5
+      ignore_errors: yes
+    - name: Create systemd service
+      template:
+        src: templates/agi.service.j2
+        dest: /etc/systemd/system/agi-unified.service
+        mode: "0644"
+      notify:
+        - Reload systemd
+        - Start agi-unified
+    - name: Enable and start service
+      systemd:
+        name: agi-unified
+        enabled: yes
+        state: started
+      ignore_errors: yes
+  handlers:
+    - name: Start and enable Docker
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+    - name: Restart application
+      debug:
+        msg: "Application restart triggered"
+    - name: Reload systemd
+      systemd:
+        daemon_reload: yes
+    - name: Start agi-unified
+      systemd:
+        name: agi-unified
+        state: started
+        enabled: yes
+    - name: Verify deployment
+      debug:
+        msg: "Deployment verification completed"

@@ -1,0 +1,60 @@
+# EAMDE-Ultra 配置文件
+version: "2.0.0"
+
+model:
+  name: default
+  device: auto
+  precision: fp16
+
+training:
+  batch_size: 32
+  learning_rate: 1e-4
+  epochs: 100
+
+hardware:
+  gpu:
+    enabled: true
+    memory_fraction: 0.9
+  cpu:
+    num_workers: 4
+
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项
+# 配置项

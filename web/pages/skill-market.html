@@ -1,0 +1,1946 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>技能市场 - AGI 统一框架</title>
+    <meta name="description" content="技能市场，浏览、安装和管理AI技能，创建自定义技能">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/reset.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/animations.css">
+    
+    <style>
+        /* Skill Market Specific Styles */
+        .skill-market-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - var(--header-height, 56px));
+            overflow: hidden;
+        }
+        
+        /* Header Section */
+        .market-header {
+            background: linear-gradient(135deg, var(--primary-600) 0%, var(--secondary-600) 100%);
+            color: white;
+            padding: 32px 40px;
+        }
+        
+        .market-header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .market-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .market-subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: 24px;
+        }
+        
+        .market-search-bar {
+            display: flex;
+            gap: 12px;
+            max-width: 700px;
+        }
+        
+        .market-search-input {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: var(--radius-xl);
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--text-primary);
+        }
+        
+        .market-search-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.3);
+        }
+        
+        .market-search-btn {
+            padding: 14px 28px;
+            background: var(--gray-900);
+            color: white;
+            border: none;
+            border-radius: var(--radius-xl);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .market-search-btn:hover {
+            background: var(--gray-800);
+            transform: translateY(-1px);
+        }
+        
+        /* Main Content */
+        .market-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            background: var(--bg-secondary);
+        }
+        
+        /* Sidebar Filters */
+        .market-sidebar {
+            width: 280px;
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border-default);
+            padding: 24px;
+            overflow-y: auto;
+        }
+        
+        .filter-section {
+            margin-bottom: 28px;
+        }
+        
+        .filter-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .filter-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .filter-item:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        
+        .filter-item.active {
+            background: var(--primary-50);
+            color: var(--primary-600);
+            font-weight: 500;
+        }
+        
+        .filter-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary-500);
+        }
+        
+        .filter-count {
+            margin-left: auto;
+            font-size: 12px;
+            color: var(--text-caption);
+            background: var(--bg-secondary);
+            padding: 2px 8px;
+            border-radius: var(--radius-full);
+        }
+        
+        /* Rating Filter */
+        .rating-filter {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .rating-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: var(--radius-lg);
+            transition: all 0.2s;
+        }
+        
+        .rating-option:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .stars {
+            color: var(--warning-400);
+            font-size: 14px;
+        }
+        
+        .rating-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        /* Main Area */
+        .market-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* Toolbar */
+        .market-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-default);
+        }
+        
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .results-count {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .active-filters {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .filter-tag {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: var(--primary-50);
+            color: var(--primary-600);
+            border-radius: var(--radius-full);
+            font-size: 13px;
+        }
+        
+        .filter-tag button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--primary-600);
+        }
+        
+        .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .sort-select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+            background: var(--bg-primary);
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .view-toggle {
+            display: flex;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 4px;
+        }
+        
+        .view-btn {
+            padding: 8px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+        
+        .view-btn.active {
+            background: var(--bg-primary);
+            color: var(--primary-500);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .create-skill-btn {
+            padding: 10px 20px;
+            background: var(--primary-500);
+            color: white;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        
+        .create-skill-btn:hover {
+            background: var(--primary-600);
+        }
+        
+        /* Skills Grid */
+        .skills-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+        
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .skill-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-2xl);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .skill-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--primary-300);
+        }
+        
+        .skill-card.installed {
+            border-color: var(--success-300);
+        }
+        
+        .skill-header {
+            padding: 20px;
+            display: flex;
+            gap: 16px;
+        }
+        
+        .skill-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: var(--radius-xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            background: linear-gradient(135deg, var(--primary-100) 0%, var(--primary-200) 100%);
+            flex-shrink: 0;
+        }
+        
+        .skill-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .skill-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .skill-author {
+            font-size: 13px;
+            color: var(--text-caption);
+            margin-bottom: 8px;
+        }
+        
+        .skill-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .skill-rating {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            color: var(--warning-500);
+        }
+        
+        .skill-downloads {
+            font-size: 13px;
+            color: var(--text-caption);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .skill-version {
+            font-size: 12px;
+            padding: 2px 8px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-full);
+            color: var(--text-secondary);
+        }
+        
+        .skill-description {
+            padding: 0 20px 16px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .skill-tags {
+            padding: 0 20px 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .skill-tag {
+            padding: 4px 10px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-full);
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .skill-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-top: 1px solid var(--border-default);
+            background: var(--bg-secondary);
+        }
+        
+        .skill-price {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .skill-price.free {
+            color: var(--success-500);
+        }
+        
+        .skill-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .skill-btn {
+            padding: 8px 16px;
+            border-radius: var(--radius-lg);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+        
+        .skill-btn.primary {
+            background: var(--primary-500);
+            color: white;
+        }
+        
+        .skill-btn.primary:hover {
+            background: var(--primary-600);
+        }
+        
+        .skill-btn.secondary {
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-default);
+        }
+        
+        .skill-btn.secondary:hover {
+            background: var(--bg-hover);
+        }
+        
+        .skill-btn.success {
+            background: var(--success-500);
+            color: white;
+        }
+        
+        /* Skill Detail Modal */
+        .skill-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 40px;
+        }
+        
+        .skill-modal-overlay.active {
+            display: flex;
+        }
+        
+        .skill-modal {
+            background: var(--bg-primary);
+            border-radius: var(--radius-2xl);
+            width: 100%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .skill-modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-default);
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+        }
+        
+        .skill-modal-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: var(--radius-xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            background: linear-gradient(135deg, var(--primary-100) 0%, var(--primary-200) 100%);
+            flex-shrink: 0;
+        }
+        
+        .skill-modal-info {
+            flex: 1;
+        }
+        
+        .skill-modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .skill-modal-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .skill-modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: var(--text-caption);
+            cursor: pointer;
+            padding: 4px;
+        }
+        
+        .skill-modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+        
+        .skill-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-default);
+        }
+        
+        .skill-tab {
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .skill-tab:hover {
+            color: var(--text-primary);
+        }
+        
+        .skill-tab.active {
+            color: var(--primary-500);
+            border-bottom-color: var(--primary-500);
+        }
+        
+        .skill-tab-panel {
+            display: none;
+        }
+        
+        .skill-tab-panel.active {
+            display: block;
+        }
+        
+        .skill-readme {
+            font-size: 15px;
+            line-height: 1.8;
+            color: var(--text-secondary);
+        }
+        
+        .skill-readme h1,
+        .skill-readme h2,
+        .skill-readme h3 {
+            color: var(--text-primary);
+            margin: 24px 0 16px;
+        }
+        
+        .skill-readme code {
+            background: var(--bg-secondary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: var(--font-family-mono);
+            font-size: 13px;
+        }
+        
+        .skill-readme pre {
+            background: var(--bg-secondary);
+            padding: 16px;
+            border-radius: var(--radius-lg);
+            overflow-x: auto;
+        }
+        
+        .skill-readme pre code {
+            background: none;
+            padding: 0;
+        }
+        
+        /* Reviews */
+        .reviews-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .review-item {
+            padding: 20px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-xl);
+        }
+        
+        .review-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        
+        .reviewer {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .reviewer-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-full);
+            background: var(--primary-200);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: var(--primary-700);
+        }
+        
+        .reviewer-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .review-date {
+            font-size: 13px;
+            color: var(--text-caption);
+        }
+        
+        .review-rating {
+            color: var(--warning-400);
+        }
+        
+        .review-content {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+        
+        /* Versions */
+        .versions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .version-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-xl);
+        }
+        
+        .version-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .version-number {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .version-badge {
+            padding: 2px 8px;
+            background: var(--success-100);
+            color: var(--success-600);
+            border-radius: var(--radius-full);
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .version-date {
+            font-size: 13px;
+            color: var(--text-caption);
+        }
+        
+        .version-changelog {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        
+        .skill-modal-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-top: 1px solid var(--border-default);
+            background: var(--bg-secondary);
+        }
+        
+        /* Skill Editor */
+        .editor-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-primary);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+        }
+        
+        .editor-overlay.active {
+            display: flex;
+        }
+        
+        .editor-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-default);
+        }
+        
+        .editor-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .editor-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .editor-body {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .editor-sidebar {
+            width: 300px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-default);
+            padding: 24px;
+            overflow-y: auto;
+        }
+        
+        .editor-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .editor-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-bottom: 1px solid var(--border-default);
+            background: var(--bg-secondary);
+        }
+        
+        .editor-toolbar-btn {
+            padding: 8px 12px;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            background: var(--bg-primary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .editor-toolbar-btn:hover {
+            background: var(--bg-hover);
+        }
+        
+        .editor-code {
+            flex: 1;
+            padding: 20px 24px;
+            font-family: var(--font-family-mono);
+            font-size: 14px;
+            line-height: 1.6;
+            background: var(--bg-primary);
+            border: none;
+            resize: none;
+            outline: none;
+            color: var(--text-primary);
+        }
+        
+        /* Installed Skills Panel */
+        .installed-panel {
+            position: fixed;
+            right: -400px;
+            top: var(--header-height);
+            bottom: 0;
+            width: 400px;
+            background: var(--bg-primary);
+            border-left: 1px solid var(--border-default);
+            box-shadow: var(--shadow-xl);
+            z-index: 100;
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .installed-panel.open {
+            right: 0;
+        }
+        
+        .installed-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-default);
+        }
+        
+        .installed-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .installed-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        
+        .installed-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        
+        .installed-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-xl);
+            margin-bottom: 12px;
+        }
+        
+        .installed-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            background: var(--bg-primary);
+        }
+        
+        .installed-info {
+            flex: 1;
+        }
+        
+        .installed-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        
+        .installed-version {
+            font-size: 12px;
+            color: var(--text-caption);
+        }
+        
+        .installed-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .installed-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            background: var(--bg-primary);
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: var(--radius-lg);
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .toast.success { background: var(--success-500); }
+        .toast.error { background: var(--danger-500); }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .market-sidebar {
+                position: fixed;
+                left: -280px;
+                top: calc(var(--header-height) + 180px);
+                bottom: 0;
+                z-index: 100;
+                transition: left 0.3s ease;
+            }
+            
+            .market-sidebar.open {
+                left: 0;
+            }
+            
+            .skills-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .market-header {
+                padding: 20px;
+            }
+            
+            .market-title {
+                font-size: 24px;
+            }
+            
+            .market-search-bar {
+                flex-direction: column;
+            }
+            
+            .skills-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .skill-modal-overlay {
+                padding: 0;
+            }
+            
+            .skill-modal {
+                max-height: 100vh;
+                border-radius: 0;
+            }
+            
+            .installed-panel {
+                width: 100%;
+                right: -100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 空状态提示 -->
+    <div id="empty-state" style="display:none; background:#fff3cd; border:1px solid #ffc107; 
+         border-radius:8px; padding:15px; margin:20px; text-align:center; color:#856404;">
+        ⚠️ 暂无数据，请确保后端服务已启动
+    </div>
+    
+    <div class="app-container">
+        <!-- Top Navigation -->
+        <header class="top-navbar" id="topNavbar">
+            <div class="navbar-left">
+                <button class="btn btn-icon sidebar-toggle" id="sidebarToggle">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="currentColor"/>
+                    </svg>
+                </button>
+                <a href="../index.html" class="navbar-brand">
+                    <span class="brand-text">AGI 统一框架</span>
+                </a>
+            </div>
+            <div class="navbar-right">
+                <button class="btn btn-icon" id="installedSkillsBtn" title="已安装技能">
+                    <span>🎒</span>
+                    <span class="badge" id="installedCount">3</span>
+                </button>
+                <button class="btn btn-icon theme-toggle" id="themeToggle">
+                    <span id="themeIcon">🌙</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Skill Market Container -->
+        <div class="skill-market-container">
+            <!-- Header -->
+            <div class="market-header">
+                <div class="market-header-content">
+                    <h1 class="market-title">技能市场</h1>
+                    <p class="market-subtitle">发现、安装和分享 AI 技能，扩展您的智能助手能力</p>
+                    <div class="market-search-bar">
+                        <input type="text" class="market-search-input" id="skillSearch" placeholder="搜索技能、工具或功能...">
+                        <button class="market-search-btn" id="searchBtn">搜索</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="market-content">
+                <!-- Sidebar Filters -->
+                <aside class="market-sidebar" id="marketSidebar">
+                    <div class="filter-section">
+                        <h3 class="filter-title">分类</h3>
+                        <div class="filter-list" id="categoryFilters">
+                            <div class="filter-item active" data-category="all">
+                                <span>全部</span>
+                                <span class="filter-count">156</span>
+                            </div>
+                            <div class="filter-item" data-category="productivity">
+                                <span>生产力</span>
+                                <span class="filter-count">42</span>
+                            </div>
+                            <div class="filter-item" data-category="data">
+                                <span>数据处理</span>
+                                <span class="filter-count">28</span>
+                            </div>
+                            <div class="filter-item" data-category="communication">
+                                <span>通讯协作</span>
+                                <span class="filter-count">35</span>
+                            </div>
+                            <div class="filter-item" data-category="development">
+                                <span>开发工具</span>
+                                <span class="filter-count">24</span>
+                            </div>
+                            <div class="filter-item" data-category="media">
+                                <span>媒体处理</span>
+                                <span class="filter-count">18</span>
+                            </div>
+                            <div class="filter-item" data-category="analysis">
+                                <span>分析洞察</span>
+                                <span class="filter-count">9</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-section">
+                        <h3 class="filter-title">评分</h3>
+                        <div class="rating-filter">
+                            <div class="rating-option" data-rating="4">
+                                <span class="stars">★★★★☆</span>
+                                <span class="rating-label">4星及以上</span>
+                            </div>
+                            <div class="rating-option" data-rating="3">
+                                <span class="stars">★★★☆☆</span>
+                                <span class="rating-label">3星及以上</span>
+                            </div>
+                            <div class="rating-option" data-rating="all">
+                                <span class="stars">★☆☆☆☆</span>
+                                <span class="rating-label">全部评分</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-section">
+                        <h3 class="filter-title">其他筛选</h3>
+                        <div class="filter-list">
+                            <label class="filter-item">
+                                <input type="checkbox" id="freeOnly">
+                                <span>仅免费</span>
+                            </label>
+                            <label class="filter-item">
+                                <input type="checkbox" id="installedOnly">
+                                <span>已安装</span>
+                            </label>
+                            <label class="filter-item">
+                                <input type="checkbox" id="verifiedOnly">
+                                <span>官方认证</span>
+                            </label>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Main Area -->
+                <main class="market-main">
+                    <!-- Toolbar -->
+                    <div class="market-toolbar">
+                        <div class="toolbar-left">
+                            <span class="results-count">显示 <strong id="resultsCount">12</strong> 个技能</span>
+                            <div class="active-filters" id="activeFilters"></div>
+                        </div>
+                        <div class="toolbar-right">
+                            <select class="sort-select" id="sortSelect">
+                                <option value="popular">最受欢迎</option>
+                                <option value="newest">最新发布</option>
+                                <option value="rating">评分最高</option>
+                                <option value="name">名称</option>
+                            </select>
+                            <div class="view-toggle">
+                                <button class="view-btn active" id="gridViewBtn" title="网格视图">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                        <path d="M3 3v8h8V3H3zm6 6H5V5h4v4zm-6 4v8h8v-8H3zm6 6H5v-4h4v4zm4-16v8h8V3h-8zm6 6h-4V5h4v4zm-6 4v8h8v-8h-8zm6 6h-4v-4h4v4z"/>
+                                    </svg>
+                                </button>
+                                <button class="view-btn" id="listViewBtn" title="列表视图">
+                                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                        <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <button class="create-skill-btn" id="createSkillBtn">
+                                <span>+</span>
+                                <span>创建技能</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Skills Grid -->
+                    <div class="skills-container">
+                        <div class="skills-grid" id="skillsGrid">
+                            <!-- Skills will be loaded dynamically -->
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+
+        <!-- Skill Detail Modal -->
+        <div class="skill-modal-overlay" id="skillModal">
+            <div class="skill-modal">
+                <div class="skill-modal-header">
+                    <div class="skill-modal-icon" id="modalIcon">🛠️</div>
+                    <div class="skill-modal-info">
+                        <h2 class="skill-modal-title" id="modalTitle">技能名称</h2>
+                        <div class="skill-modal-meta">
+                            <span id="modalAuthor">作者</span>
+                            <span>•</span>
+                            <span class="stars" id="modalRating">★★★★★</span>
+                            <span id="modalDownloads">1.2k 下载</span>
+                            <span>•</span>
+                            <span id="modalVersion">v1.0.0</span>
+                        </div>
+                    </div>
+                    <button class="skill-modal-close" id="closeModal">&times;</button>
+                </div>
+                
+                <div class="skill-modal-body">
+                    <div class="skill-tabs">
+                        <div class="skill-tab active" data-tab="readme">概述</div>
+                        <div class="skill-tab" data-tab="reviews">评价</div>
+                        <div class="skill-tab" data-tab="versions">版本</div>
+                    </div>
+                    
+                    <div class="skill-tab-panel active" id="readmePanel">
+                        <div class="skill-readme" id="modalReadme">
+                            <!-- README content -->
+                        </div>
+                    </div>
+                    
+                    <div class="skill-tab-panel" id="reviewsPanel">
+                        <div class="reviews-list" id="reviewsList">
+                            <!-- Reviews will be loaded -->
+                        </div>
+                    </div>
+                    
+                    <div class="skill-tab-panel" id="versionsPanel">
+                        <div class="versions-list" id="versionsList">
+                            <!-- Versions will be loaded -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="skill-modal-footer">
+                    <span class="skill-price" id="modalPrice">免费</span>
+                    <div class="skill-actions">
+                        <button class="skill-btn secondary" id="modalShare">分享</button>
+                        <button class="skill-btn primary" id="modalInstall">安装</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Skill Editor -->
+        <div class="editor-overlay" id="skillEditor">
+            <div class="editor-header">
+                <h2 class="editor-title">技能编辑器</h2>
+                <div class="editor-actions">
+                    <button class="btn" id="editorCancel">取消</button>
+                    <button class="btn" id="editorSaveDraft">保存草稿</button>
+                    <button class="btn btn-primary" id="editorPublish">发布</button>
+                </div>
+            </div>
+            <div class="editor-body">
+                <div class="editor-sidebar">
+                    <div class="form-group">
+                        <label class="form-label">技能名称</label>
+                        <input type="text" class="form-input" id="editorSkillName" placeholder="输入技能名称">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">描述</label>
+                        <textarea class="form-textarea" id="editorSkillDesc" rows="3" placeholder="简短描述技能功能"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">分类</label>
+                        <select class="form-select" id="editorSkillCategory">
+                            <option value="productivity">生产力</option>
+                            <option value="data">数据处理</option>
+                            <option value="communication">通讯协作</option>
+                            <option value="development">开发工具</option>
+                            <option value="media">媒体处理</option>
+                            <option value="analysis">分析洞察</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">图标</label>
+                        <input type="text" class="form-input" id="editorSkillIcon" value="🛠️">
+                    </div>
+                </div>
+                <div class="editor-main">
+                    <div class="editor-toolbar">
+                        <button class="editor-toolbar-btn">JSON</button>
+                        <button class="editor-toolbar-btn">YAML</button>
+                        <button class="editor-toolbar-btn">预览</button>
+                    </div>
+                    <textarea class="editor-code" id="editorCode" spellcheck="false">{
+  "name": "my-skill",
+  "version": "1.0.0",
+  "description": "My custom skill",
+  "functions": [
+    {
+      "name": "main",
+      "description": "Main function",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "input": {
+            "type": "string",
+            "description": "Input text"
+          }
+        }
+      }
+    }
+  ]
+}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Installed Skills Panel -->
+        <div class="installed-panel" id="installedPanel">
+            <div class="installed-header">
+                <h3 class="installed-title">已安装技能</h3>
+                <button class="installed-close" id="closeInstalled">&times;</button>
+            </div>
+            <div class="installed-list" id="installedList">
+                <!-- Installed skills will be loaded -->
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/utils.js"></script>
+    <script src="../js/state.js"></script>
+    <script src="../js/api-client.js"></script>
+    <script src="../js/common-utils.js"></script>
+    <script>
+        // Skill Market Application
+        class SkillMarket {
+            constructor() {
+                this.skills = [];
+                this.installedSkills = [];
+                this.filteredSkills = [];
+                this.currentCategory = 'all';
+                this.currentRating = 'all';
+                this.viewMode = 'grid';
+                this.currentSkill = null;
+                
+                this.init();
+            }
+            
+            init() {
+                this.loadSkills();
+                this.loadInstalledSkills();
+                this.bindEvents();
+                this.loadTheme();
+            }
+            
+            // Load skills
+            async loadSkills() {
+                // Mock data
+                this.skills = [
+                    {
+                        id: 'skill-1',
+                        name: '网页抓取助手',
+                        description: '智能抓取网页内容，提取结构化数据，支持多种网站格式自动识别',
+                        author: 'AGI Team',
+                        rating: 4.8,
+                        downloads: 15420,
+                        version: '2.3.1',
+                        price: 0,
+                        category: 'data',
+                        icon: '🕷️',
+                        tags: ['爬虫', '数据提取', '自动化'],
+                        installed: true,
+                        verified: true
+                    },
+                    {
+                        id: 'skill-2',
+                        name: '邮件智能助手',
+                        description: '自动撰写、回复和分类邮件，支持多种邮件客户端集成',
+                        author: 'EmailMaster',
+                        rating: 4.5,
+                        downloads: 8932,
+                        version: '1.8.0',
+                        price: 0,
+                        category: 'communication',
+                        icon: '📧',
+                        tags: ['邮件', '自动化', '沟通'],
+                        installed: true,
+                        verified: false
+                    },
+                    {
+                        id: 'skill-3',
+                        name: '代码审查助手',
+                        description: '自动审查代码质量，检测潜在bug和安全漏洞，提供优化建议',
+                        author: 'CodeReview Pro',
+                        rating: 4.9,
+                        downloads: 23100,
+                        version: '3.1.2',
+                        price: 29.99,
+                        category: 'development',
+                        icon: '🔍',
+                        tags: ['代码审查', '质量', '安全'],
+                        installed: false,
+                        verified: true
+                    },
+                    {
+                        id: 'skill-4',
+                        name: '会议记录生成器',
+                        description: '实时转录会议内容，自动生成摘要和待办事项',
+                        author: 'MeetingAI',
+                        rating: 4.6,
+                        downloads: 12580,
+                        version: '2.0.0',
+                        price: 0,
+                        category: 'productivity',
+                        icon: '📝',
+                        tags: ['会议', '转录', '自动化'],
+                        installed: true,
+                        verified: true
+                    },
+                    {
+                        id: 'skill-5',
+                        name: '图像处理大师',
+                        description: '批量处理图像，支持调整大小、格式转换、滤镜应用等功能',
+                        author: 'ImagePro',
+                        rating: 4.3,
+                        downloads: 6780,
+                        version: '1.5.0',
+                        price: 9.99,
+                        category: 'media',
+                        icon: '🖼️',
+                        tags: ['图像', '批量处理', '编辑'],
+                        installed: false,
+                        verified: false
+                    },
+                    {
+                        id: 'skill-6',
+                        name: '数据分析助手',
+                        description: '自动分析CSV/Excel数据，生成可视化图表和洞察报告',
+                        author: 'DataWizard',
+                        rating: 4.7,
+                        downloads: 18920,
+                        version: '2.1.0',
+                        price: 0,
+                        category: 'analysis',
+                        icon: '📊',
+                        tags: ['数据分析', '可视化', '报告'],
+                        installed: false,
+                        verified: true
+                    },
+                    {
+                        id: 'skill-7',
+                        name: '文档翻译助手',
+                        description: '支持100+语言的文档翻译，保持原有格式和排版',
+                        author: 'TranslateAI',
+                        rating: 4.4,
+                        downloads: 34200,
+                        version: '4.0.1',
+                        price: 0,
+                        category: 'productivity',
+                        icon: '🌐',
+                        tags: ['翻译', '多语言', '文档'],
+                        installed: false,
+                        verified: true
+                    },
+                    {
+                        id: 'skill-8',
+                        name: 'API测试工具',
+                        description: '快速测试REST API，支持自动化测试脚本生成',
+                        author: 'APITest',
+                        rating: 4.2,
+                        downloads: 8920,
+                        version: '1.9.0',
+                        price: 0,
+                        category: 'development',
+                        icon: '🔧',
+                        tags: ['API', '测试', '开发'],
+                        installed: false,
+                        verified: false
+                    },
+                    {
+                        id: 'skill-9',
+                        name: '社交媒体管理',
+                        description: '统一管理多个社交平台，定时发布内容，分析互动数据',
+                        author: 'SocialMaster',
+                        rating: 4.5,
+                        downloads: 15680,
+                        version: '2.5.0',
+                        price: 19.99,
+                        category: 'communication',
+                        icon: '📱',
+                        tags: ['社交媒体', '营销', '分析'],
+                        installed: false,
+                        verified: true
+                    },
+                    {
+                        id: 'skill-10',
+                        name: 'PDF处理专家',
+                        description: 'PDF合并、拆分、压缩、OCR识别一站式解决方案',
+                        author: 'PDFPro',
+                        rating: 4.6,
+                        downloads: 42300,
+                        version: '3.2.0',
+                        price: 0,
+                        category: 'productivity',
+                        icon: '📄',
+                        tags: ['PDF', '文档', 'OCR'],
+                        installed: false,
+                        verified: true
+                    },
+                    {
+                        id: 'skill-11',
+                        name: '数据库查询助手',
+                        description: '自然语言转SQL，支持多种数据库类型',
+                        author: 'SQLHelper',
+                        rating: 4.8,
+                        downloads: 28900,
+                        version: '2.0.0',
+                        price: 0,
+                        category: 'data',
+                        icon: '🗄️',
+                        tags: ['SQL', '数据库', '查询'],
+                        installed: false,
+                        verified: true
+                    },
+                    {
+                        id: 'skill-12',
+                        name: '视频剪辑助手',
+                        description: '自动剪辑视频，添加字幕和转场效果',
+                        author: 'VideoEdit AI',
+                        rating: 4.1,
+                        downloads: 5670,
+                        version: '1.2.0',
+                        price: 49.99,
+                        category: 'media',
+                        icon: '🎬',
+                        tags: ['视频', '剪辑', 'AI'],
+                        installed: false,
+                        verified: false
+                    }
+                ];
+                
+                this.applyFilters();
+            }
+            
+            // Load installed skills
+            loadInstalledSkills() {
+                this.installedSkills = this.skills.filter(s => s.installed);
+                this.renderInstalledSkills();
+                document.getElementById('installedCount').textContent = this.installedSkills.length;
+            }
+            
+            // Apply filters
+            applyFilters() {
+                let filtered = this.skills;
+                
+                // Category filter
+                if (this.currentCategory !== 'all') {
+                    filtered = filtered.filter(s => s.category === this.currentCategory);
+                }
+                
+                // Rating filter
+                if (this.currentRating !== 'all') {
+                    filtered = filtered.filter(s => s.rating >= parseInt(this.currentRating));
+                }
+                
+                // Free only
+                if (document.getElementById('freeOnly')?.checked) {
+                    filtered = filtered.filter(s => s.price === 0);
+                }
+                
+                // Installed only
+                if (document.getElementById('installedOnly')?.checked) {
+                    filtered = filtered.filter(s => s.installed);
+                }
+                
+                // Verified only
+                if (document.getElementById('verifiedOnly')?.checked) {
+                    filtered = filtered.filter(s => s.verified);
+                }
+                
+                // Search
+                const searchTerm = document.getElementById('skillSearch')?.value.toLowerCase() || '';
+                if (searchTerm) {
+                    filtered = filtered.filter(s => 
+                        s.name.toLowerCase().includes(searchTerm) ||
+                        s.description.toLowerCase().includes(searchTerm) ||
+                        s.tags.some(t => t.toLowerCase().includes(searchTerm))
+                    );
+                }
+                
+                // Sort
+                const sortBy = document.getElementById('sortSelect')?.value || 'popular';
+                switch (sortBy) {
+                    case 'newest':
+                        filtered.sort((a, b) => b.version.localeCompare(a.version));
+                        break;
+                    case 'rating':
+                        filtered.sort((a, b) => b.rating - a.rating);
+                        break;
+                    case 'name':
+                        filtered.sort((a, b) => a.name.localeCompare(b.name));
+                        break;
+                    default:
+                        filtered.sort((a, b) => b.downloads - a.downloads);
+                }
+                
+                this.filteredSkills = filtered;
+                this.renderSkills();
+            }
+            
+            // Render skills
+            renderSkills() {
+                const container = document.getElementById('skillsGrid');
+                document.getElementById('resultsCount').textContent = this.filteredSkills.length;
+                
+                if (this.filteredSkills.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state" style="grid-column: 1/-1;">
+                            <div class="empty-icon">🔍</div>
+                            <div class="empty-title">未找到技能</div>
+                            <div class="empty-description">尝试调整筛选条件或搜索关键词</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = this.filteredSkills.map(skill => `
+                    <div class="skill-card ${skill.installed ? 'installed' : ''}" data-skill-id="${skill.id}">
+                        <div class="skill-header">
+                            <div class="skill-icon">${skill.icon}</div>
+                            <div class="skill-info">
+                                <div class="skill-name">${skill.name}</div>
+                                <div class="skill-author">${skill.verified ? '✓ ' : ''}${skill.author}</div>
+                                <div class="skill-meta">
+                                    <span class="skill-rating">
+                                        <span>★</span>
+                                        <span>${skill.rating}</span>
+                                    </span>
+                                    <span class="skill-downloads">
+                                        <span>⬇️</span>
+                                        <span>${this.formatNumber(skill.downloads)}</span>
+                                    </span>
+                                    <span class="skill-version">v${skill.version}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="skill-description">${skill.description}</div>
+                        <div class="skill-tags">
+                            ${skill.tags.map(tag => `<span class="skill-tag">${tag}</span>`).join('')}
+                        </div>
+                        <div class="skill-footer">
+                            <span class="skill-price ${skill.price === 0 ? 'free' : ''}">
+                                ${skill.price === 0 ? '免费' : '¥' + skill.price}
+                            </span>
+                            <div class="skill-actions">
+                                ${skill.installed ? `
+                                    <button class="skill-btn secondary" onclick="skillMarket.uninstallSkill('${skill.id}')">卸载</button>
+                                    <button class="skill-btn success">已安装</button>
+                                ` : `
+                                    <button class="skill-btn secondary" onclick="skillMarket.viewSkill('${skill.id}')">详情</button>
+                                    <button class="skill-btn primary" onclick="skillMarket.installSkill('${skill.id}')">安装</button>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            // Render installed skills
+            renderInstalledSkills() {
+                const container = document.getElementById('installedList');
+                container.innerHTML = this.installedSkills.map(skill => `
+                    <div class="installed-item">
+                        <div class="installed-icon">${skill.icon}</div>
+                        <div class="installed-info">
+                            <div class="installed-name">${skill.name}</div>
+                            <div class="installed-version">v${skill.version}</div>
+                        </div>
+                        <div class="installed-actions">
+                            <button class="installed-btn" onclick="skillMarket.viewSkill('${skill.id}')">设置</button>
+                            <button class="installed-btn" onclick="skillMarket.uninstallSkill('${skill.id}')">卸载</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            // View skill details
+            viewSkill(skillId) {
+                const skill = this.skills.find(s => s.id === skillId);
+                if (!skill) return;
+                
+                this.currentSkill = skill;
+                
+                document.getElementById('modalIcon').textContent = skill.icon;
+                document.getElementById('modalTitle').textContent = skill.name;
+                document.getElementById('modalAuthor').textContent = skill.author;
+                document.getElementById('modalRating').textContent = '★'.repeat(Math.floor(skill.rating)) + '☆'.repeat(5 - Math.floor(skill.rating));
+                document.getElementById('modalDownloads').textContent = this.formatNumber(skill.downloads) + ' 下载';
+                document.getElementById('modalVersion').textContent = 'v' + skill.version;
+                document.getElementById('modalPrice').textContent = skill.price === 0 ? '免费' : '¥' + skill.price;
+                document.getElementById('modalPrice').className = 'skill-price ' + (skill.price === 0 ? 'free' : '');
+                
+                document.getElementById('modalReadme').innerHTML = `
+                    <h2>功能介绍</h2>
+                    <p>${skill.description}</p>
+                    <h2>使用说明</h2>
+                    <p>安装后，您可以通过以下方式使用此技能：</p>
+                    <ol>
+                        <li>在对话中直接提及技能名称</li>
+                        <li>使用快捷命令 /${skill.name.toLowerCase().replace(/\s+/g, '-')}</li>
+                        <li>在工具栏中点击技能图标</li>
+                    </ol>
+                    <h2>标签</h2>
+                    <p>${skill.tags.map(t => `<code>${t}</code>`).join(' ')}</p>
+                `;
+                
+                // Load reviews
+                document.getElementById('reviewsList').innerHTML = [
+                    { name: '张三', rating: 5, date: '2024-01-15', content: '非常好用的技能，大大提高了工作效率！' },
+                    { name: '李四', rating: 4, date: '2024-01-10', content: '功能强大，但希望能增加更多自定义选项。' },
+                    { name: '王五', rating: 5, date: '2024-01-05', content: '完美解决了我遇到的问题，强烈推荐！' }
+                ].map(review => `
+                    <div class="review-item">
+                        <div class="review-header">
+                            <div class="reviewer">
+                                <div class="reviewer-avatar">${review.name[0]}</div>
+                                <div>
+                                    <div class="reviewer-name">${review.name}</div>
+                                    <div class="review-date">${review.date}</div>
+                                </div>
+                            </div>
+                            <div class="review-rating">${'★'.repeat(review.rating)}</div>
+                        </div>
+                        <div class="review-content">${review.content}</div>
+                    </div>
+                `).join('');
+                
+                // Load versions
+                document.getElementById('versionsList').innerHTML = [
+                    { version: skill.version, date: '2024-01-15', current: true, changelog: '修复已知问题，提升性能' },
+                    { version: '1.9.0', date: '2024-01-01', current: false, changelog: '新增批量处理功能' },
+                    { version: '1.8.0', date: '2023-12-15', current: false, changelog: '优化用户界面' }
+                ].map(v => `
+                    <div class="version-item">
+                        <div class="version-info">
+                            <div>
+                                <span class="version-number">v${v.version}</span>
+                                ${v.current ? '<span class="version-badge">当前</span>' : ''}
+                            </div>
+                            <div class="version-date">${v.date}</div>
+                            <div class="version-changelog">${v.changelog}</div>
+                        </div>
+                        ${!v.current ? `<button class="skill-btn secondary">降级</button>` : ''}
+                    </div>
+                `).join('');
+                
+                // Update install button
+                const installBtn = document.getElementById('modalInstall');
+                if (skill.installed) {
+                    installBtn.textContent = '已安装';
+                    installBtn.className = 'skill-btn success';
+                    installBtn.disabled = true;
+                } else {
+                    installBtn.textContent = skill.price === 0 ? '安装' : '购买并安装';
+                    installBtn.className = 'skill-btn primary';
+                    installBtn.disabled = false;
+                    installBtn.onclick = () => {
+                        this.installSkill(skill.id);
+                        document.getElementById('skillModal').classList.remove('active');
+                    };
+                }
+                
+                document.getElementById('skillModal').classList.add('active');
+            }
+            
+            // Install skill
+            installSkill(skillId) {
+                const skill = this.skills.find(s => s.id === skillId);
+                if (!skill) return;
+                
+                skill.installed = true;
+                skill.downloads++;
+                this.loadInstalledSkills();
+                this.applyFilters();
+                
+                this.showToast(`"${skill.name}" 安装成功`, 'success');
+            }
+            
+            // Uninstall skill
+            uninstallSkill(skillId) {
+                const skill = this.skills.find(s => s.id === skillId);
+                if (!skill) return;
+                
+                if (!confirm(`确定要卸载 "${skill.name}" 吗？`)) return;
+                
+                skill.installed = false;
+                this.loadInstalledSkills();
+                this.applyFilters();
+                
+                this.showToast(`"${skill.name}" 已卸载`, 'success');
+            }
+            
+            // Bind events
+            bindEvents() {
+                // Category filters
+                document.getElementById('categoryFilters').addEventListener('click', (e) => {
+                    const item = e.target.closest('.filter-item');
+                    if (item) {
+                        document.querySelectorAll('#categoryFilters .filter-item').forEach(i => i.classList.remove('active'));
+                        item.classList.add('active');
+                        this.currentCategory = item.dataset.category;
+                        this.applyFilters();
+                    }
+                });
+                
+                // Rating filters
+                document.querySelectorAll('.rating-option').forEach(option => {
+                    option.addEventListener('click', () => {
+                        this.currentRating = option.dataset.rating;
+                        this.applyFilters();
+                    });
+                });
+                
+                // Checkboxes
+                document.getElementById('freeOnly')?.addEventListener('change', () => this.applyFilters());
+                document.getElementById('installedOnly')?.addEventListener('change', () => this.applyFilters());
+                document.getElementById('verifiedOnly')?.addEventListener('change', () => this.applyFilters());
+                
+                // Search
+                document.getElementById('skillSearch').addEventListener('input', () => {
+                    this.applyFilters();
+                });
+                
+                document.getElementById('searchBtn').addEventListener('click', () => {
+                    this.applyFilters();
+                });
+                
+                // Sort
+                document.getElementById('sortSelect').addEventListener('change', () => {
+                    this.applyFilters();
+                });
+                
+                // View toggle
+                document.getElementById('gridViewBtn').addEventListener('click', () => {
+                    this.viewMode = 'grid';
+                    document.getElementById('gridViewBtn').classList.add('active');
+                    document.getElementById('listViewBtn').classList.remove('active');
+                });
+                
+                document.getElementById('listViewBtn').addEventListener('click', () => {
+                    this.viewMode = 'list';
+                    document.getElementById('listViewBtn').classList.add('active');
+                    document.getElementById('gridViewBtn').classList.remove('active');
+                });
+                
+                // Create skill
+                document.getElementById('createSkillBtn').addEventListener('click', () => {
+                    document.getElementById('skillEditor').classList.add('active');
+                });
+                
+                document.getElementById('editorCancel').addEventListener('click', () => {
+                    document.getElementById('skillEditor').classList.remove('active');
+                });
+                
+                document.getElementById('editorPublish').addEventListener('click', () => {
+                    this.showToast('技能发布成功！', 'success');
+                    document.getElementById('skillEditor').classList.remove('active');
+                });
+                
+                // Installed panel
+                document.getElementById('installedSkillsBtn').addEventListener('click', () => {
+                    document.getElementById('installedPanel').classList.add('open');
+                });
+                
+                document.getElementById('closeInstalled').addEventListener('click', () => {
+                    document.getElementById('installedPanel').classList.remove('open');
+                });
+                
+                // Modal
+                document.getElementById('closeModal').addEventListener('click', () => {
+                    document.getElementById('skillModal').classList.remove('active');
+                });
+                
+                document.getElementById('skillModal').addEventListener('click', (e) => {
+                    if (e.target === document.getElementById('skillModal')) {
+                        document.getElementById('skillModal').classList.remove('active');
+                    }
+                });
+                
+                // Skill tabs
+                document.querySelectorAll('.skill-tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const tabName = tab.dataset.tab;
+                        document.querySelectorAll('.skill-tab').forEach(t => t.classList.remove('active'));
+                        document.querySelectorAll('.skill-tab-panel').forEach(p => p.classList.remove('active'));
+                        tab.classList.add('active');
+                        document.getElementById(tabName + 'Panel').classList.add('active');
+                    });
+                });
+                
+                // Theme toggle
+                document.getElementById('themeToggle').addEventListener('click', () => {
+                    this.toggleTheme();
+                });
+            }
+            
+            formatNumber(num) {
+                if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+                if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
+                return num.toString();
+            }
+            
+            showToast(message, type = 'success') {
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.innerHTML = `
+                    <span>${type === 'success' ? '✓' : '✗'}</span>
+                    <span>${message}</span>
+                `;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.style.animation = 'slideIn 0.3s ease reverse';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+            
+            loadTheme() {
+                const theme = localStorage.getItem('theme') || 'light';
+                document.documentElement.setAttribute('data-theme', theme);
+                document.getElementById('themeIcon').textContent = theme === 'dark' ? '☀️' : '🌙';
+            }
+            
+            toggleTheme() {
+                const current = document.documentElement.getAttribute('data-theme') || 'light';
+                const next = current === 'light' ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+                document.getElementById('themeIcon').textContent = next === 'dark' ? '☀️' : '🌙';
+            }
+        }
+        
+        // Initialize
+        let skillMarket;
+        document.addEventListener('DOMContentLoaded', () => {
+            skillMarket = new SkillMarket();
+        });
+    </script>
+<script>
+        
+            // 侧边栏切换
+            var sidebarToggle = document.getElementById('sidebarToggle');
+            var sidebar = document.getElementById('sidebar');
+            if (sidebarToggle && sidebar) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('collapsed');
+                });
+            }
+
+        </script>
+</body>
+</html>

@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>插件管理 - AGI 统一框架</title>
+    <meta name="description" content="管理AGI框架插件，浏览插件商店，安装和配置插件">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/reset.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/animations.css">
+    
+    <style>
+        /* Plugin Manager Specific Styles */
+        .plugin-manager-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - var(--header-height, 56px));
+            overflow: hidden;
+            background: var(--bg-secondary);
+        }
+        
+        /* Header */
+        .plugin-header {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-default);
+            padding: 24px 32px;
+        }
+        
+        .plugin-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .plugin-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        /* Tabs */
+        .plugin-tabs {
+            display: flex;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-default);
+            padding: 0 32px;
+        }
+        
+        .plugin-tab {
+            padding: 16px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .plugin-tab:hover {
+            color: var(--text-primary);
+        }
+        
+        .plugin-tab.active {
+            color: var(--primary-500);
+            border-bottom-color: var(--primary-500);
+        }
+        
+        .plugin-tab .badge {
+            padding: 2px 8px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-full);
+            font-size: 12px;
+        }
+        
+        /* Content */
+        .plugin-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 32px;
+        }
+        
+        .plugin-panel {
+            display: none;
+        }
+        
+        .plugin-panel.active {
+            display: block;
+        }
+        
+        /* Toolbar */
+        .plugin-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            gap: 16px;
+        }
+        
+        .toolbar-search {
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+        }
+        
+        .toolbar-search input {
+            width: 100%;
+            padding: 10px 14px 10px 40px;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+            font-size: 14px;
+            background: var(--bg-primary);
+            transition: all 0.2s;
+        }
+        
+        .toolbar-search input:focus {
+            outline: none;
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .toolbar-search svg {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-caption);
+        }
+        
+        .toolbar-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        /* Plugin Grid */
+        .plugin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 20px;
+        }
+        
+        .plugin-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-2xl);
+            padding: 24px;
+            transition: all 0.2s;
+        }
+        
+        .plugin-card:hover {
+            border-color: var(--primary-300);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .plugin-card-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .plugin-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: var(--radius-xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            background: linear-gradient(135deg, var(--primary-100) 0%, var(--primary-200) 100%);
+            flex-shrink: 0;
+        }
+        
+        .plugin-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .plugin-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .plugin-version {
+            font-size: 12px;
+            padding: 2px 8px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-full);
+            color: var(--text-caption);
+        }
+        
+        .plugin-author {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        
+        .plugin-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--text-caption);
+        }
+        
+        .plugin-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 16px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .plugin-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .plugin-tag {
+            padding: 4px 10px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-full);
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .plugin-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-default);
+        }
+        
+        .plugin-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+        }
+        
+        .plugin-status.enabled {
+            color: var(--success-500);
+        }
+        
+        .plugin-status.disabled {
+            color: var(--text-caption);
+        }
+        
+        .plugin-status.error {
+            color: var(--danger-500);
+        }
+        
+        .plugin-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .plugin-btn {
+            padding: 8px 16px;
+            border-radius: var(--radius-lg);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .plugin-btn.primary {
+            background: var(--primary-500);
+            color: white;
+        }
+        
+        .plugin-btn.primary:hover {
+            background: var(--primary-600);
+        }
+        
+        .plugin-btn.secondary {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-default);
+        }
+        
+        .plugin-btn.secondary:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .plugin-btn.danger {
+            background: var(--danger-50);
+            color: var(--danger-500);
+            border: 1px solid var(--danger-200);
+        }
+        
+        .plugin-btn.danger:hover {
+            background: var(--danger-100);
+        }
+        
+        /* Install Methods */
+        .install-methods {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+        
+        .install-method {
+            background: var(--bg-primary);
+            border: 2px dashed var(--border-default);
+            border-radius: var(--radius-2xl);
+            padding: 32px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .install-method:hover {
+            border-color: var(--primary-400);
+            background: var(--primary-50);
+        }
+        
+        .install-method-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        
+        .install-method-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .install-method-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        /* Plugin Store */
+        .store-categories {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+        
+        .store-category {
+            padding: 10px 20px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-full);
+            font-size: 14px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        
+        .store-category:hover {
+            border-color: var(--primary-300);
+        }
+        
+        .store-category.active {
+            background: var(--primary-500);
+            color: white;
+            border-color: var(--primary-500);
+        }
+        
+        /* Plugin Detail Modal */
+        .plugin-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 40px;
+        }
+        
+        .plugin-modal-overlay.active {
+            display: flex;
+        }
+        
+        .plugin-modal {
+            background: var(--bg-primary);
+            border-radius: var(--radius-2xl);
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .plugin-modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-default);
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+        }
+        
+        .plugin-modal-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: var(--radius-xl);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            background: linear-gradient(135deg, var(--primary-100) 0%, var(--primary-200) 100%);
+            flex-shrink: 0;
+        }
+        
+        .plugin-modal-info {
+            flex: 1;
+        }
+        
+        .plugin-modal-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .plugin-modal-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .plugin-modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: var(--text-caption);
+            cursor: pointer;
+        }
+        
+        .plugin-modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+        
+        .plugin-modal-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-default);
+        }
+        
+        .plugin-modal-tab {
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .plugin-modal-tab:hover {
+            color: var(--text-primary);
+        }
+        
+        .plugin-modal-tab.active {
+            color: var(--primary-500);
+            border-bottom-color: var(--primary-500);
+        }
+        
+        .plugin-modal-panel {
+            display: none;
+        }
+        
+        .plugin-modal-panel.active {
+            display: block;
+        }
+        
+        /* Permission List */
+        .permission-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .permission-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+        }
+        
+        .permission-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-lg);
+            background: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .permission-info {
+            flex: 1;
+        }
+        
+        .permission-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        
+        .permission-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        /* Log Viewer */
+        .log-viewer {
+            background: var(--gray-900);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            font-family: var(--font-family-mono);
+            font-size: 13px;
+            color: var(--gray-300);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .log-entry {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+        
+        .log-time {
+            color: var(--gray-500);
+        }
+        
+        .log-level {
+            font-weight: 600;
+        }
+        
+        .log-level.info { color: var(--info-400); }
+        .log-level.warn { color: var(--warning-400); }
+        .log-level.error { color: var(--danger-400); }
+        
+        /* Settings Form */
+        .settings-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .form-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .form-input,
+        .form-select,
+        .form-textarea {
+            padding: 12px 16px;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+            font-size: 14px;
+            background: var(--bg-secondary);
+            transition: all 0.2s;
+        }
+        
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        /* Modal Footer */
+        .plugin-modal-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-top: 1px solid var(--border-default);
+            background: var(--bg-secondary);
+        }
+        
+        /* Install Modal */
+        .install-modal-body {
+            padding: 32px;
+        }
+        
+        .install-input-group {
+            margin-bottom: 20px;
+        }
+        
+        .install-input-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        
+        .install-input-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+            font-size: 14px;
+            font-family: var(--font-family-mono);
+        }
+        
+        .install-examples {
+            margin-top: 24px;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+        }
+        
+        .install-examples h4 {
+            font-size: 14px;
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .install-example {
+            padding: 8px 12px;
+            background: var(--bg-primary);
+            border-radius: var(--radius-md);
+            font-family: var(--font-family-mono);
+            font-size: 13px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .install-example:hover {
+            background: var(--primary-50);
+        }
+        
+        /* Progress */
+        .install-progress {
+            padding: 32px;
+            text-align: center;
+        }
+        
+        .progress-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--border-default);
+            border-top-color: var(--primary-500);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .progress-text {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        
+        .progress-detail {
+            font-size: 13px;
+            color: var(--text-caption);
+        }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: var(--radius-lg);
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .toast.success { background: var(--success-500); }
+        .toast.error { background: var(--danger-500); }
+        .toast.info { background: var(--primary-500); }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        .empty-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .empty-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+            max-width: 400px;
+            margin: 0 auto 24px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .plugin-grid {
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            }
+            
+            .install-methods {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .plugin-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .toolbar-search {
+                max-width: none;
+            }
+            
+            .plugin-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .plugin-modal-overlay {
+                padding: 0;
+            }
+            
+            .plugin-modal {
+                max-height: 100vh;
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 空状态提示 -->
+    <div id="empty-state" style="display:none; background:#fff3cd; border:1px solid #ffc107; 
+         border-radius:8px; padding:15px; margin:20px; text-align:center; color:#856404;">
+        ⚠️ 暂无数据，请确保后端服务已启动
+    </div>
+    
+    <div class="app-container">
+        <!-- Top Navigation -->
+        <header class="top-navbar" id="topNavbar">
+            <div class="navbar-left">
+                <button class="btn btn-icon sidebar-toggle" id="sidebarToggle">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="currentColor"/>
+                    </svg>
+                </button>
+                <a href="../index.html" class="navbar-brand">
+                    <span class="brand-text">AGI 统一框架</span>
+                </a>
+            </div>
+            <div class="navbar-right">
+                <button class="btn btn-icon theme-toggle" id="themeToggle">
+                    <span id="themeIcon">🌙</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Plugin Manager Container -->
+        <div class="plugin-manager-container">
+            <!-- Header -->
+            <div class="plugin-header">
+                <h1 class="plugin-title">插件管理</h1>
+                <p class="plugin-subtitle">管理、安装和配置AGI框架插件</p>
+            </div>
+
+            <!-- Tabs -->
+            <div class="plugin-tabs">
+                <div class="plugin-tab active" data-tab="installed">
+                    <span>📦</span>
+                    <span>已安装</span>
+                    <span class="badge" id="installedBadge">0</span>
+                </div>
+                <div class="plugin-tab" data-tab="store">
+                    <span>🏪</span>
+                    <span>插件商店</span>
+                </div>
+                <div class="plugin-tab" data-tab="install">
+                    <span>⬇️</span>
+                    <span>安装插件</span>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="plugin-content">
+                <!-- Installed Panel -->
+                <div class="plugin-panel active" id="installedPanel">
+                    <div class="plugin-toolbar">
+                        <div class="toolbar-search">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                            </svg>
+                            <input type="text" id="installedSearch" placeholder="搜索已安装插件...">
+                        </div>
+                        <div class="toolbar-actions">
+                            <button class="btn btn-secondary" id="checkUpdatesBtn">
+                                <span>🔄</span>
+                                <span>检查更新</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="plugin-grid" id="installedGrid">
+                        <!-- Installed plugins will be loaded -->
+                    </div>
+                </div>
+
+                <!-- Store Panel -->
+                <div class="plugin-panel" id="storePanel">
+                    <div class="plugin-toolbar">
+                        <div class="toolbar-search">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                            </svg>
+                            <input type="text" id="storeSearch" placeholder="搜索插件商店...">
+                        </div>
+                    </div>
+                    
+                    <div class="store-categories">
+                        <div class="store-category active" data-category="all">全部</div>
+                        <div class="store-category" data-category="productivity">生产力</div>
+                        <div class="store-category" data-category="integration">集成</div>
+                        <div class="store-category" data-category="utility">工具</div>
+                        <div class="store-category" data-category="security">安全</div>
+                        <div class="store-category" data-category="ai">AI增强</div>
+                    </div>
+                    
+                    <div class="plugin-grid" id="storeGrid">
+                        <!-- Store plugins will be loaded -->
+                    </div>
+                </div>
+
+                <!-- Install Panel -->
+                <div class="plugin-panel" id="installPanel">
+                    <div class="install-methods">
+                        <div class="install-method" data-method="npm">
+                            <div class="install-method-icon">📦</div>
+                            <div class="install-method-title">从 NPM 安装</div>
+                            <div class="install-method-desc">安装已发布到NPM的插件包</div>
+                        </div>
+                        <div class="install-method" data-method="pip">
+                            <div class="install-method-icon">🐍</div>
+                            <div class="install-method-title">从 PyPI 安装</div>
+                            <div class="install-method-desc">安装Python插件包</div>
+                        </div>
+                        <div class="install-method" data-method="url">
+                            <div class="install-method-icon">🔗</div>
+                            <div class="install-method-title">从 URL 安装</div>
+                            <div class="install-method-desc">从Git仓库或URL安装</div>
+                        </div>
+                    </div>
+                    
+                    <div class="install-examples">
+                        <h4>热门插件</h4>
+                        <div class="install-example" data-package="@agi/plugin-web-search">@agi/plugin-web-search - 网页搜索插件</div>
+                        <div class="install-example" data-package="@agi/plugin-code-executor">@agi/plugin-code-executor - 代码执行插件</div>
+                        <div class="install-example" data-package="@agi/plugin-image-gen">@agi/plugin-image-gen - 图像生成插件</div>
+                        <div class="install-example" data-package="agi-plugin-database">agi-plugin-database - 数据库连接插件</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Plugin Detail Modal -->
+        <div class="plugin-modal-overlay" id="pluginModal">
+            <div class="plugin-modal">
+                <div class="plugin-modal-header">
+                    <div class="plugin-modal-icon" id="modalIcon">🔌</div>
+                    <div class="plugin-modal-info">
+                        <h2 class="plugin-modal-title" id="modalTitle">插件名称</h2>
+                        <div class="plugin-modal-meta">
+                            <span id="modalAuthor">作者</span>
+                            <span>•</span>
+                            <span id="modalVersion">v1.0.0</span>
+                            <span>•</span>
+                            <span id="modalDownloads">1.2k 下载</span>
+                        </div>
+                    </div>
+                    <button class="plugin-modal-close" id="closeModal">&times;</button>
+                </div>
+                
+                <div class="plugin-modal-body">
+                    <div class="plugin-modal-tabs">
+                        <div class="plugin-modal-tab active" data-tab="overview">概述</div>
+                        <div class="plugin-modal-tab" data-tab="permissions">权限</div>
+                        <div class="plugin-modal-tab" data-tab="settings">设置</div>
+                        <div class="plugin-modal-tab" data-tab="logs">日志</div>
+                    </div>
+                    
+                    <div class="plugin-modal-panel active" id="overviewPanel">
+                        <div id="modalDescription"></div>
+                        
+                        <h3 style="margin: 24px 0 16px; font-size: 16px;">功能特性</h3>
+                        <ul id="modalFeatures" style="line-height: 2; color: var(--text-secondary);"></ul>
+                        
+                        <h3 style="margin: 24px 0 16px; font-size: 16px;">更新日志</h3>
+                        <div id="modalChangelog"></div>
+                    </div>
+                    
+                    <div class="plugin-modal-panel" id="permissionsPanel">
+                        <div class="permission-list" id="permissionList"></div>
+                    </div>
+                    
+                    <div class="plugin-modal-panel" id="settingsPanel">
+                        <div class="settings-form" id="settingsForm"></div>
+                    </div>
+                    
+                    <div class="plugin-modal-panel" id="logsPanel">
+                        <div class="log-viewer" id="logViewer"></div>
+                    </div>
+                </div>
+                
+                <div class="plugin-modal-footer">
+                    <button class="plugin-btn secondary" id="modalUninstall">卸载</button>
+                    <div>
+                        <button class="plugin-btn secondary" id="modalDisable">禁用</button>
+                        <button class="plugin-btn primary" id="modalSave">保存设置</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Install Modal -->
+        <div class="plugin-modal-overlay" id="installModal">
+            <div class="plugin-modal" style="max-width: 500px;">
+                <div class="plugin-modal-header">
+                    <h2 class="plugin-modal-title">安装插件</h2>
+                    <button class="plugin-modal-close" id="closeInstallModal">&times;</button>
+                </div>
+                <div id="installModalContent">
+                    <div class="install-modal-body">
+                        <div class="install-input-group">
+                            <label>插件包名或URL</label>
+                            <input type="text" id="installInput" placeholder="例如: @agi/plugin-example">
+                        </div>
+                        <button class="plugin-btn primary" style="width: 100%;" id="confirmInstall">
+                            <span>⬇️</span>
+                            <span>开始安装</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/utils.js"></script>
+    <script src="../js/state.js"></script>
+    <script src="../js/api-client.js"></script>
+    <script src="../js/common-utils.js"></script>
+    <script>
+        // Plugin Manager Application
+        class PluginManager {
+            constructor() {
+                this.installedPlugins = [];
+                this.storePlugins = [];
+                this.currentPlugin = null;
+                this.currentTab = 'installed';
+                
+                this.init();
+            }
+            
+            init() {
+                this.loadPlugins();
+                this.bindEvents();
+                this.loadTheme();
+            }
+            
+            // Load plugins
+            loadPlugins() {
+                // Mock installed plugins
+                this.installedPlugins = [
+                    {
+                        id: 'plugin-1',
+                        name: '网页搜索',
+                        package: '@agi/plugin-web-search',
+                        version: '2.1.0',
+                        author: 'AGI Team',
+                        description: '集成多种搜索引擎，支持Google、Bing、百度等搜索服务',
+                        icon: '🔍',
+                        status: 'enabled',
+                        downloads: 45200,
+                        tags: ['搜索', '网络', '工具'],
+                        permissions: ['network', 'filesystem'],
+                        features: ['多搜索引擎支持', '搜索结果缓存', '自动摘要生成'],
+                        hasSettings: true
+                    },
+                    {
+                        id: 'plugin-2',
+                        name: '代码执行器',
+                        package: '@agi/plugin-code-executor',
+                        version: '1.5.2',
+                        author: 'CodeMaster',
+                        description: '安全执行Python、JavaScript代码，支持多种运行时环境',
+                        icon: '💻',
+                        status: 'enabled',
+                        downloads: 28900,
+                        tags: ['代码', '执行', '开发'],
+                        permissions: ['sandbox', 'filesystem'],
+                        features: ['多语言支持', '沙箱执行', '结果可视化'],
+                        hasSettings: true
+                    },
+                    {
+                        id: 'plugin-3',
+                        name: '图像生成',
+                        package: '@agi/plugin-image-gen',
+                        version: '3.0.1',
+                        author: 'ImageAI',
+                        description: '基于Stable Diffusion的图像生成插件，支持多种风格和参数',
+                        icon: '🎨',
+                        status: 'disabled',
+                        downloads: 67800,
+                        tags: ['图像', 'AI', '生成'],
+                        permissions: ['gpu', 'network'],
+                        features: ['文生图', '图生图', '风格迁移'],
+                        hasSettings: true
+                    },
+                    {
+                        id: 'plugin-4',
+                        name: '数据库连接器',
+                        package: 'agi-plugin-database',
+                        version: '1.2.0',
+                        author: 'DBMaster',
+                        description: '连接MySQL、PostgreSQL、MongoDB等多种数据库',
+                        icon: '🗄️',
+                        status: 'enabled',
+                        downloads: 15600,
+                        tags: ['数据库', 'SQL', '连接'],
+                        permissions: ['network', 'database'],
+                        features: ['多数据库支持', '查询构建器', '连接池管理'],
+                        hasSettings: true
+                    },
+                    {
+                        id: 'plugin-5',
+                        name: '文件处理器',
+                        package: '@agi/plugin-file-processor',
+                        version: '1.8.0',
+                        author: 'FileUtils',
+                        description: '处理PDF、Word、Excel等文档，支持格式转换和内容提取',
+                        icon: '📄',
+                        status: 'enabled',
+                        downloads: 23400,
+                        tags: ['文件', '文档', '处理'],
+                        permissions: ['filesystem'],
+                        features: ['格式转换', '内容提取', '批量处理'],
+                        hasSettings: false
+                    },
+                    {
+                        id: 'plugin-6',
+                        name: '数据分析',
+                        package: '@agi/plugin-data-analysis',
+                        version: '2.0.0',
+                        author: 'DataWizard',
+                        description: '数据清洗、分析和可视化，支持Pandas和Matplotlib',
+                        icon: '📊',
+                        status: 'error',
+                        downloads: 18900,
+                        tags: ['数据', '分析', '可视化'],
+                        permissions: ['filesystem', 'gpu'],
+                        features: ['数据清洗', '统计分析', '图表生成'],
+                        hasSettings: true
+                    }
+                ];
+                
+                // Mock store plugins
+                this.storePlugins = [
+                    {
+                        id: 'store-1',
+                        name: '语音识别',
+                        package: '@agi/plugin-speech',
+                        version: '1.0.0',
+                        author: 'VoiceAI',
+                        description: '实时语音识别和转录，支持多种语言和方言',
+                        icon: '🎤',
+                        downloads: 8900,
+                        tags: ['语音', '识别', 'AI'],
+                        rating: 4.8
+                    },
+                    {
+                        id: 'store-2',
+                        name: '视频处理',
+                        package: '@agi/plugin-video',
+                        version: '1.2.0',
+                        author: 'VideoPro',
+                        description: '视频剪辑、转码和特效处理',
+                        icon: '🎬',
+                        downloads: 5600,
+                        tags: ['视频', '处理', '媒体'],
+                        rating: 4.5
+                    },
+                    {
+                        id: 'store-3',
+                        name: '邮件发送',
+                        package: '@agi/plugin-email',
+                        version: '2.1.0',
+                        author: 'MailMaster',
+                        description: 'SMTP邮件发送，支持模板和附件',
+                        icon: '📧',
+                        downloads: 12300,
+                        tags: ['邮件', '通讯', '工具'],
+                        rating: 4.7
+                    },
+                    {
+                        id: 'store-4',
+                        name: '日历同步',
+                        package: '@agi/plugin-calendar',
+                        version: '1.5.0',
+                        author: 'CalendarSync',
+                        description: '同步Google Calendar、Outlook等日历服务',
+                        icon: '📅',
+                        downloads: 7800,
+                        tags: ['日历', '同步', '工具'],
+                        rating: 4.6
+                    },
+                    {
+                        id: 'store-5',
+                        name: '翻译助手',
+                        package: '@agi/plugin-translate',
+                        version: '3.0.0',
+                        author: 'TranslateAI',
+                        description: '多语言翻译，支持100+语言',
+                        icon: '🌐',
+                        downloads: 34500,
+                        tags: ['翻译', '语言', 'AI'],
+                        rating: 4.9
+                    },
+                    {
+                        id: 'store-6',
+                        name: 'OCR识别',
+                        package: '@agi/plugin-ocr',
+                        version: '2.2.0',
+                        author: 'OCRTech',
+                        description: '图像文字识别，支持多语言和手写体',
+                        icon: '👁️',
+                        downloads: 21300,
+                        tags: ['OCR', '图像', '识别'],
+                        rating: 4.7
+                    }
+                ];
+                
+                this.renderInstalledPlugins();
+                this.renderStorePlugins();
+                this.updateBadge();
+            }
+            
+            // Render installed plugins
+            renderInstalledPlugins() {
+                const container = document.getElementById('installedGrid');
+                const searchTerm = document.getElementById('installedSearch')?.value.toLowerCase() || '';
+                
+                let filtered = this.installedPlugins;
+                if (searchTerm) {
+                    filtered = filtered.filter(p => 
+                        p.name.toLowerCase().includes(searchTerm) ||
+                        p.description.toLowerCase().includes(searchTerm)
+                    );
+                }
+                
+                if (filtered.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state" style="grid-column: 1/-1;">
+                            <div class="empty-icon">📦</div>
+                            <div class="empty-title">暂无插件</div>
+                            <div class="empty-description">浏览插件商店安装新插件</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = filtered.map(p => `
+                    <div class="plugin-card" data-plugin-id="${p.id}">
+                        <div class="plugin-card-header">
+                            <div class="plugin-icon">${p.icon}</div>
+                            <div class="plugin-info">
+                                <div class="plugin-name">
+                                    ${p.name}
+                                    <span class="plugin-version">v${p.version}</span>
+                                </div>
+                                <div class="plugin-author">${p.author}</div>
+                                <div class="plugin-meta">
+                                    <span>⬇️ ${this.formatNumber(p.downloads)}</span>
+                                    <span>📦 ${p.package}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="plugin-description">${p.description}</div>
+                        <div class="plugin-tags">
+                            ${p.tags.map(t => `<span class="plugin-tag">${t}</span>`).join('')}
+                        </div>
+                        <div class="plugin-footer">
+                            <span class="plugin-status ${p.status}">
+                                <span>${p.status === 'enabled' ? '●' : p.status === 'disabled' ? '○' : '⚠️'}</span>
+                                <span>${p.status === 'enabled' ? '运行中' : p.status === 'disabled' ? '已禁用' : '错误'}</span>
+                            </span>
+                            <div class="plugin-actions">
+                                <button class="plugin-btn secondary" onclick="pluginManager.viewPlugin('${p.id}')">配置</button>
+                                ${p.status === 'enabled' ? 
+                                    `<button class="plugin-btn secondary" onclick="pluginManager.togglePlugin('${p.id}')">禁用</button>` :
+                                    `<button class="plugin-btn primary" onclick="pluginManager.togglePlugin('${p.id}')">启用</button>`
+                                }
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            // Render store plugins
+            renderStorePlugins() {
+                const container = document.getElementById('storeGrid');
+                const searchTerm = document.getElementById('storeSearch')?.value.toLowerCase() || '';
+                
+                let filtered = this.storePlugins;
+                if (searchTerm) {
+                    filtered = filtered.filter(p => 
+                        p.name.toLowerCase().includes(searchTerm) ||
+                        p.description.toLowerCase().includes(searchTerm)
+                    );
+                }
+                
+                container.innerHTML = filtered.map(p => `
+                    <div class="plugin-card">
+                        <div class="plugin-card-header">
+                            <div class="plugin-icon">${p.icon}</div>
+                            <div class="plugin-info">
+                                <div class="plugin-name">
+                                    ${p.name}
+                                    <span class="plugin-version">v${p.version}</span>
+                                </div>
+                                <div class="plugin-author">${p.author}</div>
+                                <div class="plugin-meta">
+                                    <span>⭐ ${p.rating}</span>
+                                    <span>⬇️ ${this.formatNumber(p.downloads)}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="plugin-description">${p.description}</div>
+                        <div class="plugin-tags">
+                            ${p.tags.map(t => `<span class="plugin-tag">${t}</span>`).join('')}
+                        </div>
+                        <div class="plugin-footer">
+                            <span></span>
+                            <button class="plugin-btn primary" onclick="pluginManager.installFromStore('${p.id}')">
+                                <span>⬇️</span>
+                                <span>安装</span>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            // Update badge
+            updateBadge() {
+                document.getElementById('installedBadge').textContent = this.installedPlugins.length;
+            }
+            
+            // View plugin details
+            viewPlugin(pluginId) {
+                const plugin = this.installedPlugins.find(p => p.id === pluginId);
+                if (!plugin) return;
+                
+                this.currentPlugin = plugin;
+                
+                document.getElementById('modalIcon').textContent = plugin.icon;
+                document.getElementById('modalTitle').textContent = plugin.name;
+                document.getElementById('modalAuthor').textContent = plugin.author;
+                document.getElementById('modalVersion').textContent = 'v' + plugin.version;
+                document.getElementById('modalDownloads').textContent = this.formatNumber(plugin.downloads) + ' 下载';
+                
+                document.getElementById('modalDescription').innerHTML = `<p style="color: var(--text-secondary); line-height: 1.8;">${plugin.description}</p>`;
+                
+                // Features
+                document.getElementById('modalFeatures').innerHTML = plugin.features.map(f => `<li>${f}</li>`).join('');
+                
+                // Changelog
+                document.getElementById('modalChangelog').innerHTML = `
+                    <div style="background: var(--bg-secondary); padding: 16px; border-radius: var(--radius-lg);">
+                        <div style="margin-bottom: 12px;">
+                            <strong>v${plugin.version}</strong> - 2024-01-15
+                            <p style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">修复已知问题，提升性能</p>
+                        </div>
+                        <div style="margin-bottom: 12px;">
+                            <strong>v${this.decrementVersion(plugin.version)}</strong> - 2024-01-01
+                            <p style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">新增功能，优化体验</p>
+                        </div>
+                    </div>
+                `;
+                
+                // Permissions
+                const permissionMap = {
+                    network: { name: '网络访问', desc: '访问互联网资源', icon: '🌐' },
+                    filesystem: { name: '文件系统', desc: '读写本地文件', icon: '📁' },
+                    database: { name: '数据库', desc: '连接和操作数据库', icon: '🗄️' },
+                    gpu: { name: 'GPU计算', desc: '使用GPU进行加速计算', icon: '🎮' },
+                    sandbox: { name: '沙箱执行', desc: '在隔离环境执行代码', icon: '📦' }
+                };
+                
+                document.getElementById('permissionList').innerHTML = plugin.permissions.map(p => {
+                    const info = permissionMap[p] || { name: p, desc: '', icon: '🔒' };
+                    return `
+                        <div class="permission-item">
+                            <div class="permission-icon">${info.icon}</div>
+                            <div class="permission-info">
+                                <div class="permission-name">${info.name}</div>
+                                <div class="permission-desc">${info.desc}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                // Settings
+                if (plugin.hasSettings) {
+                    document.getElementById('settingsForm').innerHTML = `
+                        <div class="form-group">
+                            <label class="form-label">API密钥</label>
+                            <input type="password" class="form-input" value="sk-xxx" placeholder="输入API密钥">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">缓存大小 (MB)</label>
+                            <input type="number" class="form-input" value="100" min="10" max="1000">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">超时时间 (秒)</label>
+                            <input type="number" class="form-input" value="30" min="5" max="300">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">高级选项</label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" checked> 启用详细日志
+                            </label>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('settingsForm').innerHTML = '<p style="color: var(--text-secondary);">此插件无需配置</p>';
+                }
+                
+                // Logs
+                document.getElementById('logViewer').innerHTML = `
+                    <div class="log-entry"><span class="log-time">2024-01-15 10:30:25</span> <span class="log-level info">[INFO]</span> 插件初始化完成</div>
+                    <div class="log-entry"><span class="log-time">2024-01-15 10:30:26</span> <span class="log-level info">[INFO]</span> 加载配置成功</div>
+                    <div class="log-entry"><span class="log-time">2024-01-15 10:35:12</span> <span class="log-level warn">[WARN]</span> 检测到缓存即将满载</div>
+                    <div class="log-entry"><span class="log-time">2024-01-15 10:40:05</span> <span class="log-level info">[INFO]</span> 自动清理缓存完成</div>
+                `;
+                
+                // Update buttons
+                const disableBtn = document.getElementById('modalDisable');
+                if (plugin.status === 'enabled') {
+                    disableBtn.textContent = '禁用';
+                    disableBtn.onclick = () => {
+                        this.togglePlugin(plugin.id);
+                        document.getElementById('pluginModal').classList.remove('active');
+                    };
+                } else {
+                    disableBtn.textContent = '启用';
+                    disableBtn.className = 'plugin-btn primary';
+                    disableBtn.onclick = () => {
+                        this.togglePlugin(plugin.id);
+                        document.getElementById('pluginModal').classList.remove('active');
+                    };
+                }
+                
+                document.getElementById('modalUninstall').onclick = () => {
+                    this.uninstallPlugin(plugin.id);
+                    document.getElementById('pluginModal').classList.remove('active');
+                };
+                
+                document.getElementById('pluginModal').classList.add('active');
+            }
+            
+            // Toggle plugin status
+            togglePlugin(pluginId) {
+                const plugin = this.installedPlugins.find(p => p.id === pluginId);
+                if (!plugin) return;
+                
+                plugin.status = plugin.status === 'enabled' ? 'disabled' : 'enabled';
+                this.renderInstalledPlugins();
+                this.showToast(`插件已${plugin.status === 'enabled' ? '启用' : '禁用'}`, 'success');
+            }
+            
+            // Uninstall plugin
+            uninstallPlugin(pluginId) {
+                if (!confirm('确定要卸载此插件吗？')) return;
+                
+                this.installedPlugins = this.installedPlugins.filter(p => p.id !== pluginId);
+                this.renderInstalledPlugins();
+                this.updateBadge();
+                this.showToast('插件已卸载', 'success');
+            }
+            
+            // Install from store
+            installFromStore(storeId) {
+                const plugin = this.storePlugins.find(p => p.id === storeId);
+                if (!plugin) return;
+                
+                // Simulate installation
+                this.showToast(`正在安装 ${plugin.name}...`, 'info');
+                
+                setTimeout(() => {
+                    const newPlugin = {
+                        ...plugin,
+                        id: 'plugin-' + Date.now(),
+                        status: 'enabled',
+                        permissions: ['network'],
+                        features: ['基础功能'],
+                        hasSettings: true
+                    };
+                    
+                    this.installedPlugins.push(newPlugin);
+                    this.renderInstalledPlugins();
+                    this.updateBadge();
+                    this.showToast(`${plugin.name} 安装成功`, 'success');
+                }, 1500);
+            }
+            
+            // Install from npm/pip/url
+            installFromMethod(method, packageName) {
+                this.showToast(`正在从 ${method} 安装...`, 'info');
+                
+                setTimeout(() => {
+                    const newPlugin = {
+                        id: 'plugin-' + Date.now(),
+                        name: packageName.split('/').pop(),
+                        package: packageName,
+                        version: '1.0.0',
+                        author: 'Unknown',
+                        description: `从${method}安装的插件`,
+                        icon: '🔌',
+                        status: 'enabled',
+                        downloads: 0,
+                        tags: ['自定义'],
+                        permissions: ['network'],
+                        features: ['基础功能'],
+                        hasSettings: false
+                    };
+                    
+                    this.installedPlugins.push(newPlugin);
+                    this.renderInstalledPlugins();
+                    this.updateBadge();
+                    this.showToast('插件安装成功', 'success');
+                    
+                    // Switch to installed tab
+                    this.switchTab('installed');
+                }, 2000);
+            }
+            
+            // Switch tab
+            switchTab(tabName) {
+                this.currentTab = tabName;
+                
+                document.querySelectorAll('.plugin-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.plugin-panel').forEach(p => p.classList.remove('active'));
+                
+                document.querySelector(`.plugin-tab[data-tab="${tabName}"]`).classList.add('active');
+                document.getElementById(tabName + 'Panel').classList.add('active');
+            }
+            
+            // Bind events
+            bindEvents() {
+                // Tab switching
+                document.querySelectorAll('.plugin-tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        this.switchTab(tab.dataset.tab);
+                    });
+                });
+                
+                // Search
+                document.getElementById('installedSearch').addEventListener('input', () => {
+                    this.renderInstalledPlugins();
+                });
+                
+                document.getElementById('storeSearch').addEventListener('input', () => {
+                    this.renderStorePlugins();
+                });
+                
+                // Install methods
+                document.querySelectorAll('.install-method').forEach(method => {
+                    method.addEventListener('click', () => {
+                        const methodType = method.dataset.method;
+                        document.getElementById('installModal').classList.add('active');
+                        document.getElementById('installInput').placeholder = 
+                            methodType === 'npm' ? '例如: @agi/plugin-example' :
+                            methodType === 'pip' ? '例如: agi-plugin-example' :
+                            '例如: https://github.com/user/repo';
+                        document.getElementById('installInput').dataset.method = methodType;
+                    });
+                });
+                
+                // Install examples
+                document.querySelectorAll('.install-example').forEach(example => {
+                    example.addEventListener('click', () => {
+                        document.getElementById('installModal').classList.add('active');
+                        document.getElementById('installInput').value = example.dataset.package;
+                        document.getElementById('installInput').dataset.method = 'npm';
+                    });
+                });
+                
+                // Confirm install
+                document.getElementById('confirmInstall').addEventListener('click', () => {
+                    const input = document.getElementById('installInput');
+                    const method = input.dataset.method || 'npm';
+                    const packageName = input.value.trim();
+                    
+                    if (!packageName) {
+                        this.showToast('请输入插件包名', 'error');
+                        return;
+                    }
+                    
+                    document.getElementById('installModal').classList.remove('active');
+                    this.installFromMethod(method, packageName);
+                    input.value = '';
+                });
+                
+                // Close modals
+                document.getElementById('closeModal').addEventListener('click', () => {
+                    document.getElementById('pluginModal').classList.remove('active');
+                });
+                
+                document.getElementById('closeInstallModal').addEventListener('click', () => {
+                    document.getElementById('installModal').classList.remove('active');
+                });
+                
+                // Modal tabs
+                document.querySelectorAll('.plugin-modal-tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const tabName = tab.dataset.tab;
+                        document.querySelectorAll('.plugin-modal-tab').forEach(t => t.classList.remove('active'));
+                        document.querySelectorAll('.plugin-modal-panel').forEach(p => p.classList.remove('active'));
+                        tab.classList.add('active');
+                        document.getElementById(tabName + 'Panel').classList.add('active');
+                    });
+                });
+                
+                // Check updates
+                document.getElementById('checkUpdatesBtn').addEventListener('click', () => {
+                    this.showToast('正在检查更新...', 'info');
+                    setTimeout(() => {
+                        this.showToast('所有插件均为最新版本', 'success');
+                    }, 1500);
+                });
+                
+                // Save settings
+                document.getElementById('modalSave').addEventListener('click', () => {
+                    this.showToast('设置已保存', 'success');
+                });
+                
+                // Theme toggle
+                document.getElementById('themeToggle').addEventListener('click', () => {
+                    this.toggleTheme();
+                });
+                
+                // Close modals on backdrop click
+                document.querySelectorAll('.plugin-modal-overlay').forEach(overlay => {
+                    overlay.addEventListener('click', (e) => {
+                        if (e.target === overlay) {
+                            overlay.classList.remove('active');
+                        }
+                    });
+                });
+            }
+            
+            formatNumber(num) {
+                if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+                if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
+                return num.toString();
+            }
+            
+            decrementVersion(version) {
+                const parts = version.split('.');
+                parts[1] = Math.max(0, parseInt(parts[1]) - 1);
+                return parts.join('.');
+            }
+            
+            showToast(message, type = 'success') {
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.innerHTML = `
+                    <span>${type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ️'}</span>
+                    <span>${message}</span>
+                `;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
+            }
+            
+            loadTheme() {
+                const theme = localStorage.getItem('theme') || 'light';
+                document.documentElement.setAttribute('data-theme', theme);
+                document.getElementById('themeIcon').textContent = theme === 'dark' ? '☀️' : '🌙';
+            }
+            
+            toggleTheme() {
+                const current = document.documentElement.getAttribute('data-theme') || 'light';
+                const next = current === 'light' ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+                document.getElementById('themeIcon').textContent = next === 'dark' ? '☀️' : '🌙';
+            }
+        }
+        
+        // Initialize
+        let pluginManager;
+        document.addEventListener('DOMContentLoaded', () => {
+            pluginManager = new PluginManager();
+        });
+    </script>
+<script>
+        
+            // 侧边栏切换
+            var sidebarToggle = document.getElementById('sidebarToggle');
+            var sidebar = document.getElementById('sidebar');
+            if (sidebarToggle && sidebar) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('collapsed');
+                });
+            }
+
+        </script>
+</body>
+</html>

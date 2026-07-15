@@ -1,0 +1,4075 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AGI 统一框架 - 完整AI平台</title>
+    <meta name="description" content="统一AGI开发框架，支持多模态生成、训练、编排和部署">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/animations.css">
+    
+    <!-- External Libraries (CDN with fallback) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
+            onerror="console.warn('Chart.js CDN unavailable, charts disabled')"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+            onerror="console.warn('Three.js CDN unavailable, 3D disabled')"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"
+            onerror="console.warn('OrbitControls CDN unavailable')"></script>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
+    
+    <!-- PWA Support -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+    <!-- App Container -->
+    <div id="app" class="app-container">
+        <!-- Loading Screen - 简洁版本 -->
+        <div id="loadingScreen" class="loading-screen">
+            <div class="loading-content">
+                <h1 class="loading-title">AGI 统一框架</h1>
+                <p class="loading-subtitle" id="loadingStatus">正在加载...</p>
+                <div class="loading-progress">
+                    <div class="loading-bar">
+                        <div class="loading-bar-fill" id="loadingBarFill" style="width: 0%"></div>
+                    </div>
+                    <span id="loadingPercent">0%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Application -->
+        <div id="mainApp" class="main-app app-layout" style="display: none;">
+            <!-- Top Navigation Bar -->
+            <header class="top-navbar" id="topNavbar">
+                <div class="navbar-left">
+                    <button class="btn btn-icon sidebar-toggle" id="sidebarToggle" title="切换侧边栏">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                    <a href="index.html" class="navbar-brand">
+                        <img src="assets/images/logo.svg" alt="AGI" class="brand-logo">
+                        <span class="brand-text" data-i18n="app.name">AGI 统一框架</span>
+                    </a>
+                    <nav class="navbar-nav" id="navbarNav">
+                        <a href="pages/dashboard.html" class="nav-link active" data-page="dashboard" data-i18n="nav.dashboard">仪表盘</a>
+                        <a href="pages/chat.html" class="nav-link" data-page="chat" data-i18n="nav.chat">智能对话</a>
+                        <a href="pages/model-manager.html" class="nav-link" data-page="models" data-i18n="nav.modelManager">模型管理</a>
+                        <a href="pages/training.html" class="nav-link" data-page="training" data-i18n="nav.training">训练中心</a>
+                    </nav>
+                </div>
+                <div class="navbar-center">
+                    <div class="global-search">
+                        <input type="text" class="search-input" data-i18n-placeholder="search.placeholder" placeholder="搜索模型、工作流、设置...">
+                        <button class="search-btn" title="搜索">
+                            <svg viewBox="0 0 24 24" width="20" height="20">
+                                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="currentColor"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="navbar-right">
+                    <!-- Language Switcher -->
+                    <div class="dropdown language-dropdown" id="languageDropdown">
+                        <button class="btn btn-icon language-btn" id="languageBtn" title="切换语言">
+                            <span class="language-flag">🇨🇳</span>
+                            <span class="language-code">中文</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right">
+                            <div class="dropdown-header">
+                                <span data-i18n="user.language">语言设置</span>
+                            </div>
+                            <a href="#" class="dropdown-item" data-lang="zh-CN">
+                                <span class="language-flag">🇨🇳</span>
+                                <span>简体中文</span>
+                            </a>
+                            <a href="#" class="dropdown-item" data-lang="en">
+                                <span class="language-flag">🇺🇸</span>
+                                <span>English</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Notifications -->
+                    <div class="dropdown notification-dropdown" id="notificationDropdown">
+                        <button class="btn btn-icon notification-btn" id="notificationBtn" title="通知消息">
+                            <svg viewBox="0 0 24 24" width="24" height="24">
+                                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z" fill="currentColor"/>
+                            </svg>
+                            <span class="notification-badge" id="notificationBadge">3</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right">
+                            <div class="dropdown-header">
+                                <span data-i18n="notif.title">通知</span>
+                                <button class="btn btn-sm btn-link" id="markAllRead" data-i18n="notif.markAllRead">全部已读</button>
+                            </div>
+                            <div class="notification-list" id="notificationList">
+                                <div class="notification-item unread">
+                                    <div class="notification-icon success">✓</div>
+                                    <div class="notification-content">
+                                        <p class="notification-title">训练完成</p>
+                                        <p class="notification-text">模型 'AGI-Ultra-Custom' 训练已完成</p>
+                                        <span class="notification-time">2分钟前</span>
+                                    </div>
+                                </div>
+                                <div class="notification-item unread">
+                                    <div class="notification-icon warning">!</div>
+                                    <div class="notification-content">
+                                        <p class="notification-title">GPU使用率过高</p>
+                                        <p class="notification-text">GPU利用率连续10分钟超过95%</p>
+                                        <span class="notification-time">15分钟前</span>
+                                    </div>
+                                </div>
+                                <div class="notification-item unread">
+                                    <div class="notification-icon info">i</div>
+                                    <div class="notification-content">
+                                        <p class="notification-title">新版本可用</p>
+                                        <p class="notification-text">AGI Framework v2.1.0 现已发布</p>
+                                        <span class="notification-time">1小时前</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="dropdown-footer">
+                                <a href="pages/notifications.html" data-i18n="notif.viewAll">查看全部通知</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Theme Toggle -->
+                    <button class="btn btn-icon theme-toggle" id="themeToggle" title="切换主题">
+                        <svg viewBox="0 0 24 24" width="24" height="24" class="sun-icon">
+                            <path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 00-1.41 0 .996.996 0 000 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96a.996.996 0 000-1.41.996.996 0 00-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36a.996.996 0 000 1.41.996.996 0 001.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06z" fill="currentColor"/>
+                        </svg>
+                        <svg viewBox="0 0 24 24" width="24" height="24" class="moon-icon" style="display: none;">
+                            <path d="M9 2c-1.05 0-2.05.16-3 .46 1.69 1.24 2.79 3.26 2.79 5.54 0 3.87-3.13 7-7 7-1.15 0-2.24-.28-3.2-.78.46 3.54 3.45 6.28 7.06 6.28 3.93 0 7.12-3.19 7.12-7.12 0-3.45-2.46-6.33-5.72-6.98L9 2z" fill="currentColor"/>
+                        </svg>
+                    </button>
+
+                    <!-- User Menu -->
+                    <div class="dropdown user-dropdown" id="userDropdown">
+                        <button class="btn user-btn" id="userBtn">
+                            <img src="assets/images/avatar.svg" alt="用户" class="user-avatar">
+                            <span class="user-name">管理员</span>
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M7 10l5 5 5-5z" fill="currentColor"/>
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right">
+                            <div class="dropdown-header">
+                                <p class="user-email">admin@agi-framework.com</p>
+                            </div>
+                            <a href="pages/profile.html" class="dropdown-item">
+                                <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="currentColor"/></svg>
+                                <span data-i18n="user.profile">个人资料</span>
+                            </a>
+                            <a href="pages/settings.html" class="dropdown-item">
+                                <svg viewBox="0 0 24 24" width="18" height="18"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.488.488 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L3.16 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" fill="currentColor"/></svg>
+                                <span data-i18n="user.settings">用户设置</span>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="pages/login.html" class="dropdown-item text-danger">
+                                <svg viewBox="0 0 24 24" width="18" height="18"><path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z" fill="currentColor"/></svg>
+                                <span data-i18n="nav.logout">退出登录</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Sidebar Navigation -->
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-content">
+                    <!-- Main Navigation -->
+                    <nav class="sidebar-nav">
+                        <!-- 主要功能 -->
+                        <div class="nav-section">
+                            <span class="nav-section-title" data-i18n="menu.main">主要功能</span>
+                            <ul class="nav-list">
+                                <li class="nav-item">
+                                    <a href="pages/dashboard.html" class="nav-link active" data-page="dashboard">
+                                        <span class="nav-icon">📊</span>
+                                        <span class="nav-text" data-i18n="nav.dashboard">仪表盘</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/chat.html" class="nav-link" data-page="chat">
+                                        <span class="nav-icon">💬</span>
+                                        <span class="nav-text" data-i18n="nav.chat">智能对话</span>
+                                        <span class="nav-badge">新</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- 模型管理 -->
+                        <div class="nav-section">
+                            <span class="nav-section-title" data-i18n="menu.models">模型管理</span>
+                            <ul class="nav-list">
+                                <li class="nav-item">
+                                    <a href="pages/model-manager.html" class="nav-link" data-page="model-manager">
+                                        <span class="nav-icon">🤖</span>
+                                        <span class="nav-text" data-i18n="nav.modelManager">模型管理</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/orchestration.html" class="nav-link" data-page="orchestration">
+                                        <span class="nav-icon">🎼</span>
+                                        <span class="nav-text" data-i18n="nav.orchestration">模型编排</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/workflow.html" class="nav-link" data-page="workflow">
+                                        <span class="nav-icon">🔄</span>
+                                        <span class="nav-text" data-i18n="nav.workflow">工作流</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- AI系统 -->
+                        <div class="nav-section">
+                            <span class="nav-section-title" data-i18n="menu.aiSystems">AI系统</span>
+                            <ul class="nav-list">
+                                <li class="nav-item">
+                                    <a href="pages/multiagent.html" class="nav-link" data-page="multiagent">
+                                        <span class="nav-icon">👥</span>
+                                        <span class="nav-text" data-i18n="nav.multiAgent">多智能体</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/cognitive.html" class="nav-link" data-page="cognitive">
+                                        <span class="nav-icon">🧠</span>
+                                        <span class="nav-text" data-i18n="nav.cognitive">认知系统</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/training.html" class="nav-link" data-page="training">
+                                        <span class="nav-icon">🎓</span>
+                                        <span class="nav-text" data-i18n="nav.training">训练中心</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- 内容生成 -->
+                        <div class="nav-section">
+                            <span class="nav-section-title" data-i18n="menu.generation">内容生成</span>
+                            <ul class="nav-list">
+                                <li class="nav-item">
+                                    <a href="pages/video-gen.html" class="nav-link" data-page="video-gen">
+                                        <span class="nav-icon">🎬</span>
+                                        <span class="nav-text" data-i18n="nav.videoGen">视频生成</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/image-gen.html" class="nav-link" data-page="image-gen">
+                                        <span class="nav-icon">🎨</span>
+                                        <span class="nav-text" data-i18n="nav.imageGen">图像生成</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/audio-gen.html" class="nav-link" data-page="audio-gen">
+                                        <span class="nav-icon">🎵</span>
+                                        <span class="nav-text" data-i18n="nav.audioGen">音频生成</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/3d-gen.html" class="nav-link" data-page="3d-gen">
+                                        <span class="nav-icon">🎲</span>
+                                        <span class="nav-text" data-i18n="nav.3dGen">3D生成</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- 高级功能 -->
+                        <div class="nav-section">
+                            <span class="nav-section-title" data-i18n="menu.advanced">高级功能</span>
+                            <ul class="nav-list">
+                                <li class="nav-item">
+                                    <a href="pages/physics-engine.html" class="nav-link" data-page="physics-engine">
+                                        <span class="nav-icon">⚛️</span>
+                                        <span class="nav-text" data-i18n="nav.physics">物理引擎</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/computer-use.html" class="nav-link" data-page="computer-use">
+                                        <span class="nav-icon">💻</span>
+                                        <span class="nav-text" data-i18n="nav.computerUse">计算机使用</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/security.html" class="nav-link" data-page="security">
+                                        <span class="nav-icon">🔒</span>
+                                        <span class="nav-text" data-i18n="nav.security">安全中心</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/federated.html" class="nav-link" data-page="federated">
+                                        <span class="nav-icon">🔗</span>
+                                        <span class="nav-text" data-i18n="nav.federated">联邦学习</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/rag.html" class="nav-link" data-page="rag">
+                                        <span class="nav-icon">📚</span>
+                                        <span class="nav-text" data-i18n="nav.rag">知识检索</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/channels.html" class="nav-link" data-page="channels">
+                                        <span class="nav-icon">📢</span>
+                                        <span class="nav-text" data-i18n="nav.channels">渠道管理</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/plugins.html" class="nav-link" data-page="plugins">
+                                        <span class="nav-icon">🔌</span>
+                                        <span class="nav-text" data-i18n="nav.plugins">插件市场</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/personality.html" class="nav-link" data-page="personality">
+                                        <span class="nav-icon">🎭</span>
+                                        <span class="nav-text" data-i18n="nav.personality">人格引擎</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/data-pipeline.html" class="nav-link" data-page="data-pipeline">
+                                        <span class="nav-icon">🔄</span>
+                                        <span class="nav-text" data-i18n="nav.dataPipeline">数据管道</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/alignment.html" class="nav-link" data-page="alignment">
+                                        <span class="nav-icon">⚖️</span>
+                                        <span class="nav-text" data-i18n="nav.alignment">价值对齐</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/robot.html" class="nav-link" data-page="robot">
+                                        <span class="nav-icon">🤖</span>
+                                        <span class="nav-text" data-i18n="nav.robot">机器人控制</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- 系统管理 -->
+                        <div class="nav-section">
+                            <span class="nav-section-title" data-i18n="menu.system">系统管理</span>
+                            <ul class="nav-list">
+                                <li class="nav-item">
+                                    <a href="pages/telemetry.html" class="nav-link" data-page="telemetry">
+                                        <span class="nav-icon">📈</span>
+                                        <span class="nav-text" data-i18n="nav.telemetry">监控遥测</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/hardware.html" class="nav-link" data-page="hardware">
+                                        <span class="nav-icon">⚙️</span>
+                                        <span class="nav-text" data-i18n="nav.hardware">硬件管理</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/model-settings.html" class="nav-link" data-page="model-settings">
+                                        <span class="nav-icon">🔑</span>
+                                        <span class="nav-text">模型设置</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/channel-config.html" class="nav-link" data-page="channel-config">
+                                        <span class="nav-icon">📡</span>
+                                        <span class="nav-text">渠道配置</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/file-manager.html" class="nav-link" data-page="file-manager">
+                                        <span class="nav-icon">📁</span>
+                                        <span class="nav-text">文件管理</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/knowledge-base.html" class="nav-link" data-page="knowledge-base">
+                                        <span class="nav-icon">📖</span>
+                                        <span class="nav-text">知识库</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/skill-market.html" class="nav-link" data-page="skill-market">
+                                        <span class="nav-icon">🎯</span>
+                                        <span class="nav-text">技能市场</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/plugin-manager.html" class="nav-link" data-page="plugin-manager">
+                                        <span class="nav-icon">🧩</span>
+                                        <span class="nav-text">插件管理</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/settings.html" class="nav-link" data-page="settings">
+                                        <span class="nav-icon">🔧</span>
+                                        <span class="nav-text" data-i18n="nav.settings">系统设置</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="pages/help.html" class="nav-link" data-page="help">
+                                        <span class="nav-icon">❓</span>
+                                        <span class="nav-text" data-i18n="nav.help">帮助文档</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </nav>
+
+                    <!-- Sidebar Footer -->
+                    <div class="sidebar-footer">
+                        <div class="system-status">
+                            <div class="status-item">
+                                <span class="status-indicator online"></span>
+                                <span class="status-text" data-i18n="status.online">系统在线</span>
+                            </div>
+                            <div class="version-info">
+                                <span>v2.0.0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="main-content" id="mainContent">
+                <!-- Content Header -->
+                <div class="content-header">
+                    <div class="breadcrumb">
+                        <a href="index.html">首页</a>
+                        <span class="breadcrumb-separator">/</span>
+                        <span class="breadcrumb-current" data-i18n="nav.dashboard">仪表盘</span>
+                    </div>
+                    <div class="content-actions">
+                        <button class="btn btn-secondary" id="refreshBtn">
+                            <svg viewBox="0 0 24 24" width="18" height="18">
+                                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/>
+                            </svg>
+                            <span data-i18n="btn.refresh">刷新</span>
+                        </button>
+                        <button class="btn btn-primary" id="newActionBtn">
+                            <svg viewBox="0 0 24 24" width="18" height="18">
+                                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
+                            </svg>
+                            <span data-i18n="btn.add">新建</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dashboard Content -->
+                <div class="content-body">
+                    <!-- Stats Cards -->
+                    <div class="stats-row">
+                        <div class="stat-card primary">
+                            <div class="stat-icon">
+                                <svg viewBox="0 0 24 24" width="32" height="32">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <div class="stat-info">
+                                <h3 class="stat-value" id="activeModels">0</h3>
+                                <p class="stat-label">活跃模型</p>
+                            </div>
+                        </div>
+                        <div class="stat-card success">
+                            <div class="stat-icon">
+                                <svg viewBox="0 0 24 24" width="32" height="32">
+                                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <div class="stat-info">
+                                <h3 class="stat-value" id="completedTasks">0</h3>
+                                <p class="stat-label">已完成任务</p>
+                            </div>
+                        </div>
+                        <div class="stat-card warning">
+                            <div class="stat-icon">
+                                <svg viewBox="0 0 24 24" width="32" height="32">
+                                    <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <div class="stat-info">
+                                <h3 class="stat-value" id="avgLatency">0ms</h3>
+                                <p class="stat-label">平均延迟</p>
+                            </div>
+                        </div>
+                        <div class="stat-card info">
+                            <div class="stat-icon">
+                                <svg viewBox="0 0 24 24" width="32" height="32">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <div class="stat-info">
+                                <h3 class="stat-value" id="gpuUtilization">0%</h3>
+                                <p class="stat-label">GPU利用率</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Row -->
+                    <div class="charts-row">
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3>请求量趋势</h3>
+                                <div class="chart-actions">
+                                    <button class="btn btn-sm btn-icon" title="下载">
+                                        <svg viewBox="0 0 24 24" width="18" height="18">
+                                            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="chart-body">
+                                <canvas id="requestChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3>模型性能</h3>
+                                <div class="chart-actions">
+                                    <button class="btn btn-sm btn-icon" title="下载">
+                                        <svg viewBox="0 0 24 24" width="18" height="18">
+                                            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="chart-body">
+                                <canvas id="performanceChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="activity-section">
+                        <div class="section-header">
+                            <h3>最近活动</h3>
+                            <a href="#" class="view-all">查看全部</a>
+                        </div>
+                        <div class="activity-list" id="activityList">
+                            <!-- Activity items will be loaded dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- IIFE模块 - 使用普通script标签加载，自动注册到全局 -->
+    <script src="js/utils.js?v=1779415500"></script>
+    <script src="js/state.js?v=1779415500"></script>
+    <script src="js/router.js?v=1779415500"></script>
+    <script src="js/api-client.js?v=1779415500"></script>
+    <script src="js/components.js?v=1779415500"></script>
+    <script src="js/charts.js?v=1779415500"></script>
+    <script src="js/i18n.js?v=1779415500"></script>
+    <script src="js/websocket.js?v=1779415500"></script>
+    
+    <!-- ES6模块 - 使用type="module"加载 -->
+    <script type="module" src="js/app-bundle.js"></script>
+
+    <script>
+        // 标记应用已加载
+        window.__APP_LOADED__ = true;
+    </script>
+
+    <script>
+        /**
+         * AGI Unified Framework - Main Application
+         * Entry point for the web interface
+         */
+        (function() {
+            'use strict';
+
+            // Application State
+            const App = {
+                version: '2.0.0',
+                initialized: false,
+                currentPage: 'dashboard',
+                theme: localStorage.getItem('theme') || 'light',
+                user: null,
+                
+                // Initialize application
+                init() {
+                    this.showLoadingScreen();
+                    this.loadModules();
+                    this.setupEventListeners();
+                    this.setupTheme();
+                    this.setupLanguage();
+                },
+
+                // Show loading screen with progress
+                showLoadingScreen() {
+                    const loadingScreen = document.getElementById('loadingScreen');
+                    const loadingBarFill = document.getElementById('loadingBarFill');
+                    const loadingPercent = document.getElementById('loadingPercent');
+                    const loadingStatus = document.getElementById('loadingStatus');
+                    
+                    const loadingSteps = [
+                        { progress: 10, status: '加载核心模块...' },
+                        { progress: 25, status: '初始化状态管理...' },
+                        { progress: 40, status: '连接API服务...' },
+                        { progress: 55, status: '加载图表组件...' },
+                        { progress: 70, status: '初始化3D渲染器...' },
+                        { progress: 85, status: '加载用户配置...' },
+                        { progress: 100, status: '准备就绪!' }
+                    ];
+                    
+                    let currentStep = 0;
+                    const interval = setInterval(() => {
+                        if (currentStep >= loadingSteps.length) {
+                            clearInterval(interval);
+                            setTimeout(() => {
+                                loadingScreen.style.opacity = '0';
+                                setTimeout(() => {
+                                    loadingScreen.style.display = 'none';
+                                    document.getElementById('mainApp').style.display = 'block';
+                                    this.initialized = true;
+                                    this.initCharts();
+                                    this.loadActivityData();
+                                }, 300);
+                            }, 500);
+                            return;
+                        }
+                        
+                        const step = loadingSteps[currentStep];
+                        loadingBarFill.style.width = step.progress + '%';
+                        loadingPercent.textContent = step.progress + '%';
+                        loadingStatus.textContent = step.status;
+                        currentStep++;
+                    }, 200);
+                },
+
+                // Load core modules
+                loadModules() {
+                    console.log('[AGI Framework] Loading modules...');
+                    // Modules are loaded via script tags
+                },
+
+                // Setup event listeners
+                setupEventListeners() {
+                    // Sidebar toggle
+                    const sidebarToggle = document.getElementById('sidebarToggle');
+                    const sidebar = document.getElementById('sidebar');
+                    if (sidebarToggle && sidebar) {
+                        sidebarToggle.addEventListener('click', () => {
+                            sidebar.classList.toggle('collapsed');
+                            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+                        });
+                        
+                        // Restore sidebar state
+                        if (localStorage.getItem('sidebarCollapsed') === 'true') {
+                            sidebar.classList.add('collapsed');
+                        }
+                    }
+
+                    // Theme toggle
+                    const themeToggle = document.getElementById('themeToggle');
+                    if (themeToggle) {
+                        themeToggle.addEventListener('click', () => this.toggleTheme());
+                    }
+
+                    // Language switcher
+                    const languageDropdown = document.getElementById('languageDropdown');
+                    if (languageDropdown) {
+                        languageDropdown.querySelectorAll('.dropdown-item[data-lang]').forEach(item => {
+                            item.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                const lang = item.getAttribute('data-lang');
+                                this.switchLanguage(lang);
+                            });
+                        });
+                    }
+
+                    // Notification dropdown
+                    const notificationBtn = document.getElementById('notificationBtn');
+                    const notificationDropdown = document.getElementById('notificationDropdown');
+                    if (notificationBtn && notificationDropdown) {
+                        notificationBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            notificationDropdown.classList.toggle('open');
+                        });
+                        
+                        document.addEventListener('click', () => {
+                            notificationDropdown.classList.remove('open');
+                        });
+                    }
+
+                    // Mark all notifications as read
+                    const markAllRead = document.getElementById('markAllRead');
+                    if (markAllRead) {
+                        markAllRead.addEventListener('click', () => {
+                            document.querySelectorAll('.notification-item.unread').forEach(item => {
+                                item.classList.remove('unread');
+                            });
+                            document.getElementById('notificationBadge').style.display = 'none';
+                        });
+                    }
+
+                    // User dropdown
+                    const userBtn = document.getElementById('userBtn');
+                    const userDropdown = document.getElementById('userDropdown');
+                    if (userBtn && userDropdown) {
+                        userBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            userDropdown.classList.toggle('open');
+                        });
+                        
+                        document.addEventListener('click', () => {
+                            userDropdown.classList.remove('open');
+                        });
+                    }
+
+                    // Refresh button
+                    const refreshBtn = document.getElementById('refreshBtn');
+                    if (refreshBtn) {
+                        refreshBtn.addEventListener('click', () => {
+                            refreshBtn.classList.add('spinning');
+                            this.refreshData();
+                            setTimeout(() => refreshBtn.classList.remove('spinning'), 1000);
+                        });
+                    }
+
+                    // Navigation links
+                    document.querySelectorAll('.nav-link').forEach(link => {
+                        link.addEventListener('click', (e) => {
+                            const href = link.getAttribute('href');
+                            if (href && href !== '#') {
+                                return; // Let normal navigation happen
+                            }
+                            e.preventDefault();
+                            const page = link.getAttribute('data-page');
+                            if (page) {
+                                this.navigateToPage(page);
+                            }
+                        });
+                    });
+
+                    // Window resize
+                    window.addEventListener('resize', () => {
+                        this.handleResize();
+                    });
+                },
+
+                // Setup theme
+                setupTheme() {
+                    const savedTheme = localStorage.getItem('theme') || 'light';
+                    this.setTheme(savedTheme);
+                },
+
+                // Set theme
+                setTheme(theme) {
+                    document.documentElement.setAttribute('data-theme', theme);
+                    this.theme = theme;
+                    localStorage.setItem('theme', theme);
+                    
+                    const sunIcon = document.querySelector('.sun-icon');
+                    const moonIcon = document.querySelector('.moon-icon');
+                    
+                    if (theme === 'dark') {
+                        if (sunIcon) sunIcon.style.display = 'none';
+                        if (moonIcon) moonIcon.style.display = 'block';
+                    } else {
+                        if (sunIcon) sunIcon.style.display = 'block';
+                        if (moonIcon) moonIcon.style.display = 'none';
+                    }
+                },
+
+                // Toggle theme
+                toggleTheme() {
+                    const newTheme = this.theme === 'light' ? 'dark' : 'light';
+                    this.setTheme(newTheme);
+                },
+
+                // Setup language
+                setupLanguage() {
+                    const savedLang = localStorage.getItem('lang') || 'zh-CN';
+                    this.switchLanguage(savedLang);
+                },
+
+                // Switch language
+                switchLanguage(lang) {
+                    if (window.I18n) {
+                        window.I18n.setLanguage(lang);
+                    }
+                    
+                    // Update language button display
+                    const languageBtn = document.getElementById('languageBtn');
+                    if (languageBtn) {
+                        const flag = lang === 'zh-CN' ? '🇨🇳' : '🇺🇸';
+                        const code = lang === 'zh-CN' ? '中文' : 'EN';
+                        languageBtn.querySelector('.language-flag').textContent = flag;
+                        languageBtn.querySelector('.language-code').textContent = code;
+                    }
+                },
+
+                // Initialize charts
+                initCharts() {
+                    this.initRequestChart();
+                    this.initPerformanceChart();
+                },
+
+                // Request volume chart
+                initRequestChart() {
+                    const ctx = document.getElementById('requestChart');
+                    if (!ctx) return;
+
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '23:59'],
+                            datasets: [{
+                                label: '请求量',
+                                data: [120, 190, 300, 500, 420, 380, 250],
+                                borderColor: '#3b82f6',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                fill: true,
+                                tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        color: 'rgba(0, 0, 0, 0.05)'
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        }
+                    });
+                },
+
+                // Performance chart
+                initPerformanceChart() {
+                    const ctx = document.getElementById('performanceChart');
+                    if (!ctx) return;
+
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['AGI-Ultra', 'AGI-Sage', 'Qwen-72B', 'Llama-3', 'DeepSeek'],
+                            datasets: [{
+                                label: '吞吐量 (tokens/s)',
+                                data: [85, 92, 78, 88, 95],
+                                backgroundColor: [
+                                    'rgba(59, 130, 246, 0.8)',
+                                    'rgba(16, 185, 129, 0.8)',
+                                    'rgba(245, 158, 11, 0.8)',
+                                    'rgba(239, 68, 68, 0.8)',
+                                    'rgba(139, 92, 246, 0.8)'
+                                ],
+                                borderRadius: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        color: 'rgba(0, 0, 0, 0.05)'
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        }
+                    });
+                },
+
+                // Load activity data
+                loadActivityData() {
+                    const activityList = document.getElementById('activityList');
+                    if (!activityList) return;
+
+                    const activities = [
+                        { icon: '🤖', title: '模型训练完成', desc: 'AGI-Ultra-Custom 训练任务已完成，准确率 94.5%', time: '2分钟前', type: 'success' },
+                        { icon: '📊', title: '新工作流创建', desc: '用户 admin 创建了 "客服自动化" 工作流', time: '15分钟前', type: 'info' },
+                        { icon: '⚠️', title: 'GPU使用率警告', desc: 'GPU-0 利用率超过 95%，已持续 10 分钟', time: '1小时前', type: 'warning' },
+                        { icon: '🎨', title: '图像生成完成', desc: '批量生成 50 张图像已完成', time: '2小时前', type: 'success' },
+                        { icon: '🔒', title: '安全扫描完成', desc: '每日安全扫描未发现威胁', time: '3小时前', type: 'success' }
+                    ];
+
+                    activityList.innerHTML = activities.map(activity => `
+                        <div class="activity-item ${activity.type}">
+                            <div class="activity-icon">${activity.icon}</div>
+                            <div class="activity-content">
+                                <p class="activity-title">${activity.title}</p>
+                                <p class="activity-desc">${activity.desc}</p>
+                                <span class="activity-time">${activity.time}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                },
+
+                // Refresh data - 从API获取真实数据
+                async refreshData() {
+                    console.log('[AGI Framework] Refreshing data...');
+                    this.loadActivityData();
+                    
+                    try {
+                        // 并行获取所有数据
+                        const [metricsRes, modelsRes, trainingRes, workflowsRes] = await Promise.all([
+                            fetch('/api/v1/system/metrics'),
+                            fetch('/api/v1/models'),
+                            fetch('/api/v1/training/jobs'),
+                            fetch('/api/v1/workflows')
+                        ]);
+                        
+                        const metricsData = await metricsRes.json();
+                        const modelsData = await modelsRes.json();
+                        const trainingData = await trainingRes.json();
+                        const workflowsData = await workflowsRes.json();
+                        
+                        // 活跃模型数 - 真实数据
+                        const activeModels = modelsData.data ? modelsData.data.length : 0;
+                        document.getElementById('activeModels').textContent = activeModels;
+                        
+                        // 已完成任务数 - 训练任务 + 工作流任务
+                        const trainingJobs = trainingData.data ? trainingData.data.length : 0;
+                        const workflowJobs = workflowsData.data ? workflowsData.data.length : 0;
+                        const completedTasks = trainingJobs + workflowJobs;
+                        document.getElementById('completedTasks').textContent = completedTasks;
+                        
+                        // 延迟和GPU - 从系统指标获取，如果没有则显示0
+                        const cpuUsage = metricsData.cpu_usage_percent || 0;
+                        const memUsage = metricsData.memory_usage_percent || 0;
+                        
+                        // 延迟：基于系统负载计算，如果没有数据则显示0ms
+                        const latency = cpuUsage > 0 ? Math.max(1, Math.floor(cpuUsage * 0.5)) : 0;
+                        document.getElementById('avgLatency').textContent = latency + 'ms';
+                        
+                        // GPU利用率：如果没有真实数据则显示0%
+                        document.getElementById('gpuUtilization').textContent = '0%';
+                        
+                        console.log('[AGI Framework] 真实数据:', { 
+                            activeModels, 
+                            completedTasks, 
+                            trainingJobs, 
+                            workflowJobs,
+                            latency,
+                            cpuUsage 
+                        });
+                    } catch (error) {
+                        console.warn('[AGI Framework] 获取数据失败:', error);
+                        // 失败时显示0，不使用随机数
+                        document.getElementById('activeModels').textContent = '0';
+                        document.getElementById('completedTasks').textContent = '0';
+                        document.getElementById('avgLatency').textContent = '0ms';
+                        document.getElementById('gpuUtilization').textContent = '0%';
+                    }
+                },
+
+                // Navigate to page
+                navigateToPage(page) {
+                    console.log('[AGI Framework] Navigating to:', page);
+                    // Update active nav link
+                    document.querySelectorAll('.nav-link').forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('data-page') === page) {
+                            link.classList.add('active');
+                        }
+                    });
+                    this.currentPage = page;
+                },
+
+                // Handle window resize
+                handleResize() {
+                    // Responsive adjustments
+                    const sidebar = document.getElementById('sidebar');
+                    if (window.innerWidth < 768) {
+                        sidebar?.classList.add('collapsed');
+                    }
+                }
+            };
+
+            // Initialize when DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => App.init());
+            } else {
+                App.init();
+            }
+
+            // Expose App globally
+            window.AGIApp = App;
+        })();
+
+        // ============================================
+        // SPA Router - 完整路由系统
+        // ============================================
+        (function() {
+            'use strict';
+
+            class SPARouter {
+                constructor() {
+                    this.routes = new Map();
+                    this.currentRoute = null;
+                    this.history = [];
+                    this.middleware = [];
+                    this.guards = [];
+                    this.init();
+                }
+
+                init() {
+                    window.addEventListener('popstate', (e) => this.handlePopState(e));
+                    document.addEventListener('click', (e) => this.handleLinkClick(e));
+                }
+
+                register(path, config) {
+                    this.routes.set(path, {
+                        path,
+                        component: config.component,
+                        title: config.title || '',
+                        layout: config.layout || 'default',
+                        meta: config.meta || {},
+                        beforeEnter: config.beforeEnter || null,
+                        afterLeave: config.afterLeave || null,
+                        preload: config.preload || null,
+                        cache: config.cache !== false
+                    });
+                    return this;
+                }
+
+                addMiddleware(fn) {
+                    this.middleware.push(fn);
+                    return this;
+                }
+
+                addGuard(fn) {
+                    this.guards.push(fn);
+                    return this;
+                }
+
+                async navigate(path, options = {}) {
+                    const route = this.matchRoute(path);
+                    if (!route) {
+                        return this.handleNotFound(path);
+                    }
+
+                    for (const guard of this.guards) {
+                        const result = await guard(route, this.currentRoute);
+                        if (result === false) return false;
+                        if (typeof result === 'string') return this.navigate(result);
+                    }
+
+                    for (const middleware of this.middleware) {
+                        await middleware(route, this.currentRoute);
+                    }
+
+                    if (route.beforeEnter) {
+                        const result = await route.beforeEnter(route, this.currentRoute);
+                        if (result === false) return false;
+                    }
+
+                    if (this.currentRoute && this.currentRoute.afterLeave) {
+                        await this.currentRoute.afterLeave(this.currentRoute, route);
+                    }
+
+                    this.history.push(path);
+                    this.currentRoute = route;
+
+                    if (!options.replace) {
+                        window.history.pushState({ path }, route.title, path);
+                    } else {
+                        window.history.replaceState({ path }, route.title, path);
+                    }
+
+                    document.title = route.title || 'AGI 统一框架';
+
+                    await this.renderRoute(route);
+
+                    return true;
+                }
+
+                matchRoute(path) {
+                    for (const [pattern, route] of this.routes) {
+                        const params = this.matchPattern(pattern, path);
+                        if (params) {
+                            return { ...route, params };
+                        }
+                    }
+                    return null;
+                }
+
+                matchPattern(pattern, path) {
+                    const patternParts = pattern.split('/').filter(Boolean);
+                    const pathParts = path.split('/').filter(Boolean);
+
+                    if (patternParts.length !== pathParts.length) {
+                        if (!pattern.includes(':') && pattern !== path) return null;
+                    }
+
+                    const params = {};
+                    for (let i = 0; i < patternParts.length; i++) {
+                        if (patternParts[i].startsWith(':')) {
+                            params[patternParts[i].slice(1)] = pathParts[i];
+                        } else if (patternParts[i] !== pathParts[i]) {
+                            return null;
+                        }
+                    }
+
+                    return params;
+                }
+
+                async renderRoute(route) {
+                    const mainContent = document.getElementById('mainContent');
+                    if (!mainContent) return;
+
+                    mainContent.classList.add('route-transitioning');
+
+                    if (route.preload) {
+                        await route.preload();
+                    }
+
+                    if (typeof route.component === 'function') {
+                        const content = await route.component(route.params);
+                        mainContent.innerHTML = content;
+                    } else if (typeof route.component === 'string') {
+                        mainContent.innerHTML = route.component;
+                    }
+
+                    setTimeout(() => {
+                        mainContent.classList.remove('route-transitioning');
+                    }, 300);
+                }
+
+                handlePopState(e) {
+                    const path = e.state?.path || window.location.pathname;
+                    this.navigate(path, { replace: true });
+                }
+
+                handleLinkClick(e) {
+                    const link = e.target.closest('a[href]');
+                    if (!link) return;
+
+                    const href = link.getAttribute('href');
+                    if (!href || href.startsWith('http') || href.startsWith('//') || href.startsWith('#')) {
+                        return;
+                    }
+
+                    if (link.hasAttribute('data-external')) return;
+                    
+                    // 不拦截指向实际文件的链接（如 pages/chat.html）
+                    if (href.includes('.html') || href.includes('.htm')) {
+                        return; // 让浏览器正常导航
+                    }
+
+                    e.preventDefault();
+                    this.navigate(href);
+                }
+
+                handleNotFound(path) {
+                    console.warn('Route not found:', path);
+                    const mainContent = document.getElementById('mainContent');
+                    if (mainContent) {
+                        mainContent.innerHTML = `
+                            <div class="not-found-page">
+                                <div class="not-found-content">
+                                    <h1>404</h1>
+                                    <p>页面未找到</p>
+                                    <p class="not-found-path">${path}</p>
+                                    <a href="/" class="btn btn-primary">返回首页</a>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    return false;
+                }
+
+                go(n) {
+                    window.history.go(n);
+                }
+
+                back() {
+                    window.history.back();
+                }
+
+                forward() {
+                    window.history.forward();
+                }
+
+                getHistory() {
+                    return [...this.history];
+                }
+
+                getCurrentRoute() {
+                    return this.currentRoute;
+                }
+            }
+
+            window.SPARouter = new SPARouter();
+
+            window.SPARouter
+                .register('/', {
+                    component: 'dashboard',
+                    title: '仪表盘 - AGI 统一框架'
+                })
+                .register('/chat', {
+                    component: 'chat',
+                    title: '智能对话 - AGI 统一框架'
+                })
+                .register('/models', {
+                    component: 'models',
+                    title: '模型管理 - AGI 统一框架'
+                })
+                .register('/training', {
+                    component: 'training',
+                    title: '训练中心 - AGI 统一框架'
+                })
+                .register('/settings', {
+                    component: 'settings',
+                    title: '系统设置 - AGI 统一框架'
+                });
+        })();
+
+        // ============================================
+        // 全局状态管理器
+        // ============================================
+        (function() {
+            'use strict';
+
+            class GlobalState {
+                constructor() {
+                    this.state = {};
+                    this.subscribers = new Map();
+                    this.history = [];
+                    this.maxHistory = 100;
+                    this.computed = new Map();
+                    this.actions = new Map();
+                    this.middlewares = [];
+                }
+
+                getState(path) {
+                    if (!path) return { ...this.state };
+                    return this.getNestedValue(this.state, path);
+                }
+
+                setState(path, value, options = {}) {
+                    const oldValue = this.getState(path);
+
+                    if (options.merge && typeof oldValue === 'object' && typeof value === 'object') {
+                        value = { ...oldValue, ...value };
+                    }
+
+                    this.setNestedValue(this.state, path, value);
+
+                    this.history.push({
+                        path,
+                        oldValue,
+                        newValue: value,
+                        timestamp: Date.now()
+                    });
+
+                    if (this.history.length > this.maxHistory) {
+                        this.history.shift();
+                    }
+
+                    this.notify(path, value, oldValue);
+
+                    if (!options.silent) {
+                        this.persist(path, value);
+                    }
+
+                    return value;
+                }
+
+                getNestedValue(obj, path) {
+                    const keys = path.split('.');
+                    let current = obj;
+                    for (const key of keys) {
+                        if (current === null || current === undefined) return undefined;
+                        current = current[key];
+                    }
+                    return current;
+                }
+
+                setNestedValue(obj, path, value) {
+                    const keys = path.split('.');
+                    let current = obj;
+                    for (let i = 0; i < keys.length - 1; i++) {
+                        if (!(keys[i] in current)) {
+                            current[keys[i]] = {};
+                        }
+                        current = current[keys[i]];
+                    }
+                    current[keys[keys.length - 1]] = value;
+                }
+
+                subscribe(path, callback, options = {}) {
+                    if (!this.subscribers.has(path)) {
+                        this.subscribers.set(path, new Set());
+                    }
+                    this.subscribers.get(path).add(callback);
+
+                    if (options.immediate) {
+                        callback(this.getState(path), undefined);
+                    }
+
+                    return () => {
+                        this.subscribers.get(path)?.delete(callback);
+                    };
+                }
+
+                notify(path, newValue, oldValue) {
+                    const callbacks = this.subscribers.get(path);
+                    if (callbacks) {
+                        callbacks.forEach(cb => cb(newValue, oldValue));
+                    }
+
+                    for (const [subPath, subCallbacks] of this.subscribers) {
+                        if (subPath.startsWith(path + '.')) {
+                            const nestedValue = this.getState(subPath);
+                            subCallbacks.forEach(cb => cb(nestedValue, undefined));
+                        }
+                    }
+                }
+
+                defineComputed(name, dependencies, computeFn) {
+                    this.computed.set(name, {
+                        dependencies,
+                        computeFn,
+                        cachedValue: null,
+                        dirty: true
+                    });
+
+                    dependencies.forEach(dep => {
+                        this.subscribe(dep, () => {
+                            const computed = this.computed.get(name);
+                            if (computed) computed.dirty = true;
+                        });
+                    });
+                }
+
+                getComputed(name) {
+                    const computed = this.computed.get(name);
+                    if (!computed) return undefined;
+
+                    if (computed.dirty) {
+                        const depValues = computed.dependencies.map(dep => this.getState(dep));
+                        computed.cachedValue = computed.computeFn(...depValues);
+                        computed.dirty = false;
+                    }
+
+                    return computed.cachedValue;
+                }
+
+                defineAction(name, actionFn) {
+                    this.actions.set(name, actionFn);
+                }
+
+                async dispatch(name, payload) {
+                    const action = this.actions.get(name);
+                    if (!action) {
+                        console.error('Action not found:', name);
+                        return;
+                    }
+
+                    for (const middleware of this.middlewares) {
+                        await middleware(name, payload);
+                    }
+
+                    return action(this, payload);
+                }
+
+                addMiddleware(middleware) {
+                    this.middlewares.push(middleware);
+                }
+
+                persist(path, value) {
+                    try {
+                        const key = `agi_state_${path}`;
+                        if (value === undefined) {
+                            localStorage.removeItem(key);
+                        } else {
+                            localStorage.setItem(key, JSON.stringify(value));
+                        }
+                    } catch (e) {
+                        console.warn('State persistence failed:', e);
+                    }
+                }
+
+                hydrate() {
+                    const prefix = 'agi_state_';
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (key.startsWith(prefix)) {
+                            const path = key.slice(prefix.length);
+                            try {
+                                const value = JSON.parse(localStorage.getItem(key));
+                                this.setState(path, value, { silent: true });
+                            } catch (e) {
+                                console.warn('State hydration failed for', path);
+                            }
+                        }
+                    }
+                }
+
+                reset(path) {
+                    if (path) {
+                        this.setState(path, undefined);
+                    } else {
+                        this.state = {};
+                        this.subscribers.forEach(callbacks => callbacks.forEach(cb => cb(undefined, undefined)));
+                    }
+                }
+
+                getHistory() {
+                    return [...this.history];
+                }
+            }
+
+            window.GlobalState = new GlobalState();
+
+            window.GlobalState.setState('user', {
+                id: 'user_001',
+                name: '管理员',
+                email: 'admin@agi-framework.com',
+                role: 'admin',
+                avatar: '/assets/images/avatar.png',
+                preferences: {
+                    theme: 'light',
+                    language: 'zh-CN',
+                    notifications: true
+                }
+            });
+
+            window.GlobalState.setState('system', {
+                version: '2.0.0',
+                buildDate: '2024-01-15',
+                status: 'online',
+                features: {
+                    chat: true,
+                    training: true,
+                    models: true,
+                    multiagent: true
+                }
+            });
+
+            window.GlobalState.hydrate();
+        })();
+
+        // ============================================
+        // WebSocket 连接管理器
+        // ============================================
+        (function() {
+            'use strict';
+
+            class WebSocketManager {
+                constructor() {
+                    this.ws = null;
+                    this.url = null;
+                    this.reconnectAttempts = 0;
+                    this.maxReconnectAttempts = 5;
+                    this.reconnectDelay = 1000;
+                    this.heartbeatInterval = null;
+                    this.messageQueue = [];
+                    this.handlers = new Map();
+                    this.state = 'disconnected';
+                    this.lastMessageTime = null;
+                }
+
+                connect(url) {
+                    this.url = url || `ws://${window.location.host}/ws`;
+                    this.state = 'connecting';
+
+                    try {
+                        this.ws = new WebSocket(this.url);
+                        this.setupEventHandlers();
+                    } catch (error) {
+                        console.error('WebSocket connection failed:', error);
+                        this.handleConnectionError();
+                    }
+                }
+
+                setupEventHandlers() {
+                    this.ws.onopen = () => {
+                        this.state = 'connected';
+                        this.reconnectAttempts = 0;
+                        console.log('[WebSocket] Connected');
+                        this.startHeartbeat();
+                        this.flushMessageQueue();
+                        this.emit('connected');
+                    };
+
+                    this.ws.onmessage = (event) => {
+                        this.lastMessageTime = Date.now();
+                        try {
+                            const message = JSON.parse(event.data);
+                            this.handleMessage(message);
+                        } catch (error) {
+                            console.error('[WebSocket] Message parse error:', error);
+                        }
+                    };
+
+                    this.ws.onclose = (event) => {
+                        this.state = 'disconnected';
+                        this.stopHeartbeat();
+                        console.log('[WebSocket] Disconnected:', event.code, event.reason);
+                        this.emit('disconnected', { code: event.code, reason: event.reason });
+
+                        if (!event.wasClean) {
+                            this.scheduleReconnect();
+                        }
+                    };
+
+                    this.ws.onerror = (error) => {
+                        console.error('[WebSocket] Error:', error);
+                        this.emit('error', error);
+                    };
+                }
+
+                handleMessage(message) {
+                    const { type, payload, id } = message;
+
+                    if (type === 'pong') {
+                        return;
+                    }
+
+                    if (id && this.handlers.has(id)) {
+                        const handler = this.handlers.get(id);
+                        handler(payload);
+                        this.handlers.delete(id);
+                        return;
+                    }
+
+                    this.emit(type, payload);
+                }
+
+                send(type, payload, options = {}) {
+                    const message = {
+                        type,
+                        payload,
+                        id: options.id || this.generateId(),
+                        timestamp: Date.now()
+                    };
+
+                    if (this.state === 'connected') {
+                        this.ws.send(JSON.stringify(message));
+                    } else {
+                        this.messageQueue.push(message);
+                    }
+
+                    if (options.expectResponse) {
+                        return new Promise((resolve, reject) => {
+                            const timeout = setTimeout(() => {
+                                this.handlers.delete(message.id);
+                                reject(new Error('Response timeout'));
+                            }, options.timeout || 30000);
+
+                            this.handlers.set(message.id, (response) => {
+                                clearTimeout(timeout);
+                                resolve(response);
+                            });
+                        });
+                    }
+
+                    return message.id;
+                }
+
+                subscribe(channel, callback) {
+                    this.send('subscribe', { channel });
+                    return this.on(channel, callback);
+                }
+
+                unsubscribe(channel) {
+                    this.send('unsubscribe', { channel });
+                    this.off(channel);
+                }
+
+                on(event, callback) {
+                    if (!this.handlers.has(event)) {
+                        this.handlers.set(event, new Set());
+                    }
+                    this.handlers.get(event).add(callback);
+
+                    return () => {
+                        this.handlers.get(event)?.delete(callback);
+                    };
+                }
+
+                off(event, callback) {
+                    if (callback) {
+                        this.handlers.get(event)?.delete(callback);
+                    } else {
+                        this.handlers.delete(event);
+                    }
+                }
+
+                emit(event, data) {
+                    const handlers = this.handlers.get(event);
+                    if (handlers) {
+                        handlers.forEach(handler => {
+                            try {
+                                handler(data);
+                            } catch (error) {
+                                console.error('[WebSocket] Handler error:', error);
+                            }
+                        });
+                    }
+                }
+
+                startHeartbeat() {
+                    this.heartbeatInterval = setInterval(() => {
+                        if (this.state === 'connected') {
+                            this.send('ping', { timestamp: Date.now() });
+                        }
+                    }, 30000);
+                }
+
+                stopHeartbeat() {
+                    if (this.heartbeatInterval) {
+                        clearInterval(this.heartbeatInterval);
+                        this.heartbeatInterval = null;
+                    }
+                }
+
+                flushMessageQueue() {
+                    while (this.messageQueue.length > 0 && this.state === 'connected') {
+                        const message = this.messageQueue.shift();
+                        this.ws.send(JSON.stringify(message));
+                    }
+                }
+
+                scheduleReconnect() {
+                    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+                        console.error('[WebSocket] Max reconnect attempts reached');
+                        this.emit('reconnect_failed');
+                        return;
+                    }
+
+                    this.reconnectAttempts++;
+                    const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
+
+                    console.log(`[WebSocket] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
+
+                    setTimeout(() => {
+                        this.connect(this.url);
+                    }, delay);
+                }
+
+                handleConnectionError() {
+                    this.state = 'error';
+                    this.scheduleReconnect();
+                }
+
+                disconnect() {
+                    this.stopHeartbeat();
+                    if (this.ws) {
+                        this.ws.close(1000, 'Client disconnect');
+                        this.ws = null;
+                    }
+                    this.state = 'disconnected';
+                }
+
+                generateId() {
+                    return 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                }
+
+                getState() {
+                    return this.state;
+                }
+
+                isConnected() {
+                    return this.state === 'connected';
+                }
+            }
+
+            window.WebSocketManager = new WebSocketManager();
+
+            window.WebSocketManager.on('notification', (data) => {
+                if (window.NotificationSystem) {
+                    window.NotificationSystem.show(data.message, data.type || 'info');
+                }
+            });
+
+            window.WebSocketManager.on('training_update', (data) => {
+                if (window.GlobalState) {
+                    window.GlobalState.setState(`training.${data.taskId}`, data);
+                }
+            });
+
+            window.WebSocketManager.on('model_update', (data) => {
+                if (window.GlobalState) {
+                    window.GlobalState.setState(`models.${data.modelId}`, data);
+                }
+            });
+        })();
+
+        // ============================================
+        // 全局通知系统
+        // ============================================
+        (function() {
+            'use strict';
+
+            class NotificationSystem {
+                constructor() {
+                    this.container = null;
+                    this.notifications = new Map();
+                    this.maxNotifications = 5;
+                    this.defaultDuration = 5000;
+                    this.init();
+                }
+
+                init() {
+                    this.container = document.createElement('div');
+                    this.container.className = 'notification-container';
+                    this.container.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        z-index: 10000;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 10px;
+                        pointer-events: none;
+                    `;
+                    document.body.appendChild(this.container);
+                }
+
+                show(message, type = 'info', options = {}) {
+                    const id = options.id || this.generateId();
+
+                    if (options.id && this.notifications.has(options.id)) {
+                        this.update(options.id, message, type);
+                        return options.id;
+                    }
+
+                    const notification = this.createNotification(id, message, type, options);
+                    this.notifications.set(id, notification);
+                    this.container.appendChild(notification.element);
+
+                    if (this.notifications.size > this.maxNotifications) {
+                        const oldest = this.container.firstChild;
+                        if (oldest) {
+                            this.dismiss(oldest.dataset.notificationId);
+                        }
+                    }
+
+                    requestAnimationFrame(() => {
+                        notification.element.classList.add('show');
+                    });
+
+                    if (options.duration !== 0) {
+                        notification.timeout = setTimeout(() => {
+                            this.dismiss(id);
+                        }, options.duration || this.defaultDuration);
+                    }
+
+                    return id;
+                }
+
+                createNotification(id, message, type, options) {
+                    const element = document.createElement('div');
+                    element.className = `notification notification-${type}`;
+                    element.dataset.notificationId = id;
+                    element.style.cssText = `
+                        display: flex;
+                        align-items: flex-start;
+                        gap: 12px;
+                        padding: 16px 20px;
+                        background: var(--card-bg, #fff);
+                        border-radius: 12px;
+                        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+                        border-left: 4px solid ${this.getTypeColor(type)};
+                        min-width: 300px;
+                        max-width: 450px;
+                        transform: translateX(120%);
+                        opacity: 0;
+                        transition: all 0.3s ease;
+                        pointer-events: auto;
+                    `;
+
+                    const icon = this.getTypeIcon(type);
+                    element.innerHTML = `
+                        <span class="notification-icon" style="font-size: 20px;">${icon}</span>
+                        <div class="notification-content" style="flex: 1;">
+                            ${options.title ? `<div class="notification-title" style="font-weight: 600; margin-bottom: 4px;">${options.title}</div>` : ''}
+                            <div class="notification-message" style="font-size: 14px; color: var(--text-primary);">${message}</div>
+                        </div>
+                        <button class="notification-close" style="
+                            background: none;
+                            border: none;
+                            cursor: pointer;
+                            padding: 4px;
+                            opacity: 0.5;
+                            transition: opacity 0.2s;
+                        ">✕</button>
+                    `;
+
+                    const closeBtn = element.querySelector('.notification-close');
+                    closeBtn.addEventListener('click', () => this.dismiss(id));
+                    closeBtn.addEventListener('mouseenter', () => closeBtn.style.opacity = '1');
+                    closeBtn.addEventListener('mouseleave', () => closeBtn.style.opacity = '0.5');
+
+                    if (options.actions) {
+                        const actionsContainer = document.createElement('div');
+                        actionsContainer.className = 'notification-actions';
+                        actionsContainer.style.cssText = 'display: flex; gap: 8px; margin-top: 12px;';
+                        options.actions.forEach(action => {
+                            const btn = document.createElement('button');
+                            btn.className = `btn btn-${action.type || 'secondary'}`;
+                            btn.style.cssText = 'padding: 6px 12px; font-size: 12px; border-radius: 6px;';
+                            btn.textContent = action.label;
+                            btn.addEventListener('click', () => {
+                                action.callback();
+                                if (action.dismissOnClick !== false) {
+                                    this.dismiss(id);
+                                }
+                            });
+                            actionsContainer.appendChild(btn);
+                        });
+                        element.querySelector('.notification-content').appendChild(actionsContainer);
+                    }
+
+                    return { element, timeout: null };
+                }
+
+                update(id, message, type) {
+                    const notification = this.notifications.get(id);
+                    if (!notification) return;
+
+                    const messageEl = notification.element.querySelector('.notification-message');
+                    if (messageEl) {
+                        messageEl.textContent = message;
+                    }
+
+                    notification.element.className = `notification notification-${type} show`;
+                    notification.element.style.borderLeftColor = this.getTypeColor(type);
+                }
+
+                dismiss(id) {
+                    const notification = this.notifications.get(id);
+                    if (!notification) return;
+
+                    if (notification.timeout) {
+                        clearTimeout(notification.timeout);
+                    }
+
+                    notification.element.classList.remove('show');
+                    notification.element.style.transform = 'translateX(120%)';
+                    notification.element.style.opacity = '0';
+
+                    setTimeout(() => {
+                        notification.element.remove();
+                        this.notifications.delete(id);
+                    }, 300);
+                }
+
+                dismissAll() {
+                    this.notifications.forEach((_, id) => this.dismiss(id));
+                }
+
+                success(message, options = {}) {
+                    return this.show(message, 'success', options);
+                }
+
+                error(message, options = {}) {
+                    return this.show(message, 'error', { ...options, duration: options.duration || 8000 });
+                }
+
+                warning(message, options = {}) {
+                    return this.show(message, 'warning', options);
+                }
+
+                info(message, options = {}) {
+                    return this.show(message, 'info', options);
+                }
+
+                confirm(message, options = {}) {
+                    return new Promise((resolve) => {
+                        this.show(message, 'info', {
+                            ...options,
+                            duration: 0,
+                            actions: [
+                                {
+                                    label: options.confirmLabel || '确认',
+                                    type: 'primary',
+                                    callback: () => resolve(true)
+                                },
+                                {
+                                    label: options.cancelLabel || '取消',
+                                    callback: () => resolve(false)
+                                }
+                            ]
+                        });
+                    });
+                }
+
+                getTypeColor(type) {
+                    const colors = {
+                        success: '#22c55e',
+                        error: '#ef4444',
+                        warning: '#f59e0b',
+                        info: '#3b82f6'
+                    };
+                    return colors[type] || colors.info;
+                }
+
+                getTypeIcon(type) {
+                    const icons = {
+                        success: '✓',
+                        error: '✕',
+                        warning: '⚠',
+                        info: 'ℹ'
+                    };
+                    return icons[type] || icons.info;
+                }
+
+                generateId() {
+                    return 'notif_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                }
+            }
+
+            window.NotificationSystem = new NotificationSystem();
+        })();
+
+        // ============================================
+        // 全局模态框管理器
+        // ============================================
+        (function() {
+            'use strict';
+
+            class ModalManager {
+                constructor() {
+                    this.modals = new Map();
+                    this.activeModal = null;
+                    this.zIndex = 1000;
+                    this.init();
+                }
+
+                init() {
+                    document.addEventListener('keydown', (e) => {
+                        if (e.key === 'Escape' && this.activeModal) {
+                            const modal = this.modals.get(this.activeModal);
+                            if (modal && modal.closeOnEscape !== false) {
+                                this.close(this.activeModal);
+                            }
+                        }
+                    });
+                }
+
+                create(id, options = {}) {
+                    const overlay = document.createElement('div');
+                    overlay.className = 'modal-overlay';
+                    overlay.dataset.modalId = id;
+                    overlay.style.cssText = `
+                        position: fixed;
+                        inset: 0;
+                        background: rgba(0, 0, 0, 0.7);
+                        display: none;
+                        align-items: center;
+                        justify-content: center;
+                        z-index: ${this.zIndex};
+                        backdrop-filter: blur(4px);
+                    `;
+
+                    const modal = document.createElement('div');
+                    modal.className = 'modal';
+                    modal.style.cssText = `
+                        background: var(--card-bg, #fff);
+                        border-radius: 16px;
+                        max-width: ${options.width || '600px'};
+                        width: 90%;
+                        max-height: 90vh;
+                        overflow: hidden;
+                        box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+                    `;
+
+                    const header = document.createElement('div');
+                    header.className = 'modal-header';
+                    header.style.cssText = `
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding: 20px 24px;
+                        border-bottom: 1px solid var(--border-color, #eee);
+                    `;
+                    header.innerHTML = `
+                        <h2 class="modal-title" style="font-size: 18px; font-weight: 600; margin: 0;">${options.title || ''}</h2>
+                        <button class="modal-close" style="
+                            width: 32px;
+                            height: 32px;
+                            border-radius: 50%;
+                            background: transparent;
+                            border: none;
+                            font-size: 24px;
+                            cursor: pointer;
+                            color: var(--text-secondary, #666);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        ">×</button>
+                    `;
+
+                    const body = document.createElement('div');
+                    body.className = 'modal-body';
+                    body.style.cssText = `
+                        padding: 24px;
+                        overflow-y: auto;
+                        max-height: calc(90vh - 140px);
+                    `;
+
+                    const footer = document.createElement('div');
+                    footer.className = 'modal-footer';
+                    footer.style.cssText = `
+                        display: flex;
+                        justify-content: flex-end;
+                        gap: 12px;
+                        padding: 16px 24px;
+                        border-top: 1px solid var(--border-color, #eee);
+                        background: var(--card-bg-secondary, #f9f9f9);
+                    `;
+
+                    modal.appendChild(header);
+                    modal.appendChild(body);
+                    if (options.footer !== false) {
+                        modal.appendChild(footer);
+                    }
+                    overlay.appendChild(modal);
+                    document.body.appendChild(overlay);
+
+                    const closeBtn = header.querySelector('.modal-close');
+                    closeBtn.addEventListener('click', () => this.close(id));
+                    closeBtn.addEventListener('mouseenter', () => closeBtn.style.background = 'var(--hover-bg, #f0f0f0)');
+                    closeBtn.addEventListener('mouseleave', () => closeBtn.style.background = 'transparent');
+
+                    overlay.addEventListener('click', (e) => {
+                        if (e.target === overlay && options.closeOnOverlay !== false) {
+                            this.close(id);
+                        }
+                    });
+
+                    this.modals.set(id, {
+                        overlay,
+                        modal,
+                        header,
+                        body,
+                        footer,
+                        options,
+                        closeOnEscape: options.closeOnEscape !== false
+                    });
+
+                    return { overlay, modal, header, body, footer };
+                }
+
+                open(id, options = {}) {
+                    let modalData = this.modals.get(id);
+
+                    if (!modalData) {
+                        modalData = this.create(id, options);
+                    }
+
+                    if (options.title) {
+                        modalData.header.querySelector('.modal-title').textContent = options.title;
+                    }
+
+                    if (options.content) {
+                        if (typeof options.content === 'string') {
+                            modalData.body.innerHTML = options.content;
+                        } else {
+                            modalData.body.innerHTML = '';
+                            modalData.body.appendChild(options.content);
+                        }
+                    }
+
+                    if (options.buttons) {
+                        modalData.footer.innerHTML = '';
+                        options.buttons.forEach(btn => {
+                            const button = document.createElement('button');
+                            button.className = `btn btn-${btn.type || 'secondary'}`;
+                            button.textContent = btn.label;
+                            button.addEventListener('click', () => {
+                                if (btn.onClick) btn.onClick();
+                                if (btn.closeOnClick !== false) this.close(id);
+                            });
+                            modalData.footer.appendChild(button);
+                        });
+                    }
+
+                    modalData.overlay.style.display = 'flex';
+                    this.activeModal = id;
+                    this.zIndex++;
+                    modalData.overlay.style.zIndex = this.zIndex;
+
+                    document.body.style.overflow = 'hidden';
+
+                    return modalData;
+                }
+
+                close(id) {
+                    const modalData = this.modals.get(id);
+                    if (!modalData) return;
+
+                    modalData.overlay.style.display = 'none';
+
+                    if (this.activeModal === id) {
+                        this.activeModal = null;
+                    }
+
+                    const hasOpenModal = Array.from(this.modals.values())
+                        .some(m => m.overlay.style.display === 'flex');
+
+                    if (!hasOpenModal) {
+                        document.body.style.overflow = '';
+                    }
+                }
+
+                setContent(id, content) {
+                    const modalData = this.modals.get(id);
+                    if (!modalData) return;
+
+                    if (typeof content === 'string') {
+                        modalData.body.innerHTML = content;
+                    } else {
+                        modalData.body.innerHTML = '';
+                        modalData.body.appendChild(content);
+                    }
+                }
+
+                setTitle(id, title) {
+                    const modalData = this.modals.get(id);
+                    if (!modalData) return;
+
+                    modalData.header.querySelector('.modal-title').textContent = title;
+                }
+
+                destroy(id) {
+                    const modalData = this.modals.get(id);
+                    if (!modalData) return;
+
+                    modalData.overlay.remove();
+                    this.modals.delete(id);
+                }
+
+                confirm(message, options = {}) {
+                    return new Promise((resolve) => {
+                        const id = 'confirm_' + Date.now();
+                        this.open(id, {
+                            title: options.title || '确认',
+                            content: `<p style="margin: 0; font-size: 15px;">${message}</p>`,
+                            buttons: [
+                                {
+                                    label: options.confirmLabel || '确认',
+                                    type: 'primary',
+                                    onClick: () => resolve(true)
+                                },
+                                {
+                                    label: options.cancelLabel || '取消',
+                                    onClick: () => resolve(false)
+                                }
+                            ]
+                        });
+                    });
+                }
+
+                alert(message, options = {}) {
+                    return new Promise((resolve) => {
+                        const id = 'alert_' + Date.now();
+                        this.open(id, {
+                            title: options.title || '提示',
+                            content: `<p style="margin: 0; font-size: 15px;">${message}</p>`,
+                            buttons: [
+                                {
+                                    label: '确定',
+                                    type: 'primary',
+                                    onClick: () => resolve()
+                                }
+                            ]
+                        });
+                    });
+                }
+
+                prompt(message, options = {}) {
+                    return new Promise((resolve) => {
+                        const id = 'prompt_' + Date.now();
+                        const inputId = 'prompt_input_' + Date.now();
+
+                        this.open(id, {
+                            title: options.title || '输入',
+                            content: `
+                                <p style="margin: 0 0 16px 0; font-size: 15px;">${message}</p>
+                                <input type="${options.type || 'text'}" id="${inputId}" class="form-input" style="
+                                    width: 100%;
+                                    padding: 12px 16px;
+                                    border: 1px solid var(--border-color, #ddd);
+                                    border-radius: 8px;
+                                    font-size: 14px;
+                                " value="${options.defaultValue || ''}" placeholder="${options.placeholder || ''}">
+                            `,
+                            buttons: [
+                                {
+                                    label: '确定',
+                                    type: 'primary',
+                                    onClick: () => {
+                                        const input = document.getElementById(inputId);
+                                        resolve(input?.value);
+                                    }
+                                },
+                                {
+                                    label: '取消',
+                                    onClick: () => resolve(null)
+                                }
+                            ]
+                        });
+
+                        setTimeout(() => {
+                            const input = document.getElementById(inputId);
+                            if (input) {
+                                input.focus();
+                                input.addEventListener('keydown', (e) => {
+                                    if (e.key === 'Enter') {
+                                        resolve(input.value);
+                                        this.close(id);
+                                    }
+                                });
+                            }
+                        }, 100);
+                    });
+                }
+            }
+
+            window.ModalManager = new ModalManager();
+        })();
+
+        // ============================================
+        // 错误边界处理器
+        // ============================================
+        (function() {
+            'use strict';
+
+            class ErrorBoundary {
+                constructor() {
+                    this.errorHandlers = new Map();
+                    this.errorLog = [];
+                    this.maxLogSize = 100;
+                    this.init();
+                }
+
+                init() {
+                    window.addEventListener('error', (e) => this.handleGlobalError(e));
+                    window.addEventListener('unhandledrejection', (e) => this.handleUnhandledRejection(e));
+                }
+
+                handleGlobalError(event) {
+                    const error = {
+                        type: 'error',
+                        message: event.message,
+                        filename: event.filename,
+                        lineno: event.lineno,
+                        colno: event.colno,
+                        stack: event.error?.stack,
+                        timestamp: Date.now()
+                    };
+
+                    this.logError(error);
+                    this.notifyHandlers('error', error);
+
+                    if (window.NotificationSystem) {
+                        window.NotificationSystem.error('发生错误: ' + event.message, {
+                            title: '系统错误'
+                        });
+                    }
+
+                    event.preventDefault();
+                }
+
+                handleUnhandledRejection(event) {
+                    const error = {
+                        type: 'unhandledrejection',
+                        reason: event.reason,
+                        stack: event.reason?.stack,
+                        timestamp: Date.now()
+                    };
+
+                    this.logError(error);
+                    this.notifyHandlers('unhandledrejection', error);
+
+                    if (window.NotificationSystem) {
+                        window.NotificationSystem.error('Promise拒绝: ' + (event.reason?.message || event.reason), {
+                            title: '异步错误'
+                        });
+                    }
+
+                    event.preventDefault();
+                }
+
+                logError(error) {
+                    this.errorLog.push(error);
+                    if (this.errorLog.length > this.maxLogSize) {
+                        this.errorLog.shift();
+                    }
+
+                    try {
+                        const stored = JSON.parse(localStorage.getItem('agi_error_log') || '[]');
+                        stored.push(error);
+                        if (stored.length > 50) stored.shift();
+                        localStorage.setItem('agi_error_log', JSON.stringify(stored));
+                    } catch (e) {}
+                }
+
+                registerHandler(type, handler) {
+                    if (!this.errorHandlers.has(type)) {
+                        this.errorHandlers.set(type, new Set());
+                    }
+                    this.errorHandlers.get(type).add(handler);
+                }
+
+                unregisterHandler(type, handler) {
+                    this.errorHandlers.get(type)?.delete(handler);
+                }
+
+                notifyHandlers(type, error) {
+                    const handlers = this.errorHandlers.get(type);
+                    if (handlers) {
+                        handlers.forEach(handler => {
+                            try {
+                                handler(error);
+                            } catch (e) {
+                                console.error('Error handler failed:', e);
+                            }
+                        });
+                    }
+                }
+
+                wrap(fn, options = {}) {
+                    return async (...args) => {
+                        try {
+                            return await fn(...args);
+                        } catch (error) {
+                            this.logError({
+                                type: 'wrapped',
+                                message: error.message,
+                                stack: error.stack,
+                                context: options.context,
+                                timestamp: Date.now()
+                            });
+
+                            if (options.onError) {
+                                options.onError(error);
+                            }
+
+                            if (options.fallback !== undefined) {
+                                return options.fallback;
+                            }
+
+                            throw error;
+                        }
+                    };
+                }
+
+                wrapSync(fn, options = {}) {
+                    return (...args) => {
+                        try {
+                            return fn(...args);
+                        } catch (error) {
+                            this.logError({
+                                type: 'wrapped_sync',
+                                message: error.message,
+                                stack: error.stack,
+                                context: options.context,
+                                timestamp: Date.now()
+                            });
+
+                            if (options.onError) {
+                                options.onError(error);
+                            }
+
+                            if (options.fallback !== undefined) {
+                                return options.fallback;
+                            }
+
+                            throw error;
+                        }
+                    };
+                }
+
+                getErrorLog() {
+                    return [...this.errorLog];
+                }
+
+                clearErrorLog() {
+                    this.errorLog = [];
+                    localStorage.removeItem('agi_error_log');
+                }
+
+                reportError(error, context = {}) {
+                    const errorData = {
+                        type: 'reported',
+                        message: error.message || String(error),
+                        stack: error.stack,
+                        context,
+                        timestamp: Date.now(),
+                        userAgent: navigator.userAgent,
+                        url: window.location.href
+                    };
+
+                    this.logError(errorData);
+
+                    if (window.WebSocketManager?.isConnected()) {
+                        window.WebSocketManager.send('error_report', errorData);
+                    }
+                }
+            }
+
+            window.ErrorBoundary = new ErrorBoundary();
+        })();
+
+        // ============================================
+        // 性能监控器
+        // ============================================
+        (function() {
+            'use strict';
+
+            class PerformanceMonitor {
+                constructor() {
+                    this.metrics = new Map();
+                    this.marks = new Map();
+                    this.observers = [];
+                    this.config = {
+                        enabled: true,
+                        sampleRate: 1,
+                        reportInterval: 60000
+                    };
+                    this.init();
+                }
+
+                init() {
+                    if (!this.config.enabled) return;
+
+                    this.setupObservers();
+                    this.startReporting();
+
+                    window.addEventListener('load', () => {
+                        this.collectPageLoadMetrics();
+                    });
+                }
+
+                setupObservers() {
+                    if ('PerformanceObserver' in window) {
+                        try {
+                            const longTaskObserver = new PerformanceObserver((list) => {
+                                list.getEntries().forEach(entry => {
+                                    this.recordMetric('long_task', {
+                                        duration: entry.duration,
+                                        startTime: entry.startTime,
+                                        name: entry.name
+                                    });
+                                });
+                            });
+                            longTaskObserver.observe({ entryTypes: ['longtask'] });
+                            this.observers.push(longTaskObserver);
+                        } catch (e) {}
+
+                        try {
+                            const layoutShiftObserver = new PerformanceObserver((list) => {
+                                list.getEntries().forEach(entry => {
+                                    if (!entry.hadRecentInput) {
+                                        this.recordMetric('layout_shift', {
+                                            value: entry.value,
+                                            startTime: entry.startTime
+                                        });
+                                    }
+                                });
+                            });
+                            layoutShiftObserver.observe({ entryTypes: ['layout-shift'] });
+                            this.observers.push(layoutShiftObserver);
+                        } catch (e) {}
+
+                        try {
+                            const resourceObserver = new PerformanceObserver((list) => {
+                                list.getEntries().forEach(entry => {
+                                    this.recordMetric('resource', {
+                                        name: entry.name,
+                                        duration: entry.duration,
+                                        size: entry.transferSize,
+                                        type: entry.initiatorType
+                                    });
+                                });
+                            });
+                            resourceObserver.observe({ entryTypes: ['resource'] });
+                            this.observers.push(resourceObserver);
+                        } catch (e) {}
+                    }
+                }
+
+                collectPageLoadMetrics() {
+                    const timing = performance.timing;
+                    const navigation = performance.getEntriesByType('navigation')[0];
+
+                    const metrics = {
+                        dns: timing.domainLookupEnd - timing.domainLookupStart,
+                        tcp: timing.connectEnd - timing.connectStart,
+                        ssl: timing.connectEnd - timing.secureConnectionStart,
+                        ttfb: timing.responseStart - timing.requestStart,
+                        download: timing.responseEnd - timing.responseStart,
+                        domParse: timing.domInteractive - timing.responseEnd,
+                        domReady: timing.domContentLoadedEventEnd - timing.domContentLoadedEventStart,
+                        load: timing.loadEventEnd - timing.loadEventStart,
+                        total: timing.loadEventEnd - timing.navigationStart
+                    };
+
+                    Object.entries(metrics).forEach(([key, value]) => {
+                        this.recordMetric(`page_load_${key}`, value);
+                    });
+
+                    if (navigation) {
+                        this.recordMetric('dom_content_loaded', navigation.domContentLoadedEventEnd);
+                        this.recordMetric('load_complete', navigation.loadEventEnd);
+                    }
+
+                    const paintEntries = performance.getEntriesByType('paint');
+                    paintEntries.forEach(entry => {
+                        this.recordMetric(`paint_${entry.name}`, entry.startTime);
+                    });
+                }
+
+                mark(name) {
+                    const timestamp = performance.now();
+                    this.marks.set(name, timestamp);
+                    performance.mark(name);
+                }
+
+                measure(name, startMark, endMark) {
+                    const start = this.marks.get(startMark);
+                    const end = this.marks.get(endMark) || performance.now();
+
+                    if (start !== undefined) {
+                        const duration = end - start;
+                        this.recordMetric(name, duration);
+                        return duration;
+                    }
+
+                    return null;
+                }
+
+                startMeasure(name) {
+                    this.mark(`${name}_start`);
+                }
+
+                endMeasure(name) {
+                    this.mark(`${name}_end`);
+                    return this.measure(name, `${name}_start`, `${name}_end`);
+                }
+
+                recordMetric(name, value, tags = {}) {
+                    if (Math.random() > this.config.sampleRate) return;
+
+                    if (!this.metrics.has(name)) {
+                        this.metrics.set(name, []);
+                    }
+
+                    this.metrics.get(name).push({
+                        value,
+                        tags,
+                        timestamp: Date.now()
+                    });
+                }
+
+                getMetric(name) {
+                    return this.metrics.get(name) || [];
+                }
+
+                getMetricStats(name) {
+                    const values = this.metrics.get(name);
+                    if (!values || values.length === 0) return null;
+
+                    const nums = values.map(v => typeof v.value === 'number' ? v.value : 0);
+                    return {
+                        count: nums.length,
+                        min: Math.min(...nums),
+                        max: Math.max(...nums),
+                        mean: nums.reduce((a, b) => a + b, 0) / nums.length,
+                        latest: nums[nums.length - 1]
+                    };
+                }
+
+                trackFunction(name, fn) {
+                    return async (...args) => {
+                        const start = performance.now();
+                        try {
+                            const result = await fn(...args);
+                            const duration = performance.now() - start;
+                            this.recordMetric(`function_${name}`, duration);
+                            return result;
+                        } catch (error) {
+                            const duration = performance.now() - start;
+                            this.recordMetric(`function_${name}_error`, duration);
+                            throw error;
+                        }
+                    };
+                }
+
+                trackRender(componentName) {
+                    const start = performance.now();
+                    return () => {
+                        const duration = performance.now() - start;
+                        this.recordMetric(`render_${componentName}`, duration);
+                    };
+                }
+
+                trackAPI(endpoint) {
+                    const start = performance.now();
+                    return (status) => {
+                        const duration = performance.now() - start;
+                        this.recordMetric(`api_${endpoint}`, duration, { status });
+                    };
+                }
+
+                startReporting() {
+                    setInterval(() => {
+                        this.report();
+                    }, this.config.reportInterval);
+                }
+
+                report() {
+                    const reportData = {};
+                    this.metrics.forEach((values, name) => {
+                        const stats = this.getMetricStats(name);
+                        if (stats) {
+                            reportData[name] = stats;
+                        }
+                    });
+
+                    if (window.WebSocketManager?.isConnected()) {
+                        window.WebSocketManager.send('performance_report', reportData);
+                    }
+
+                    return reportData;
+                }
+
+                getMemoryUsage() {
+                    if ('memory' in performance) {
+                        return {
+                            usedJSHeapSize: performance.memory.usedJSHeapSize,
+                            totalJSHeapSize: performance.memory.totalJSHeapSize,
+                            jsHeapSizeLimit: performance.memory.jsHeapSizeLimit
+                        };
+                    }
+                    return null;
+                }
+
+                getResourceTiming() {
+                    return performance.getEntriesByType('resource').map(entry => ({
+                        name: entry.name,
+                        duration: entry.duration,
+                        size: entry.transferSize,
+                        type: entry.initiatorType,
+                        startTime: entry.startTime
+                    }));
+                }
+
+                clearMetrics() {
+                    this.metrics.clear();
+                    this.marks.clear();
+                }
+            }
+
+            window.PerformanceMonitor = new PerformanceMonitor();
+        })();
+
+        // ============================================
+        // 全局加载状态管理器
+        // ============================================
+        (function() {
+            'use strict';
+
+            class LoadingManager {
+                constructor() {
+                    this.loaders = new Map();
+                    this.globalLoading = false;
+                    this.globalCount = 0;
+                    this.container = null;
+                    this.init();
+                }
+
+                init() {
+                    this.container = document.createElement('div');
+                    this.container.className = 'global-loading-container';
+                    this.container.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        z-index: 9999;
+                        display: none;
+                    `;
+                    this.container.innerHTML = `
+                        <div class="loading-bar" style="
+                            height: 3px;
+                            background: linear-gradient(90deg, #3b82f6, #10b981);
+                            animation: loading-progress 1.5s ease-in-out infinite;
+                        "></div>
+                        <style>
+                            @keyframes loading-progress {
+                                0% { width: 0%; margin-left: 0; }
+                                50% { width: 50%; margin-left: 25%; }
+                                100% { width: 0%; margin-left: 100%; }
+                            }
+                        </style>
+                    `;
+                    document.body.appendChild(this.container);
+                }
+
+                start(id, options = {}) {
+                    if (options.global) {
+                        this.globalCount++;
+                        if (!this.globalLoading) {
+                            this.globalLoading = true;
+                            this.container.style.display = 'block';
+                        }
+                    }
+
+                    this.loaders.set(id, {
+                        startTime: Date.now(),
+                        global: options.global,
+                        message: options.message
+                    });
+
+                    return id;
+                }
+
+                stop(id) {
+                    const loader = this.loaders.get(id);
+                    if (!loader) return;
+
+                    if (loader.global) {
+                        this.globalCount--;
+                        if (this.globalCount <= 0) {
+                            this.globalCount = 0;
+                            this.globalLoading = false;
+                            this.container.style.display = 'none';
+                        }
+                    }
+
+                    this.loaders.delete(id);
+                }
+
+                isLoading(id) {
+                    if (id) {
+                        return this.loaders.has(id);
+                    }
+                    return this.globalLoading;
+                }
+
+                withLoading(promise, options = {}) {
+                    const id = options.id || this.generateId();
+                    this.start(id, options);
+
+                    return promise
+                        .then(result => {
+                            this.stop(id);
+                            return result;
+                        })
+                        .catch(error => {
+                            this.stop(id);
+                            throw error;
+                        });
+                }
+
+                async withLoadingAsync(fn, options = {}) {
+                    const id = options.id || this.generateId();
+                    this.start(id, options);
+
+                    try {
+                        const result = await fn();
+                        this.stop(id);
+                        return result;
+                    } catch (error) {
+                        this.stop(id);
+                        throw error;
+                    }
+                }
+
+                generateId() {
+                    return 'loader_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                }
+            }
+
+            window.LoadingManager = new LoadingManager();
+        })();
+
+        // ============================================
+        // 主题管理器增强
+        // ============================================
+        (function() {
+            'use strict';
+
+            class ThemeManager {
+                constructor() {
+                    this.themes = {
+                        light: {
+                            name: '浅色主题',
+                            colors: {
+                                '--bg-primary': '#ffffff',
+                                '--bg-secondary': '#f5f5f5',
+                                '--text-primary': '#1a1a1a',
+                                '--text-secondary': '#666666',
+                                '--border-color': '#e0e0e0',
+                                '--card-bg': '#ffffff',
+                                '--card-bg-secondary': '#f9f9f9',
+                                '--hover-bg': '#f0f0f0',
+                                '--input-bg': '#ffffff'
+                            }
+                        },
+                        dark: {
+                            name: '深色主题',
+                            colors: {
+                                '--bg-primary': '#1a1a2e',
+                                '--bg-secondary': '#16213e',
+                                '--text-primary': '#ffffff',
+                                '--text-secondary': '#a0a0a0',
+                                '--border-color': '#2d3748',
+                                '--card-bg': '#1e1e30',
+                                '--card-bg-secondary': '#252540',
+                                '--hover-bg': '#2d2d4a',
+                                '--input-bg': '#252540'
+                            }
+                        },
+                        system: {
+                            name: '跟随系统',
+                            colors: null
+                        }
+                    };
+                    this.currentTheme = 'light';
+                    this.listeners = new Set();
+                    this.init();
+                }
+
+                init() {
+                    const saved = localStorage.getItem('agi_theme');
+                    if (saved && this.themes[saved]) {
+                        this.setTheme(saved);
+                    } else {
+                        this.setTheme('light');
+                    }
+
+                    if (window.matchMedia) {
+                        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                            if (this.currentTheme === 'system') {
+                                this.applySystemTheme();
+                            }
+                        });
+                    }
+                }
+
+                setTheme(themeName) {
+                    if (!this.themes[themeName]) return;
+
+                    this.currentTheme = themeName;
+
+                    if (themeName === 'system') {
+                        this.applySystemTheme();
+                    } else {
+                        this.applyTheme(themeName);
+                    }
+
+                    localStorage.setItem('agi_theme', themeName);
+                    this.notifyListeners(themeName);
+                }
+
+                applyTheme(themeName) {
+                    const theme = this.themes[themeName];
+                    if (!theme || !theme.colors) return;
+
+                    Object.entries(theme.colors).forEach(([property, value]) => {
+                        document.documentElement.style.setProperty(property, value);
+                    });
+
+                    document.documentElement.setAttribute('data-theme', themeName);
+                }
+
+                applySystemTheme() {
+                    const isDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+                    this.applyTheme(isDark ? 'dark' : 'light');
+                    document.documentElement.setAttribute('data-theme', 'system');
+                }
+
+                toggle() {
+                    const next = this.currentTheme === 'light' ? 'dark' : 'light';
+                    this.setTheme(next);
+                }
+
+                getTheme() {
+                    return this.currentTheme;
+                }
+
+                getThemes() {
+                    return Object.entries(this.themes).map(([key, value]) => ({
+                        id: key,
+                        name: value.name
+                    }));
+                }
+
+                registerTheme(name, config) {
+                    this.themes[name] = config;
+                }
+
+                onChange(callback) {
+                    this.listeners.add(callback);
+                    return () => this.listeners.delete(callback);
+                }
+
+                notifyListeners(theme) {
+                    this.listeners.forEach(callback => {
+                        try {
+                            callback(theme);
+                        } catch (e) {
+                            console.error('Theme listener error:', e);
+                        }
+                    });
+                }
+            }
+
+            window.ThemeManager = new ThemeManager();
+        })();
+
+        // ============================================
+        // 键盘快捷键管理器
+        // ============================================
+        (function() {
+            'use strict';
+
+            class KeyboardManager {
+                constructor() {
+                    this.shortcuts = new Map();
+                    this.enabled = true;
+                    this.init();
+                }
+
+                init() {
+                    document.addEventListener('keydown', (e) => this.handleKeyDown(e));
+                }
+
+                register(combo, callback, options = {}) {
+                    const normalized = this.normalizeCombo(combo);
+                    this.shortcuts.set(normalized, {
+                        combo: normalized,
+                        callback,
+                        description: options.description,
+                        scope: options.scope || 'global',
+                        preventDefault: options.preventDefault !== false
+                    });
+                    return () => this.shortcuts.delete(normalized);
+                }
+
+                unregister(combo) {
+                    this.shortcuts.delete(this.normalizeCombo(combo));
+                }
+
+                normalizeCombo(combo) {
+                    return combo.toLowerCase()
+                        .split('+')
+                        .map(key => key.trim())
+                        .sort()
+                        .join('+');
+                }
+
+                handleKeyDown(e) {
+                    if (!this.enabled) return;
+
+                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                        if (!e.ctrlKey && !e.metaKey) return;
+                    }
+
+                    const combo = this.buildCombo(e);
+                    const shortcut = this.shortcuts.get(combo);
+
+                    if (shortcut) {
+                        if (shortcut.preventDefault) {
+                            e.preventDefault();
+                        }
+                        shortcut.callback(e);
+                    }
+                }
+
+                buildCombo(e) {
+                    const parts = [];
+                    if (e.ctrlKey) parts.push('ctrl');
+                    if (e.altKey) parts.push('alt');
+                    if (e.shiftKey) parts.push('shift');
+                    if (e.metaKey) parts.push('meta');
+
+                    let key = e.key.toLowerCase();
+                    if (key === ' ') key = 'space';
+
+                    parts.push(key);
+                    return parts.sort().join('+');
+                }
+
+                enable() {
+                    this.enabled = true;
+                }
+
+                disable() {
+                    this.enabled = false;
+                }
+
+                getShortcuts(scope) {
+                    const result = [];
+                    this.shortcuts.forEach(shortcut => {
+                        if (!scope || shortcut.scope === scope) {
+                            result.push({
+                                combo: shortcut.combo,
+                                description: shortcut.description
+                            });
+                        }
+                    });
+                    return result;
+                }
+            }
+
+            window.KeyboardManager = new KeyboardManager();
+
+            window.KeyboardManager.register('ctrl+k', () => {
+                const searchInput = document.querySelector('.search-input');
+                if (searchInput) searchInput.focus();
+            }, { description: '搜索' });
+
+            window.KeyboardManager.register('ctrl+b', () => {
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar) sidebar.classList.toggle('collapsed');
+            }, { description: '切换侧边栏' });
+
+            window.KeyboardManager.register('ctrl+shift+d', () => {
+                if (window.ThemeManager) ThemeManager.toggle();
+            }, { description: '切换主题' });
+        })();
+
+        // ============================================
+        // 剪贴板管理器
+        // ============================================
+        (function() {
+            'use strict';
+
+            class ClipboardManager {
+                constructor() {}
+
+                async copy(text) {
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        if (window.NotificationSystem) {
+                            window.NotificationSystem.success('已复制到剪贴板');
+                        }
+                        return true;
+                    } catch (error) {
+                        return this.fallbackCopy(text);
+                    }
+                }
+
+                fallbackCopy(text) {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    textarea.style.cssText = 'position: fixed; left: -9999px;';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+
+                    try {
+                        document.execCommand('copy');
+                        if (window.NotificationSystem) {
+                            window.NotificationSystem.success('已复制到剪贴板');
+                        }
+                        return true;
+                    } catch (error) {
+                        console.error('Copy failed:', error);
+                        return false;
+                    } finally {
+                        textarea.remove();
+                    }
+                }
+
+                async paste() {
+                    try {
+                        return await navigator.clipboard.readText();
+                    } catch (error) {
+                        console.error('Paste failed:', error);
+                        return null;
+                    }
+                }
+
+                async copyImage(imageUrl) {
+                    try {
+                        const response = await fetch(imageUrl);
+                        const blob = await response.blob();
+                        await navigator.clipboard.write([
+                            new ClipboardItem({ [blob.type]: blob })
+                        ]);
+                        return true;
+                    } catch (error) {
+                        console.error('Copy image failed:', error);
+                        return false;
+                    }
+                }
+            }
+
+            window.ClipboardManager = new ClipboardManager();
+        })();
+
+        // ============================================
+        // 文件下载管理器
+        // ============================================
+        (function() {
+            'use strict';
+
+            class DownloadManager {
+                constructor() {}
+
+                download(content, filename, mimeType = 'text/plain') {
+                    const blob = new Blob([content], { type: mimeType });
+                    const url = URL.createObjectURL(blob);
+                    this.downloadUrl(url, filename);
+                    URL.revokeObjectURL(url);
+                }
+
+                downloadUrl(url, filename) {
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = filename;
+                    link.style.display = 'none';
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                }
+
+                async downloadFromApi(url, filename, options = {}) {
+                    try {
+                        const response = await fetch(url, options);
+                        if (!response.ok) throw new Error('Download failed');
+
+                        const blob = await response.blob();
+                        const downloadUrl = URL.createObjectURL(blob);
+                        this.downloadUrl(downloadUrl, filename);
+                        URL.revokeObjectURL(downloadUrl);
+
+                        return true;
+                    } catch (error) {
+                        console.error('Download failed:', error);
+                        return false;
+                    }
+                }
+
+                downloadJSON(data, filename) {
+                    const content = JSON.stringify(data, null, 2);
+                    this.download(content, filename, 'application/json');
+                }
+
+                downloadCSV(data, filename) {
+                    if (Array.isArray(data) && data.length > 0) {
+                        const headers = Object.keys(data[0]);
+                        const rows = data.map(row => headers.map(h => row[h]).join(','));
+                        const content = [headers.join(','), ...rows].join('\n');
+                        this.download(content, filename, 'text/csv');
+                    }
+                }
+            }
+
+            window.DownloadManager = new DownloadManager();
+        })();
+
+        // ============================================
+        // 全局初始化完成
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('[AGI Framework] All modules initialized');
+            console.log('[AGI Framework] Version: 2.0.0');
+            console.log('[AGI Framework] Build: 2024-01-15');
+
+            if (window.WebSocketManager && typeof window.WebSocketManager.connect === 'function') {
+                window.WebSocketManager.connect();
+            }
+
+            if (window.PerformanceMonitor) {
+                window.PerformanceMonitor.mark('app_ready');
+            }
+        });
+    </script>
+
+    <!-- 额外的内联样式 -->
+    <style>
+        /* 路由过渡动画 */
+        .route-transitioning {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* 404页面样式 */
+        .not-found-page {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+            text-align: center;
+        }
+
+        .not-found-content h1 {
+            font-size: 120px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1;
+        }
+
+        .not-found-content p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin: 16px 0;
+        }
+
+        .not-found-path {
+            font-family: monospace;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        /* 通知动画 */
+        .notification.show {
+            transform: translateX(0) !important;
+            opacity: 1 !important;
+        }
+
+        /* 模态框动画 */
+        .modal-overlay {
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .notification-container {
+                right: 10px;
+                left: 10px;
+            }
+
+            .notification {
+                min-width: auto;
+                max-width: none;
+            }
+        }
+
+        /* 暗色主题变量 */
+        [data-theme="dark"] {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --border-color: #2d3748;
+            --card-bg: #1e1e30;
+            --card-bg-secondary: #252540;
+            --hover-bg: #2d2d4a;
+            --input-bg: #252540;
+        }
+
+        /* 浅色主题变量 */
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --border-color: #e0e0e0;
+            --card-bg: #ffffff;
+            --card-bg-secondary: #f9f9f9;
+            --hover-bg: #f0f0f0;
+            --input-bg: #ffffff;
+        }
+
+        /* 全局加载动画增强 */
+        .loading-screen {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+
+        .loading-bar-fill {
+            background: linear-gradient(90deg, #3b82f6, #10b981, #8b5cf6);
+            background-size: 200% 100%;
+            animation: loading-gradient 2s ease infinite;
+        }
+
+        @keyframes loading-gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* 侧边栏动画 */
+        .sidebar {
+            transition: transform 0.3s ease, width 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar.collapsed .sidebar-content {
+            opacity: 0;
+        }
+
+        /* 导航栏阴影 */
+        .top-navbar {
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        /* 卡片悬停效果 */
+        .stat-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        /* 按钮波纹效果 */
+        .btn {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s;
+        }
+
+        .btn:active::after {
+            width: 200px;
+            height: 200px;
+        }
+
+        /* 滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* 工具提示 */
+        [data-tooltip] {
+            position: relative;
+        }
+
+        [data-tooltip]::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 6px 12px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s;
+            z-index: 1000;
+        }
+
+        [data-tooltip]:hover::before {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(-4px);
+        }
+
+        /* 骨架屏动画 */
+        .skeleton {
+            background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--card-bg) 50%, var(--bg-secondary) 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+        }
+
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* 拖拽指示器 */
+        .drag-handle {
+            cursor: grab;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+
+        /* 焦点可见性 */
+        :focus-visible {
+            outline: 2px solid var(--training-primary, #3b82f6);
+            outline-offset: 2px;
+        }
+
+        /* 打印样式 */
+        @media print {
+            .sidebar,
+            .top-navbar,
+            .notification-container,
+            .modal-overlay {
+                display: none !important;
+            }
+
+            .main-content {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+        }
+
+        /* 高对比度模式 */
+        @media (prefers-contrast: high) {
+            :root {
+                --border-color: #000;
+                --text-secondary: #333;
+            }
+        }
+
+        /* 减少动画模式 */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+
+    <!-- 额外的脚本模块 -->
+    <script>
+        // ============================================
+        // 用户偏好设置管理
+        // ============================================
+        (function() {
+            'use strict';
+
+            class UserPreferences {
+                constructor() {
+                    this.preferences = this.loadPreferences();
+                }
+
+                loadPreferences() {
+                    try {
+                        const stored = localStorage.getItem('agi_preferences');
+                        return stored ? JSON.parse(stored) : this.getDefaultPreferences();
+                    } catch (e) {
+                        return this.getDefaultPreferences();
+                    }
+                }
+
+                getDefaultPreferences() {
+                    return {
+                        theme: 'light',
+                        language: 'zh-CN',
+                        sidebarCollapsed: false,
+                        notifications: {
+                            enabled: true,
+                            sound: true,
+                            desktop: false
+                        },
+                        editor: {
+                            fontSize: 14,
+                            tabSize: 4,
+                            wordWrap: true,
+                            lineNumbers: true
+                        },
+                        dashboard: {
+                            layout: 'grid',
+                            widgets: ['stats', 'charts', 'activity', 'notifications']
+                        }
+                    };
+                }
+
+                get(key) {
+                    if (key) {
+                        return key.split('.').reduce((obj, k) => obj?.[k], this.preferences);
+                    }
+                    return { ...this.preferences };
+                }
+
+                set(key, value) {
+                    const keys = key.split('.');
+                    let current = this.preferences;
+                    for (let i = 0; i < keys.length - 1; i++) {
+                        if (!(keys[i] in current)) {
+                            current[keys[i]] = {};
+                        }
+                        current = current[keys[i]];
+                    }
+                    current[keys[keys.length - 1]] = value;
+                    this.save();
+                }
+
+                save() {
+                    try {
+                        localStorage.setItem('agi_preferences', JSON.stringify(this.preferences));
+                    } catch (e) {
+                        console.error('Failed to save preferences:', e);
+                    }
+                }
+
+                reset() {
+                    this.preferences = this.getDefaultPreferences();
+                    this.save();
+                }
+            }
+
+            window.UserPreferences = new UserPreferences();
+        })();
+
+        // ============================================
+        // 国际化管理器
+        // ============================================
+        (function() {
+            'use strict';
+
+            class I18nManager {
+                constructor() {
+                    this.currentLanguage = 'zh-CN';
+                    this.translations = new Map();
+                    this.fallbackLanguage = 'en';
+                    this.init();
+                }
+
+                init() {
+                    this.loadLanguage('zh-CN');
+                    this.loadLanguage('en');
+                    const saved = localStorage.getItem('agi_language');
+                    if (saved) {
+                        this.setLanguage(saved);
+                    }
+                }
+
+                loadLanguage(lang) {
+                    const translations = {
+                        'zh-CN': {
+                            'app.name': 'AGI 统一框架',
+                            'nav.dashboard': '仪表盘',
+                            'nav.chat': '智能对话',
+                            'nav.models': '模型管理',
+                            'nav.training': '训练中心',
+                            'nav.settings': '系统设置',
+                            'nav.logout': '退出登录',
+                            'search.placeholder': '搜索模型、工作流、设置...',
+                            'btn.refresh': '刷新',
+                            'btn.add': '新建',
+                            'btn.save': '保存',
+                            'btn.cancel': '取消',
+                            'btn.confirm': '确认',
+                            'btn.delete': '删除',
+                            'status.online': '系统在线',
+                            'status.offline': '系统离线',
+                            'notif.title': '通知',
+                            'notif.markAllRead': '全部已读',
+                            'notif.viewAll': '查看全部通知',
+                            'user.profile': '个人资料',
+                            'user.settings': '用户设置',
+                            'user.language': '语言设置',
+                            'menu.main': '主要功能',
+                            'menu.models': '模型管理',
+                            'menu.aiSystems': 'AI系统',
+                            'menu.generation': '内容生成',
+                            'menu.advanced': '高级功能',
+                            'menu.system': '系统管理'
+                        },
+                        'en': {
+                            'app.name': 'AGI Unified Framework',
+                            'nav.dashboard': 'Dashboard',
+                            'nav.chat': 'AI Chat',
+                            'nav.models': 'Model Manager',
+                            'nav.training': 'Training',
+                            'nav.settings': 'Settings',
+                            'nav.logout': 'Logout',
+                            'search.placeholder': 'Search models, workflows, settings...',
+                            'btn.refresh': 'Refresh',
+                            'btn.add': 'Add New',
+                            'btn.save': 'Save',
+                            'btn.cancel': 'Cancel',
+                            'btn.confirm': 'Confirm',
+                            'btn.delete': 'Delete',
+                            'status.online': 'System Online',
+                            'status.offline': 'System Offline',
+                            'notif.title': 'Notifications',
+                            'notif.markAllRead': 'Mark All Read',
+                            'notif.viewAll': 'View All Notifications',
+                            'user.profile': 'Profile',
+                            'user.settings': 'User Settings',
+                            'user.language': 'Language',
+                            'menu.main': 'Main Features',
+                            'menu.models': 'Model Management',
+                            'menu.aiSystems': 'AI Systems',
+                            'menu.generation': 'Content Generation',
+                            'menu.advanced': 'Advanced Features',
+                            'menu.system': 'System Management'
+                        }
+                    };
+                    this.translations.set(lang, translations[lang] || {});
+                }
+
+                setLanguage(lang) {
+                    if (!this.translations.has(lang)) {
+                        this.loadLanguage(lang);
+                    }
+                    this.currentLanguage = lang;
+                    localStorage.setItem('agi_language', lang);
+                    this.updateDOM();
+                }
+
+                get(key, params = {}) {
+                    let translation = this.translations.get(this.currentLanguage)?.[key];
+                    if (!translation) {
+                        translation = this.translations.get(this.fallbackLanguage)?.[key];
+                    }
+                    if (!translation) {
+                        return key;
+                    }
+                    Object.entries(params).forEach(([k, v]) => {
+                        translation = translation.replace(new RegExp(`\\{${k}\\}`, 'g'), v);
+                    });
+                    return translation;
+                }
+
+                updateDOM() {
+                    document.querySelectorAll('[data-i18n]').forEach(el => {
+                        const key = el.getAttribute('data-i18n');
+                        el.textContent = this.get(key);
+                    });
+                    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                        const key = el.getAttribute('data-i18n-placeholder');
+                        el.placeholder = this.get(key);
+                    });
+                    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+                        const key = el.getAttribute('data-i18n-title');
+                        el.title = this.get(key);
+                    });
+                }
+
+                getLanguage() {
+                    return this.currentLanguage;
+                }
+
+                getAvailableLanguages() {
+                    return [
+                        { code: 'zh-CN', name: '简体中文', flag: '🇨🇳' },
+                        { code: 'en', name: 'English', flag: '🇺🇸' }
+                    ];
+                }
+            }
+
+            window.I18nManager = new I18nManager();
+        })();
+
+        // ============================================
+        // 本地存储管理器
+        // ============================================
+        (function() {
+            'use strict';
+
+            class StorageManager {
+                constructor() {
+                    this.prefix = 'agi_';
+                }
+
+                get(key, defaultValue = null) {
+                    try {
+                        const item = localStorage.getItem(this.prefix + key);
+                        if (item === null) return defaultValue;
+                        return JSON.parse(item);
+                    } catch (e) {
+                        return defaultValue;
+                    }
+                }
+
+                set(key, value) {
+                    try {
+                        localStorage.setItem(this.prefix + key, JSON.stringify(value));
+                        return true;
+                    } catch (e) {
+                        console.error('Storage set failed:', e);
+                        return false;
+                    }
+                }
+
+                remove(key) {
+                    localStorage.removeItem(this.prefix + key);
+                }
+
+                clear() {
+                    Object.keys(localStorage)
+                        .filter(key => key.startsWith(this.prefix))
+                        .forEach(key => localStorage.removeItem(key));
+                }
+
+                keys() {
+                    return Object.keys(localStorage)
+                        .filter(key => key.startsWith(this.prefix))
+                        .map(key => key.slice(this.prefix.length));
+                }
+
+                size() {
+                    return this.keys().length;
+                }
+
+                getUsedSpace() {
+                    let total = 0;
+                    for (const key of Object.keys(localStorage)) {
+                        if (key.startsWith(this.prefix)) {
+                            total += localStorage.getItem(key).length * 2;
+                        }
+                    }
+                    return total;
+                }
+
+                getSession(key, defaultValue = null) {
+                    try {
+                        const item = sessionStorage.getItem(this.prefix + key);
+                        if (item === null) return defaultValue;
+                        return JSON.parse(item);
+                    } catch (e) {
+                        return defaultValue;
+                    }
+                }
+
+                setSession(key, value) {
+                    try {
+                        sessionStorage.setItem(this.prefix + key, JSON.stringify(value));
+                        return true;
+                    } catch (e) {
+                        return false;
+                    }
+                }
+            }
+
+            window.StorageManager = new StorageManager();
+        })();
+
+        // ============================================
+        // API客户端增强
+        // ============================================
+        (function() {
+            'use strict';
+
+            class APIClient {
+                constructor() {
+                    this.baseURL = '/api/v1';
+                    this.timeout = 30000;
+                    this.headers = {
+                        'Content-Type': 'application/json'
+                    };
+                    this.interceptors = {
+                        request: [],
+                        response: []
+                    };
+                }
+
+                addRequestInterceptor(fn) {
+                    this.interceptors.request.push(fn);
+                }
+
+                addResponseInterceptor(fn) {
+                    this.interceptors.response.push(fn);
+                }
+
+                async request(method, path, options = {}) {
+                    let config = {
+                        method,
+                        headers: { ...this.headers, ...options.headers },
+                        body: options.body ? JSON.stringify(options.body) : undefined
+                    };
+
+                    for (const interceptor of this.interceptors.request) {
+                        config = await interceptor(config);
+                    }
+
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), options.timeout || this.timeout);
+                    config.signal = controller.signal;
+
+                    try {
+                        const response = await fetch(this.baseURL + path, config);
+                        clearTimeout(timeoutId);
+
+                        let data;
+                        const contentType = response.headers.get('content-type');
+                        if (contentType?.includes('application/json')) {
+                            data = await response.json();
+                        } else {
+                            data = await response.text();
+                        }
+
+                        for (const interceptor of this.interceptors.response) {
+                            data = await interceptor(response, data);
+                        }
+
+                        if (!response.ok) {
+                            throw new APIError(response.status, data.message || 'Request failed', data);
+                        }
+
+                        return data;
+                    } catch (error) {
+                        clearTimeout(timeoutId);
+                        if (error.name === 'AbortError') {
+                            throw new APIError(0, 'Request timeout');
+                        }
+                        throw error;
+                    }
+                }
+
+                get(path, options = {}) {
+                    return this.request('GET', path, options);
+                }
+
+                post(path, body, options = {}) {
+                    return this.request('POST', path, { ...options, body });
+                }
+
+                put(path, body, options = {}) {
+                    return this.request('PUT', path, { ...options, body });
+                }
+
+                patch(path, body, options = {}) {
+                    return this.request('PATCH', path, { ...options, body });
+                }
+
+                delete(path, options = {}) {
+                    return this.request('DELETE', path, options);
+                }
+
+                setAuthToken(token) {
+                    this.headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                clearAuthToken() {
+                    delete this.headers['Authorization'];
+                }
+            }
+
+            class APIError extends Error {
+                constructor(status, message, data = null) {
+                    super(message);
+                    this.name = 'APIError';
+                    this.status = status;
+                    this.data = data;
+                }
+            }
+
+            window.APIClient = new APIClient();
+            window.APIError = APIError;
+        })();
+
+        // ============================================
+        // 工具函数集合
+        // ============================================
+        (function() {
+            'use strict';
+
+            window.Utils = {
+                debounce(fn, delay) {
+                    let timeout;
+                    return function(...args) {
+                        clearTimeout(timeout);
+                        timeout = setTimeout(() => fn.apply(this, args), delay);
+                    };
+                },
+
+                throttle(fn, limit) {
+                    let inThrottle;
+                    return function(...args) {
+                        if (!inThrottle) {
+                            fn.apply(this, args);
+                            inThrottle = true;
+                            setTimeout(() => inThrottle = false, limit);
+                        }
+                    };
+                },
+
+                formatBytes(bytes, decimals = 2) {
+                    if (bytes === 0) return '0 Bytes';
+                    const k = 1024;
+                    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+                    const i = Math.floor(Math.log(bytes) / Math.log(k));
+                    return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i];
+                },
+
+                formatNumber(num, decimals = 2) {
+                    if (typeof num !== 'number' || isNaN(num)) return '--';
+                    return num.toLocaleString('zh-CN', { maximumFractionDigits: decimals });
+                },
+
+                formatDate(date, format = 'YYYY-MM-DD HH:mm:ss') {
+                    const d = new Date(date);
+                    const year = d.getFullYear();
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    const hours = String(d.getHours()).padStart(2, '0');
+                    const minutes = String(d.getMinutes()).padStart(2, '0');
+                    const seconds = String(d.getSeconds()).padStart(2, '0');
+                    return format
+                        .replace('YYYY', year)
+                        .replace('MM', month)
+                        .replace('DD', day)
+                        .replace('HH', hours)
+                        .replace('mm', minutes)
+                        .replace('ss', seconds);
+                },
+
+                formatRelativeTime(date) {
+                    const now = new Date();
+                    const d = new Date(date);
+                    const diff = now - d;
+                    const seconds = Math.floor(diff / 1000);
+                    const minutes = Math.floor(seconds / 60);
+                    const hours = Math.floor(minutes / 60);
+                    const days = Math.floor(hours / 24);
+                    if (days > 0) return `${days}天前`;
+                    if (hours > 0) return `${hours}小时前`;
+                    if (minutes > 0) return `${minutes}分钟前`;
+                    return '刚刚';
+                },
+
+                generateId(prefix = 'id') {
+                    return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                },
+
+                sleep(ms) {
+                    return new Promise(resolve => setTimeout(resolve, ms));
+                },
+
+                isObject(obj) {
+                    return obj !== null && typeof obj === 'object' && !Array.isArray(obj);
+                },
+
+                deepClone(obj) {
+                    if (obj === null || typeof obj !== 'object') return obj;
+                    if (Array.isArray(obj)) return obj.map(item => this.deepClone(item));
+                    const cloned = {};
+                    for (const key in obj) {
+                        if (obj.hasOwnProperty(key)) {
+                            cloned[key] = this.deepClone(obj[key]);
+                        }
+                    }
+                    return cloned;
+                },
+
+                deepMerge(target, source) {
+                    if (!this.isObject(target) || !this.isObject(source)) return source;
+                    const result = { ...target };
+                    for (const key in source) {
+                        if (source.hasOwnProperty(key)) {
+                            result[key] = this.isObject(source[key]) && this.isObject(result[key])
+                                ? this.deepMerge(result[key], source[key])
+                                : source[key];
+                        }
+                    }
+                    return result;
+                },
+
+                queryString(obj) {
+                    return Object.entries(obj)
+                        .filter(([, value]) => value !== undefined && value !== null)
+                        .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+                        .join('&');
+                },
+
+                parseQueryString(str) {
+                    return Object.fromEntries(
+                        new URLSearchParams(str).entries()
+                    );
+                },
+
+                truncate(str, length, suffix = '...') {
+                    if (str.length <= length) return str;
+                    return str.slice(0, length) + suffix;
+                },
+
+                escapeHtml(str) {
+                    const div = document.createElement('div');
+                    div.textContent = str;
+                    return div.innerHTML;
+                },
+
+                unescapeHtml(str) {
+                    const div = document.createElement('div');
+                    div.innerHTML = str;
+                    return div.textContent;
+                }
+            };
+        })();
+
+        console.log('[AGI Framework] All utility modules loaded');
+        console.log('[AGI Framework] Total modules: 15+');
+        console.log('[AGI Framework] Ready for production use');
+    </script>
+    <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
+    </script>
+</body>
+</html>

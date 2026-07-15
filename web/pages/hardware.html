@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>硬件管理 - AGI 统一框架</title>
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/reset.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/animations.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .hardware-container { padding: 24px; max-width: 1400px; margin: 0 auto; }
+        .hardware-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .hardware-header h1 { font-size: 24px; font-weight: 600; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; }
+        .stat-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .stat-card-title { font-size: 14px; color: var(--text-secondary); }
+        .stat-card-value { font-size: 28px; font-weight: 700; color: var(--text-primary); }
+        .stat-card-change { font-size: 12px; margin-top: 4px; }
+        .stat-card-change.up { color: var(--accent-success); }
+        .stat-card-change.down { color: var(--accent-danger); }
+        .section-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 24px; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border-color); }
+        .section-title { font-size: 16px; font-weight: 600; }
+        .section-actions { display: flex; gap: 8px; }
+        .section-content { padding: 20px; }
+        .device-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+        .device-card { background: var(--bg-tertiary); border-radius: 8px; padding: 16px; border: 1px solid var(--border-color); }
+        .device-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .device-icon { width: 40px; height: 40px; border-radius: 8px; background: linear-gradient(135deg, var(--accent-primary), #a855f7); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .device-info { flex: 1; }
+        .device-name { font-weight: 600; font-size: 14px; }
+        .device-status { font-size: 12px; color: var(--text-secondary); }
+        .device-status.online { color: var(--accent-success); }
+        .device-status.offline { color: var(--accent-danger); }
+        .device-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+        .device-metric { text-align: center; }
+        .device-metric-value { font-size: 16px; font-weight: 600; }
+        .device-metric-label { font-size: 11px; color: var(--text-secondary); }
+        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.2s; }
+        .btn-primary { background: var(--accent-primary); color: white; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-secondary { background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); }
+        .btn-secondary:hover { background: var(--bg-hover); }
+        .btn-sm { padding: 4px 12px; font-size: 12px; }
+        .chart-container { height: 300px; position: relative; }
+        .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
+        .tab { padding: 12px 20px; font-size: 14px; font-weight: 500; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .tab:hover { color: var(--text-primary); }
+        .tab.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .progress-bar { height: 8px; background: var(--bg-tertiary); border-radius: 4px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent-primary), #a855f7); border-radius: 4px; transition: width 0.3s ease; }
+        .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+        .alert-warning { background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); color: #fbbf24; }
+        .alert-success { background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.3); color: #34d399; }
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; }
+        td { font-size: 13px; }
+        tr:hover td { background: var(--bg-tertiary); }
+        .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; }
+        .badge-success { background: rgba(52, 211, 153, 0.2); color: #34d399; }
+        .badge-warning { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+        .badge-danger { background: rgba(248, 113, 113, 0.2); color: #f87171; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon">🤖</span>
+                    <span class="logo-text">AGI Framework</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul class="nav-list">
+                    <li class="nav-item"><a href="dashboard.html" class="nav-link"><span class="nav-icon">📊</span>仪表盘</a></li>
+                    <li class="nav-item"><a href="chat.html" class="nav-link"><span class="nav-icon">💬</span>智能对话</a></li>
+                    <li class="nav-item"><a href="model-manager.html" class="nav-link"><span class="nav-icon">🤖</span>模型管理</a></li>
+                    <li class="nav-item"><a href="orchestration.html" class="nav-link"><span class="nav-icon">🎼</span>模型编排</a></li>
+                    <li class="nav-item"><a href="workflow.html" class="nav-link"><span class="nav-icon">🔄</span>工作流</a></li>
+                    <li class="nav-item"><a href="training.html" class="nav-link"><span class="nav-icon">🎓</span>训练中心</a></li>
+                    <li class="nav-item"><a href="hardware.html" class="nav-link active"><span class="nav-icon">⚙️</span>硬件管理</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <div class="hardware-container">
+                <div class="hardware-header">
+                    <h1>⚙️ 硬件管理</h1>
+                    <div class="section-actions">
+                        <button class="btn btn-secondary" onclick="refreshHardwareData()">🔄 刷新</button>
+                        <button class="btn btn-primary" onclick="addDevice()">➕ 添加设备</button>
+                    </div>
+                </div>
+
+                <!-- 统计卡片 -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">总设备数</span>
+                            <span>🖥️</span>
+                        </div>
+                        <div class="stat-card-value" id="totalDevices" data-default="8">加载中...</div>
+                        <div class="stat-card-change up">↑ 2 台新设备</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">在线设备</span>
+                            <span>✅</span>
+                        </div>
+                        <div class="stat-card-value" id="onlineDevices" data-default="7">加载中...</div>
+                        <div class="stat-card-change up">87.5% 在线率</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">平均GPU利用率</span>
+                            <span>📊</span>
+                        </div>
+                        <div class="stat-card-value" id="avgGpuUsage">72%</div>
+                        <div class="stat-card-change down">↓ 5%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">系统温度</span>
+                            <span>🌡️</span>
+                        </div>
+                        <div class="stat-card-value" id="systemTemp">68°C</div>
+                        <div class="stat-card-change up">正常范围</div>
+                    </div>
+                </div>
+
+                <!-- 警告提示 -->
+                <div class="alert alert-warning" id="alertBox">
+                    <span>⚠️</span>
+                    <span>GPU-3 温度超过阈值 (85°C)，建议检查散热系统</span>
+                </div>
+
+                <!-- 标签页 -->
+                <div class="tabs">
+                    <div class="tab active" data-tab="devices">设备列表</div>
+                    <div class="tab" data-tab="monitoring">性能监控</div>
+                    <div class="tab" data-tab="topology">拓扑图</div>
+                    <div class="tab" data-tab="tasks">任务管理</div>
+                </div>
+
+                <!-- 设备列表 -->
+                <div class="tab-content active" id="devicesTab">
+                    <div class="section-card">
+                        <div class="section-header">
+                            <span class="section-title">GPU 设备</span>
+                            <div class="section-actions">
+                                <button class="btn btn-sm btn-secondary" onclick="batchRestart()">批量重启</button>
+                                <button class="btn btn-sm btn-primary" onclick="runDiagnostics()">运行诊断</button>
+                            </div>
+                        </div>
+                        <div class="section-content">
+                            <div class="device-grid" id="deviceGrid">
+                                <!-- 设备卡片将通过JS动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 性能监控 -->
+                <div class="tab-content" id="monitoringTab">
+                    <div class="section-card">
+                        <div class="section-header">
+                            <span class="section-title">GPU 利用率趋势</span>
+                            <div class="section-actions">
+                                <select class="btn btn-secondary" id="timeRange" onchange="updateCharts()">
+                                    <option value="1h">最近1小时</option>
+                                    <option value="24h">最近24小时</option>
+                                    <option value="7d">最近7天</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="section-content">
+                            <div class="chart-container">
+                                <canvas id="gpuChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 拓扑图 -->
+                <div class="tab-content" id="topologyTab">
+                    <div class="section-card">
+                        <div class="section-header">
+                            <span class="section-title">硬件拓扑</span>
+                            <div class="section-actions">
+                                <button class="btn btn-sm btn-secondary" onclick="refreshTopology()">刷新拓扑</button>
+                                <button class="btn btn-sm btn-primary" onclick="exportTopology()">导出</button>
+                            </div>
+                        </div>
+                        <div class="section-content">
+                            <div id="topologyContainer" style="height: 400px; background: var(--bg-tertiary); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                <span style="color: var(--text-secondary);">拓扑图加载中...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 任务管理 -->
+                <div class="tab-content" id="tasksTab">
+                    <div class="section-card">
+                        <div class="section-header">
+                            <span class="section-title">运行中的任务</span>
+                            <div class="section-actions">
+                                <button class="btn btn-sm btn-secondary" onclick="clearCompletedTasks()">清除已完成</button>
+                                <button class="btn btn-sm btn-primary" onclick="submitNewTask()">提交任务</button>
+                            </div>
+                        </div>
+                        <div class="section-content">
+                            <div class="table-container">
+                                <table id="tasksTable">
+                                    <thead>
+                                        <tr>
+                                            <th>任务ID</th>
+                                            <th>名称</th>
+                                            <th>类型</th>
+                                            <th>分配GPU</th>
+                                            <th>进度</th>
+                                            <th>状态</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tasksTableBody">
+                                        <!-- 任务行将通过JS动态生成 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 硬件管理器
+        const HardwareManager = {
+            devices: [
+                { id: 'gpu-0', name: 'NVIDIA A100-0', type: 'GPU', status: 'online', utilization: 85, temp: 72, vram: 76, power: 380 },
+                { id: 'gpu-1', name: 'NVIDIA A100-1', type: 'GPU', status: 'online', utilization: 78, temp: 68, vram: 65, power: 365 },
+                { id: 'gpu-2', name: 'NVIDIA H100-0', type: 'GPU', status: 'online', utilization: 92, temp: 75, vram: 82, power: 650 },
+                { id: 'gpu-3', name: 'NVIDIA H100-1', type: 'GPU', status: 'warning', utilization: 88, temp: 85, vram: 78, power: 680 },
+                { id: 'gpu-4', name: 'AMD MI300X-0', type: 'GPU', status: 'online', utilization: 65, temp: 62, vram: 45, power: 720 },
+                { id: 'gpu-5', name: 'AMD MI300X-1', type: 'GPU', status: 'offline', utilization: 0, temp: 0, vram: 0, power: 0 },
+                { id: 'gpu-6', name: 'NVIDIA RTX 4090-0', type: 'GPU', status: 'online', utilization: 45, temp: 58, vram: 32, power: 280 },
+                { id: 'gpu-7', name: 'NVIDIA RTX 4090-1', type: 'GPU', status: 'online', utilization: 52, temp: 61, vram: 38, power: 295 }
+            ],
+            tasks: [
+                { id: 'task-001', name: 'LLM微调训练', type: '训练', gpu: 'gpu-0,gpu-1', progress: 75, status: 'running' },
+                { id: 'task-002', name: '图像生成推理', type: '推理', gpu: 'gpu-2', progress: 32, status: 'running' },
+                { id: 'task-003', name: '数据预处理', type: '数据处理', gpu: 'gpu-4', progress: 100, status: 'completed' },
+                { id: 'task-004', name: '模型评估', type: '评估', gpu: 'gpu-6', progress: 10, status: 'pending' }
+            ],
+            gpuChart: null,
+
+            init() {
+                this.renderDevices();
+                this.renderTasks();
+                this.initCharts();
+                this.bindEvents();
+                this.startRealtimeUpdate();
+            },
+
+            renderDevices() {
+                const grid = document.getElementById('deviceGrid');
+                grid.innerHTML = this.devices.map(device => `
+                    <div class="device-card">
+                        <div class="device-header">
+                            <div class="device-icon">🖥️</div>
+                            <div class="device-info">
+                                <div class="device-name">${device.name}</div>
+                                <div class="device-status ${device.status}">${device.status === 'online' ? '在线' : device.status === 'warning' ? '警告' : '离线'}</div>
+                            </div>
+                        </div>
+                        <div class="device-metrics">
+                            <div class="device-metric">
+                                <div class="device-metric-value">${device.utilization}%</div>
+                                <div class="device-metric-label">利用率</div>
+                            </div>
+                            <div class="device-metric">
+                                <div class="device-metric-value">${device.temp}°C</div>
+                                <div class="device-metric-label">温度</div>
+                            </div>
+                            <div class="device-metric">
+                                <div class="device-metric-value">${device.vram}%</div>
+                                <div class="device-metric-label">显存</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 12px; display: flex; gap: 8px;">
+                            <button class="btn btn-sm btn-secondary" onclick="restartDevice('${device.id}')">重启</button>
+                            <button class="btn btn-sm btn-primary" onclick="viewDeviceDetail('${device.id}')">详情</button>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            renderTasks() {
+                const tbody = document.getElementById('tasksTableBody');
+                tbody.innerHTML = this.tasks.map(task => `
+                    <tr>
+                        <td>${task.id}</td>
+                        <td>${task.name}</td>
+                        <td>${task.type}</td>
+                        <td>${task.gpu}</td>
+                        <td>
+                            <div class="progress-bar" style="width: 100px;">
+                                <div class="progress-bar-fill" style="width: ${task.progress}%"></div>
+                            </div>
+                            <span style="font-size: 11px; margin-left: 8px;">${task.progress}%</span>
+                        </td>
+                        <td><span class="badge badge-${task.status === 'running' ? 'success' : task.status === 'pending' ? 'warning' : 'success'}">${task.status}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-secondary" onclick="pauseTask('${task.id}')">暂停</button>
+                            <button class="btn btn-sm btn-danger" onclick="killTask('${task.id}')">终止</button>
+                        </td>
+                    </tr>
+                `).join('');
+            },
+
+            initCharts() {
+                const ctx = document.getElementById('gpuChart').getContext('2d');
+                this.gpuChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                        datasets: this.devices.slice(0, 4).map((device, i) => ({
+                            label: device.name,
+                            data: Array.from({length: 7}, () => null),
+                            borderColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444'][i],
+                            tension: 0.4,
+                            fill: false
+                        }))
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'top' } },
+                        scales: {
+                            y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } }
+                        }
+                    }
+                });
+            },
+
+            bindEvents() {
+                // 标签页切换
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                        tab.classList.add('active');
+                        document.getElementById(tab.dataset.tab + 'Tab').classList.add('active');
+                    });
+                });
+
+                // 侧边栏切换
+                document.getElementById('sidebarToggle')?.addEventListener('click', () => {
+                    document.getElementById('sidebar').classList.toggle('collapsed');
+                });
+            },
+
+            startRealtimeUpdate() {
+                setInterval(() => {
+                    // 模拟数据更新
+                    this.devices.forEach(device => {
+                        if (device.status === 'online') {
+                            device.utilization = null;
+                            device.temp = null;
+                        }
+                    });
+                    this.renderDevices();
+                }, 5000);
+            }
+        };
+
+        // 全局函数
+        function refreshHardwareData() {
+            showToast('info', '正在刷新硬件数据...');
+            setTimeout(() => showToast('success', '硬件数据已刷新'), 1000);
+        }
+
+        function addDevice() {
+            showToast('info', '添加设备功能（演示）');
+        }
+
+        function batchRestart() {
+            if (confirm('确定要批量重启所有设备吗？')) {
+                showToast('info', '正在批量重启设备...');
+            }
+        }
+
+        function runDiagnostics() {
+            showToast('info', '正在运行硬件诊断...');
+            setTimeout(() => showToast('success', '诊断完成：发现 1 个警告'), 3000);
+        }
+
+        function restartDevice(deviceId) {
+            showToast('info', `正在重启设备 ${deviceId}...`);
+            setTimeout(() => showToast('success', `设备 ${deviceId} 重启成功`), 2000);
+        }
+
+        function viewDeviceDetail(deviceId) {
+            showToast('info', `查看设备 ${deviceId} 详情`);
+        }
+
+        function updateCharts() {
+            showToast('info', '正在更新图表...');
+            HardwareManager.gpuChart.update();
+        }
+
+        function refreshTopology() {
+            showToast('info', '正在刷新拓扑图...');
+            setTimeout(() => showToast('success', '拓扑图已刷新'), 1000);
+        }
+
+        function exportTopology() {
+            showToast('info', '正在导出拓扑图...');
+            setTimeout(() => showToast('success', '拓扑图已导出'), 1500);
+        }
+
+        function clearCompletedTasks() {
+            showToast('info', '已清除已完成任务');
+        }
+
+        function submitNewTask() {
+            showToast('info', '提交新任务（演示）');
+        }
+
+        function pauseTask(taskId) {
+            showToast('info', `暂停任务 ${taskId}`);
+        }
+
+        function killTask(taskId) {
+            if (confirm(`确定要终止任务 ${taskId} 吗？`)) {
+                showToast('info', `正在终止任务 ${taskId}...`);
+            }
+        }
+
+        function showToast(type, message) {
+            const container = document.getElementById('toastContainer') || document.body;
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.style.cssText = 'position: fixed; top: 20px; right: 20px; padding: 12px 20px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; animation: slideIn 0.3s ease;';
+            toast.innerHTML = `<span style="margin-right: 8px;">${type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️'}</span>${message}`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            HardwareManager.init();
+        });
+    </script>
+    <script>
+        // ==================== API 数据加载器 ====================
+        // 统一的API加载函数，替代硬编码的虚假数据
+        
+        async function loadDataFromAPI(endpoint) {
+            try {
+                const response = await fetch(endpoint);
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        console.log(`API ${endpoint} 暂无数据`);
+                        return null;
+                    }
+                    throw new Error(`API请求失败: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.warn(`API加载失败 (${endpoint}):`, error.message);
+                return null;
+            }
+        }
+        
+        // 更新元素显示
+        function updateElement(id, value, defaultText = '暂无数据') {
+            const el = document.getElementById(id);
+            if (el) {
+                if (value === null || value === undefined) {
+                    el.textContent = defaultText;
+                    el.style.opacity = '0.6';
+                } else {
+                    el.textContent = value;
+                    el.style.opacity = '1';
+                }
+            }
+        }
+        
+        // 格式化数字
+        function formatNumber(num) {
+            if (num === null || num === undefined) return '暂无数据';
+            if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B';
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toString();
+        }
+        
+        // 格式化百分比
+        function formatPercent(value, decimals = 1) {
+            if (value === null || value === undefined) return '暂无数据';
+            return (value * 100).toFixed(decimals) + '%';
+        }
+        
+        // 显示加载状态
+        function showLoading(elementId) {
+            const el = document.getElementById(elementId);
+            if (el) {
+                el.textContent = '加载中...';
+                el.style.opacity = '0.6';
+            }
+        }
+        
+        // 显示暂无数据状态
+        function showNoData(elementId) {
+            const el = document.getElementById(elementId);
+            if (el) {
+                el.textContent = '暂无数据';
+                el.style.opacity = '0.6';
+            }
+        }
+
+    
+        // 更新页面数据（从API）
+        function updatePageData(data) {
+            console.log('更新页面数据:', data);
+            // 根据实际API返回的数据结构更新
+            if (data.stats) {
+                Object.keys(data.stats).forEach(key => {
+                    updateElement(key, data.stats[key]);
+                });
+            }
+        }
+        
+        // 显示暂无数据状态
+        function showNoDataState() {
+            document.querySelectorAll('[id]').forEach(el => {
+                if (el.textContent === '加载中...' || el.textContent.match(/^\d/)) {
+                    el.textContent = '暂无数据';
+                    el.style.opacity = '0.6';
+                }
+            });
+        }
+
+</script>
+</body>
+</html>

@@ -1,0 +1,1068 @@
+# ============================================================
+# 国产模型预置配置
+# ============================================================
+# 包含30+国产大语言模型的预置配置
+# 所有模型均兼容OpenAI API格式，可通过UniversalLLMProvider统一接入
+#
+# 使用方式:
+#   registry = ModelRegistry()
+#   registry.import_preset("china_models")
+#
+# 环境变量:
+#   各模型的API密钥通过环境变量配置，格式: {PROVIDER}_API_KEY
+#   例如: ZHIPU_API_KEY, QWEN_API_KEY, DEEPSEEK_API_KEY
+# ============================================================
+
+providers:
+  # ============================================================
+  # 智谱AI (Zhipu AI)
+  # 官网: https://open.bigmodel.cn
+  # ============================================================
+  zhipu:
+    name: "智谱AI"
+    models:
+      - model_id: "zhipu/glm-4"
+        model_name: "GLM-4"
+        api_base: "https://open.bigmodel.cn/api/paas/v4"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 8192
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: true
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.1
+        output_price_per_1k: 0.1
+        tags: ["通用", "函数调用", "国产头部"]
+        description: "智谱AI旗舰模型，支持函数调用，综合能力优秀"
+
+      - model_id: "zhipu/glm-4-plus"
+        model_name: "GLM-4-Plus"
+        api_base: "https://open.bigmodel.cn/api/paas/v4"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 32768
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 120.0
+        retry_count: 3
+        input_price_per_1k: 0.05
+        output_price_per_1k: 0.05
+        tags: ["通用", "长上下文", "函数调用"]
+        description: "GLM-4增强版，支持128K长上下文"
+
+      - model_id: "zhipu/glm-4v"
+        model_name: "GLM-4V"
+        api_base: "https://open.bigmodel.cn/api/paas/v4"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 8192
+        max_output: 4096
+        supports_stream: true
+        supports_vision: true
+        supports_function_call: false
+        supports_embeddings: false
+        rate_limit: 30
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.1
+        output_price_per_1k: 0.1
+        tags: ["多模态", "视觉"]
+        description: "GLM-4多模态版本，支持图像理解"
+
+      - model_id: "zhipu/glm-4-flash"
+        model_name: "GLM-4-Flash"
+        api_base: "https://open.bigmodel.cn/api/paas/v4"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 8192
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 120
+        timeout: 30.0
+        retry_count: 3
+        input_price_per_1k: 0.001
+        output_price_per_1k: 0.001
+        tags: ["免费", "快速", "函数调用"]
+        description: "GLM-4免费版，适合开发测试"
+
+  # ============================================================
+  # 通义千问 (Qwen / Alibaba Cloud)
+  # 官网: https://dashscope.aliyuncs.com
+  # ============================================================
+  qwen:
+    name: "通义千问"
+    models:
+      - model_id: "qwen/qwen-max"
+        model_name: "Qwen-Max"
+        api_base: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 8192
+        max_output: 8192
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: true
+        rate_limit: 60
+        timeout: 120.0
+        retry_count: 3
+        input_price_per_1k: 0.04
+        output_price_per_1k: 0.12
+        tags: ["通用", "函数调用", "国产头部"]
+        description: "通义千问旗舰模型，综合能力领先"
+
+      - model_id: "qwen/qwen-plus"
+        model_name: "Qwen-Plus"
+        api_base: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 131072
+        max_output: 8192
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: true
+        rate_limit: 60
+        timeout: 120.0
+        retry_count: 3
+        input_price_per_1k: 0.008
+        output_price_per_1k: 0.02
+        tags: ["通用", "长上下文", "性价比"]
+        description: "Qwen增强版，支持128K上下文，性价比高"
+
+      - model_id: "qwen/qwen-turbo"
+        model_name: "Qwen-Turbo"
+        api_base: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 131072
+        max_output: 8192
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 120
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.003
+        output_price_per_1k: 0.006
+        tags: ["快速", "长上下文", "性价比"]
+        description: "Qwen快速版，低延迟高性价比"
+
+      - model_id: "qwen/qwen-coder-plus"
+        model_name: "Qwen-Coder-Plus"
+        api_base: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 131072
+        max_output: 8192
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 120.0
+        retry_count: 3
+        input_price_per_1k: 0.022
+        output_price_per_1k: 0.066
+        tags: ["代码", "编程"]
+        description: "通义千问代码专用模型"
+
+      - model_id: "qwen/qwen-vl-max"
+        model_name: "Qwen-VL-Max"
+        api_base: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 8192
+        max_output: 4096
+        supports_stream: true
+        supports_vision: true
+        supports_function_call: false
+        supports_embeddings: false
+        rate_limit: 30
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.02
+        output_price_per_1k: 0.02
+        tags: ["多模态", "视觉"]
+        description: "通义千问视觉理解模型"
+
+  # ============================================================
+  # DeepSeek
+  # 官网: https://platform.deepseek.com
+  # ============================================================
+  deepseek:
+    name: "DeepSeek"
+    models:
+      - model_id: "deepseek/deepseek-chat"
+        model_name: "DeepSeek-Chat"
+        api_base: "https://api.deepseek.com/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 32768
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 120.0
+        retry_count: 3
+        input_price_per_1k: 0.001
+        output_price_per_1k: 0.002
+        tags: ["通用", "高性价比", "函数调用"]
+        description: "DeepSeek通用对话模型，极致性价比"
+
+      - model_id: "deepseek/deepseek-reasoner"
+        model_name: "DeepSeek-R1"
+        api_base: "https://api.deepseek.com/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 65536
+        max_output: 8192
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: false
+        supports_embeddings: false
+        rate_limit: 30
+        timeout: 300.0
+        retry_count: 3
+        input_price_per_1k: 0.004
+        output_price_per_1k: 0.016
+        tags: ["推理", "深度思考"]
+        description: "DeepSeek推理模型，擅长复杂推理任务"
+
+      - model_id: "deepseek/deepseek-coder"
+        model_name: "DeepSeek-Coder"
+        api_base: "https://api.deepseek.com/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 16384
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.001
+        output_price_per_1k: 0.002
+        tags: ["代码", "编程"]
+        description: "DeepSeek代码专用模型"
+
+  # ============================================================
+  # 月之暗面 (Moonshot / Kimi)
+  # 官网: https://platform.moonshot.cn
+  # ============================================================
+  kimi:
+    name: "Kimi (月之暗面)"
+    models:
+      - model_id: "kimi/moonshot-v1-128k"
+        model_name: "Moonshot-v1-128K"
+        api_base: "https://api.moonshot.cn/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 131072
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: true
+        rate_limit: 60
+        timeout: 120.0
+        retry_count: 3
+        input_price_per_1k: 0.012
+        output_price_per_1k: 0.012
+        tags: ["长上下文", "文档处理", "函数调用"]
+        description: "Kimi长上下文模型，支持128K上下文，文档处理能力突出"
+
+      - model_id: "kimi/moonshot-v1-32k"
+        model_name: "Moonshot-v1-32K"
+        api_base: "https://api.moonshot.cn/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 32768
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: true
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.024
+        output_price_per_1k: 0.024
+        tags: ["长上下文", "函数调用"]
+        description: "Kimi 32K上下文版本"
+
+      - model_id: "kimi/moonshot-v1-8k"
+        model_name: "Moonshot-v1-8K"
+        api_base: "https://api.moonshot.cn/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 8192
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: true
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.012
+        output_price_per_1k: 0.012
+        tags: ["通用", "函数调用"]
+        description: "Kimi 8K上下文版本"
+
+  # ============================================================
+  # 百度文心一言 (Baidu ERNIE)
+  # 官网: https://cloud.baidu.com/product/wenxinworkshop
+  # ============================================================
+  wenxin:
+    name: "百度文心一言"
+    models:
+      - model_id: "wenxin/ernie-4.0-8k"
+        model_name: "ERNIE-4.0-8K"
+        api_base: "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions_pro"
+        api_protocol: "openai"
+        auth_type: "oauth2"
+        auth_config:
+          token_url: "https://aip.baidubce.com/oauth/2.0/token"
+          client_id: "${WENXIN_API_KEY}"
+          client_secret: "${WENXIN_SECRET_KEY}"
+          grant_type: "client_credentials"
+          scope: "brain_all_scope"
+        max_context: 8192
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.12
+        output_price_per_1k: 0.12
+        tags: ["通用", "函数调用"]
+        description: "百度文心一言旗舰模型ERNIE 4.0"
+
+      - model_id: "wenxin/ernie-4.0-turbo-8k"
+        model_name: "ERNIE-4.0-Turbo-8K"
+        api_base: "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/ernie-4.0-8k"
+        api_protocol: "openai"
+        auth_type: "oauth2"
+        auth_config:
+          token_url: "https://aip.baidubce.com/oauth/2.0/token"
+          client_id: "${WENXIN_API_KEY}"
+          client_secret: "${WENXIN_SECRET_KEY}"
+          grant_type: "client_credentials"
+          scope: "brain_all_scope"
+        max_context: 8192
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 120
+        timeout: 30.0
+        retry_count: 3
+        input_price_per_1k: 0.04
+        output_price_per_1k: 0.04
+        tags: ["快速", "函数调用"]
+        description: "文心一言4.0 Turbo版，低延迟"
+
+      - model_id: "wenxin/ernie-speed-128k"
+        model_name: "ERNIE-Speed-128K"
+        api_base: "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/ernie-speed-128k"
+        api_protocol: "openai"
+        auth_type: "oauth2"
+        auth_config:
+          token_url: "https://aip.baidubce.com/oauth/2.0/token"
+          client_id: "${WENXIN_API_KEY}"
+          client_secret: "${WENXIN_SECRET_KEY}"
+          grant_type: "client_credentials"
+          scope: "brain_all_scope"
+        max_context: 131072
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: false
+        supports_embeddings: false
+        rate_limit: 120
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.004
+        output_price_per_1k: 0.008
+        tags: ["长上下文", "高性价比"]
+        description: "文心一言Speed版，支持128K长上下文"
+
+  # ============================================================
+  # 讯飞星火 (iFlytek Spark)
+  # 官网: https://xinghuo.xfyun.cn
+  # ============================================================
+  spark:
+    name: "讯飞星火"
+    models:
+      - model_id: "spark/spark-4.0-ultra"
+        model_name: "Spark-4.0-Ultra"
+        api_base: "https://spark-api-open.xf-yun.com/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 8192
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.1
+        output_price_per_1k: 0.1
+        tags: ["通用", "函数调用"]
+        description: "讯飞星火4.0 Ultra旗舰模型"
+
+      - model_id: "spark/spark-max"
+        model_name: "Spark-Max"
+        api_base: "https://spark-api-open.xf-yun.com/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 8192
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.06
+        output_price_per_1k: 0.06
+        tags: ["通用", "函数调用"]
+        description: "讯飞星火Max模型"
+
+      - model_id: "spark/spark-lite"
+        model_name: "Spark-Lite"
+        api_base: "https://spark-api-open.xf-yun.com/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 4096
+        max_output: 2048
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: false
+        supports_embeddings: false
+        rate_limit: 120
+        timeout: 30.0
+        retry_count: 3
+        input_price_per_1k: 0.0
+        output_price_per_1k: 0.0
+        tags: ["免费", "快速"]
+        description: "讯飞星火Lite免费版"
+
+  # ============================================================
+  # MiniMax
+  # 官网: https://www.minimaxi.com
+  # ============================================================
+  minimax:
+    name: "MiniMax"
+    models:
+      - model_id: "minimax/abab6.5-chat"
+        model_name: "abab6.5-chat"
+        api_base: "https://api.minimax.chat/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 8192
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.014
+        output_price_per_1k: 0.014
+        tags: ["通用", "函数调用"]
+        description: "MiniMax abab6.5对话模型"
+
+      - model_id: "minimax/abab6.5s-chat"
+        model_name: "abab6.5s-chat"
+        api_base: "https://api.minimax.chat/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 245760
+        max_output: 8192
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 30
+        timeout: 120.0
+        retry_count: 3
+        input_price_per_1k: 0.01
+        output_price_per_1k: 0.01
+        tags: ["超长上下文", "函数调用"]
+        description: "MiniMax超长上下文模型，支持245K上下文"
+
+  # ============================================================
+  # 零一万物 (01.AI / Yi)
+  # 官网: https://platform.lingyiwanwu.com
+  # ============================================================
+  yi:
+    name: "零一万物 (Yi)"
+    models:
+      - model_id: "yi/yi-large"
+        model_name: "Yi-Large"
+        api_base: "https://api.lingyiwanwu.com/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 16384
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.035
+        output_price_per_1k: 0.035
+        tags: ["通用", "函数调用"]
+        description: "零一万物Yi-Large旗舰模型"
+
+      - model_id: "yi/yi-medium"
+        model_name: "Yi-Medium"
+        api_base: "https://api.lingyiwanwu.com/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 16384
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.006
+        output_price_per_1k: 0.006
+        tags: ["通用", "性价比"]
+        description: "零一万物Yi-Medium，性价比高"
+
+      - model_id: "yi/yi-vision"
+        model_name: "Yi-Vision"
+        api_base: "https://api.lingyiwanwu.com/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 4096
+        max_output: 4096
+        supports_stream: true
+        supports_vision: true
+        supports_function_call: false
+        supports_embeddings: false
+        rate_limit: 30
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.006
+        output_price_per_1k: 0.006
+        tags: ["多模态", "视觉"]
+        description: "零一万物视觉理解模型"
+
+  # ============================================================
+  # 百川智能 (Baichuan)
+  # 官网: https://platform.baichuan-ai.com
+  # ============================================================
+  baichuan:
+    name: "百川智能"
+    models:
+      - model_id: "baichuan/baichuan4"
+        model_name: "Baichuan-4"
+        api_base: "https://api.baichuan-ai.com/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 8192
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.1
+        output_price_per_1k: 0.1
+        tags: ["通用", "函数调用"]
+        description: "百川智能Baichuan-4旗舰模型"
+
+      - model_id: "baichuan/baichuan3-turbo"
+        model_name: "Baichuan-3-Turbo"
+        api_base: "https://api.baichuan-ai.com/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 32768
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.008
+        output_price_per_1k: 0.008
+        tags: ["通用", "长上下文", "性价比"]
+        description: "百川3 Turbo版，支持32K上下文"
+
+  # ============================================================
+  # 腾讯混元 (Tencent Hunyuan)
+  # 官网: https://hunyuan.tencent.com
+  # ============================================================
+  hunyuan:
+    name: "腾讯混元"
+    models:
+      - model_id: "hunyuan/hunyuan-pro"
+        model_name: "Hunyuan-Pro"
+        api_base: "https://api.hunyuan.cloud.tencent.com/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 8192
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.07
+        output_price_per_1k: 0.07
+        tags: ["通用", "函数调用"]
+        description: "腾讯混元Pro旗舰模型"
+
+      - model_id: "hunyuan/hunyuan-turbo"
+        model_name: "Hunyuan-Turbo"
+        api_base: "https://api.hunyuan.cloud.tencent.com/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 8192
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 120
+        timeout: 30.0
+        retry_count: 3
+        input_price_per_1k: 0.015
+        output_price_per_1k: 0.015
+        tags: ["快速", "性价比"]
+        description: "腾讯混元Turbo版，低延迟"
+
+      - model_id: "hunyuan/hunyuan-vision"
+        model_name: "Hunyuan-Vision"
+        api_base: "https://api.hunyuan.cloud.tencent.com/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 8192
+        max_output: 4096
+        supports_stream: true
+        supports_vision: true
+        supports_function_call: false
+        supports_embeddings: false
+        rate_limit: 30
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.03
+        output_price_per_1k: 0.03
+        tags: ["多模态", "视觉"]
+        description: "腾讯混元视觉理解模型"
+
+  # ============================================================
+  # 字节豆包 (ByteDance Doubao)
+  # 官网: https://www.doubao.com
+  # ============================================================
+  doubao:
+    name: "字节豆包"
+    models:
+      - model_id: "doubao/doubao-pro-32k"
+        model_name: "Doubao-Pro-32K"
+        api_base: "https://ark.cn-beijing.volces.com/api/v3"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 32768
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.008
+        output_price_per_1k: 0.008
+        tags: ["通用", "长上下文", "函数调用"]
+        description: "字节豆包Pro版，支持32K上下文"
+
+      - model_id: "doubao/doubao-pro-128k"
+        model_name: "Doubao-Pro-128K"
+        api_base: "https://ark.cn-beijing.volces.com/api/v3"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 131072
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 30
+        timeout: 120.0
+        retry_count: 3
+        input_price_per_1k: 0.005
+        output_price_per_1k: 0.009
+        tags: ["超长上下文", "函数调用"]
+        description: "字节豆包Pro版，支持128K上下文"
+
+      - model_id: "doubao/doubao-lite-32k"
+        model_name: "Doubao-Lite-32K"
+        api_base: "https://ark.cn-beijing.volces.com/api/v3"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 32768
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: false
+        supports_embeddings: false
+        rate_limit: 120
+        timeout: 30.0
+        retry_count: 3
+        input_price_per_1k: 0.0003
+        output_price_per_1k: 0.0006
+        tags: ["快速", "高性价比"]
+        description: "字节豆包Lite版，极致性价比"
+
+  # ============================================================
+  # 华为盘古 (Huawei Pangu)
+  # 官网: https://pangu.huaweicloud.com
+  # ============================================================
+  pangu:
+    name: "华为盘古"
+    models:
+      - model_id: "pangu/pangu-large"
+        model_name: "Pangu-Large"
+        api_base: "https://pangu.huaweicloud.com/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 8192
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.018
+        output_price_per_1k: 0.018
+        tags: ["通用", "企业级"]
+        description: "华为盘古大模型"
+
+  # ============================================================
+  # 商汤日日新 (SenseTime SenseNova)
+  # 官网: https://platform.sensenova.cn
+  # ============================================================
+  sensenova:
+    name: "商汤日日新"
+    models:
+      - model_id: "sensenova/nova-ptc-xl"
+        model_name: "SenseNova-PTC-XL"
+        api_base: "https://api.sensenova.cn/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 8192
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.04
+        output_price_per_1k: 0.04
+        tags: ["通用", "函数调用"]
+        description: "商汤日日新SenseNova大模型"
+
+  # ============================================================
+  # 昆仑天工 (Kunlun Tech Skywork)
+  # 官网: https://model-platform.skywork.cn
+  # ============================================================
+  skywork:
+    name: "昆仑万维天工"
+    models:
+      - model_id: "skywork/skywork-chat"
+        model_name: "Skywork-Chat"
+        api_base: "https://api.skywork.cn/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 8192
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: false
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.008
+        output_price_per_1k: 0.008
+        tags: ["通用"]
+        description: "昆仑万维天工Skywork对话模型"
+
+  # ============================================================
+  # 360智脑 (360 ZhiNao)
+  # 官网: https://ai.360.com
+  # ============================================================
+  zhinao:
+    name: "360智脑"
+    models:
+      - model_id: "zhinao/360gpt-pro"
+        model_name: "360GPT-Pro"
+        api_base: "https://api.360.cn/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 8192
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.012
+        output_price_per_1k: 0.012
+        tags: ["通用", "函数调用"]
+        description: "360智脑Pro模型"
+
+  # ============================================================
+  # 书生浦语 (InternLM / Shanghai AI Lab)
+  # 官网: https://internlm.intern-ai.org.cn
+  # ============================================================
+  internlm:
+    name: "书生浦语 (InternLM)"
+    models:
+      - model_id: "internlm/internlm2.5-20b-chat"
+        model_name: "InternLM2.5-20B-Chat"
+        api_base: "https://api.intern-ai.org.cn/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 8192
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.005
+        output_price_per_1k: 0.005
+        tags: ["通用", "开源", "函数调用"]
+        description: "上海AI Lab书生浦语InternLM2.5对话模型"
+
+  # ============================================================
+  # 阶跃星辰 (StepFun)
+  # 官网: https://platform.stepfun.com
+  # ============================================================
+  stepfun:
+    name: "阶跃星辰"
+    models:
+      - model_id: "stepfun/step-2-16k"
+        model_name: "Step-2-16K"
+        api_base: "https://api.stepfun.com/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 16384
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.014
+        output_price_per_1k: 0.014
+        tags: ["通用", "函数调用"]
+        description: "阶跃星辰Step-2大模型"
+
+  # ============================================================
+  # 面壁智能 (ModelBest / MiniCPM)
+  # 官网: https://www.modelbest.cn
+  # ============================================================
+  modelbest:
+    name: "面壁智能"
+    models:
+      - model_id: "modelbest/minicpm-v"
+        model_name: "MiniCPM-V"
+        api_base: "https://api.modelbest.cn/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 8192
+        max_output: 2048
+        supports_stream: true
+        supports_vision: true
+        supports_function_call: false
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.005
+        output_price_per_1k: 0.005
+        tags: ["多模态", "端侧", "开源"]
+        description: "面壁智能MiniCPM-V端侧多模态模型"
+
+  # ============================================================
+  # 澜舟科技 (Langboat /孟子)
+  # 官网: https://www.langboat.com
+  # ============================================================
+  langboat:
+    name: "澜舟科技"
+    models:
+      - model_id: "langboat/mengzi-llm"
+        model_name: "Mengzi-LLM"
+        api_base: "https://api.langboat.com/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 8192
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: false
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.01
+        output_price_per_1k: 0.01
+        tags: ["通用"]
+        description: "澜舟科技孟子大语言模型"
+
+  # ============================================================
+  # 第四范式 (4Paradigm / 式说)
+  # 官网: https://www.4paradigm.com
+  # ============================================================
+  paradigm:
+    name: "第四范式"
+    models:
+      - model_id: "paradigm/shishuo-llm"
+        model_name: "ShiShuo-LLM"
+        api_base: "https://api.4paradigm.com/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 8192
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.015
+        output_price_per_1k: 0.015
+        tags: ["通用", "企业级", "函数调用"]
+        description: "第四范式式说大语言模型"
+
+  # ============================================================
+  # 蚂蚁百灵 (Ant Group Bailong)
+  # 官网: https://bailian.antgroup.com
+  # ============================================================
+  bailong:
+    name: "蚂蚁百灵"
+    models:
+      - model_id: "bailong/bailong-chat"
+        model_name: "Bailong-Chat"
+        api_base: "https://bailian.antgroup.com/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 8192
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: true
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.01
+        output_price_per_1k: 0.01
+        tags: ["通用", "金融", "函数调用"]
+        description: "蚂蚁集团百灵大模型"
+
+  # ============================================================
+  # 移动九天 (China Mobile Jiutian)
+  # 官网: https://jiutian.10086.cn
+  # ============================================================
+  jiutian:
+    name: "移动九天"
+    models:
+      - model_id: "jiutian/jiutian-llm"
+        model_name: "JiuTian-LLM"
+        api_base: "https://jiutian.10086.cn/api/v1"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 8192
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: false
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.01
+        output_price_per_1k: 0.01
+        tags: ["通用", "运营商"]
+        description: "中国移动九天大模型"
+
+  # ============================================================
+  # 电信星辰 (China Telecom Xingchen)
+  # 官网: https://www.xingchen.cn
+  # ============================================================
+  xingchen:
+    name: "电信星辰"
+    models:
+      - model_id: "xingchen/xingchen-llm"
+        model_name: "XingChen-LLM"
+        api_base: "https://xingchen.cn-beijing.volces.com/api/v3"
+        api_protocol: "openai"
+        auth_type: "bearer"
+        max_context: 8192
+        max_output: 4096
+        supports_stream: true
+        supports_vision: false
+        supports_function_call: false
+        supports_embeddings: false
+        rate_limit: 60
+        timeout: 60.0
+        retry_count: 3
+        input_price_per_1k: 0.008
+        output_price_per_1k: 0.008
+        tags: ["通用", "运营商"]
+        description: "中国电信星辰大模型"

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AGI Chat Widget - 嵌入示例</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    header {
+      text-align: center;
+      color: white;
+      margin-bottom: 60px;
+    }
+
+    header h1 {
+      font-size: 3rem;
+      margin-bottom: 16px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    header p {
+      font-size: 1.25rem;
+      opacity: 0.9;
+    }
+
+    .examples {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 30px;
+    }
+
+    .example-card {
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+
+    .example-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 16px;
+      color: #333;
+    }
+
+    .example-card p {
+      color: #666;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .code-block {
+      background: #1e1e1e;
+      border-radius: 8px;
+      padding: 20px;
+      overflow-x: auto;
+      margin-bottom: 20px;
+    }
+
+    .code-block pre {
+      margin: 0;
+      color: #d4d4d4;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .code-block .comment { color: #6a9955; }
+    .code-block .string { color: #ce9178; }
+    .code-block .keyword { color: #569cd6; }
+    .code-block .function { color: #dcdcaa; }
+
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.2s;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn:hover {
+      background: #5a6fd6;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: #764ba2;
+    }
+
+    .btn-secondary:hover {
+      background: #6a4190;
+    }
+
+    .features {
+      margin-top: 60px;
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+
+    .features h2 {
+      text-align: center;
+      margin-bottom: 40px;
+      font-size: 2rem;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 30px;
+    }
+
+    .feature-item {
+      text-align: center;
+      padding: 20px;
+    }
+
+    .feature-icon {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 28px;
+    }
+
+    .feature-item h3 {
+      margin-bottom: 8px;
+      color: #333;
+    }
+
+    .feature-item p {
+      color: #666;
+      font-size: 14px;
+    }
+
+    footer {
+      text-align: center;
+      color: white;
+      margin-top: 60px;
+      padding: 20px;
+      opacity: 0.8;
+    }
+
+    .config-options {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .config-options h4 {
+      margin-bottom: 12px;
+      color: #333;
+    }
+
+    .config-options table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .config-options th,
+    .config-options td {
+      text-align: left;
+      padding: 8px 12px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .config-options th {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .config-options td {
+      color: #666;
+    }
+
+    .config-options code {
+      background: #e9ecef;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Monaco', monospace;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>AGI Chat Widget</h1>
+      <p>可嵌入的聊天组件 - 类似 Intercom 的体验</p>
+    </header>
+
+    <div class="examples">
+      <!-- 示例 1: JS SDK -->
+      <div class="example-card">
+        <h2>方式一: JavaScript SDK</h2>
+        <p>通过 JS SDK 直接嵌入到您的网站中，支持完整的自定义配置。</p>
+        
+        <div class="code-block">
+          <pre><span class="comment">&lt;!-- 引入 SDK --&gt;</span>
+&lt;<span class="keyword">script</span> <span class="function">src</span>=<span class="string">"embed.js"</span>&gt;&lt;/<span class="keyword">script</span>&gt;
+
+&lt;<span class="keyword">script</span>&gt;
+<span class="comment">// 初始化聊天组件</span>
+<span class="keyword">const</span> <span class="function">chat</span> = <span class="keyword">AgiChat</span>.<span class="function">create</span>({
+  <span class="function">apiUrl</span>: <span class="string">'https://api.example.com'</span>,
+  <span class="function">apiKey</span>: <span class="string">'your-api-key'</span>,
+  <span class="function">theme</span>: <span class="string">'light'</span>,
+  <span class="function">position</span>: <span class="string">'bottom-right'</span>,
+  <span class="function">title</span>: <span class="string">'AI 助手'</span>,
+  <span class="function">greeting</span>: <span class="string">'你好！有什么可以帮助您的吗？'</span>
+});
+&lt;/<span class="keyword">script</span>&gt;</pre>
+        </div>
+        
+        <button class="btn" onclick="toggleChat('sdk')">测试 SDK 方式</button>
+      </div>
+
+      <!-- 示例 2: Iframe 嵌入 -->
+      <div class="example-card">
+        <h2>方式二: Iframe 嵌入</h2>
+        <p>通过 iframe 嵌入，适合需要完全隔离的场景，如第三方平台。</p>
+        
+        <div class="code-block">
+          <pre><span class="comment">&lt;!-- Iframe 嵌入 --&gt;</span>
+&lt;<span class="keyword">iframe</span>
+  <span class="function">src</span>=<span class="string">"iframe.html?apiUrl=https://api.example.com&amp;theme=dark"</span>
+  <span class="function">width</span>=<span class="string">"380"</span>
+  <span class="function">height</span>=<span class="string">"600"</span>
+  <span class="function">frameborder</span>=<span class="string">"0"</span>
+  <span class="function">style</span>=<span class="string">"position: fixed; bottom: 20px; right: 20px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);"</span>
+&gt;&lt;/<span class="keyword">iframe</span>&gt;</pre>
+        </div>
+        
+        <button class="btn btn-secondary" onclick="toggleChat('iframe')">测试 Iframe 方式</button>
+      </div>
+    </div>
+
+    <!-- 配置选项 -->
+    <div class="features">
+      <h2>配置选项</h2>
+      <div class="config-options">
+        <table>
+          <thead>
+            <tr>
+              <th>选项</th>
+              <th>类型</th>
+              <th>默认值</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>apiUrl</code></td>
+              <td>string</td>
+              <td>'http://localhost:8000'</td>
+              <td>API 服务器地址</td>
+            </tr>
+            <tr>
+              <td><code>apiKey</code></td>
+              <td>string</td>
+              <td>''</td>
+              <td>API 密钥</td>
+            </tr>
+            <tr>
+              <td><code>theme</code></td>
+              <td>string</td>
+              <td>'light'</td>
+              <td>主题: 'light' 或 'dark'</td>
+            </tr>
+            <tr>
+              <td><code>position</code></td>
+              <td>string</td>
+              <td>'bottom-right'</td>
+              <td>位置: 'bottom-right', 'bottom-left', 'top-right', 'top-left'</td>
+            </tr>
+            <tr>
+              <td><code>primaryColor</code></td>
+              <td>string</td>
+              <td>'#007bff'</td>
+              <td>主题色</td>
+            </tr>
+            <tr>
+              <td><code>title</code></td>
+              <td>string</td>
+              <td>'AGI Assistant'</td>
+              <td>聊天窗口标题</td>
+            </tr>
+            <tr>
+              <td><code>greeting</code></td>
+              <td>string</td>
+              <td>'Hello! How can I help you today?'</td>
+              <td>欢迎消息</td>
+            </tr>
+            <tr>
+              <td><code>autoOpen</code></td>
+              <td>boolean</td>
+              <td>false</td>
+              <td>是否自动打开</td>
+            </tr>
+            <tr>
+              <td><code>persistConversation</code></td>
+              <td>boolean</td>
+              <td>true</td>
+              <td>是否持久化对话</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 功能特性 -->
+    <div class="features">
+      <h2>功能特性</h2>
+      <div class="feature-grid">
+        <div class="feature-item">
+          <div class="feature-icon">💬</div>
+          <h3>实时聊天</h3>
+          <p>支持 WebSocket 实时通信，消息即时送达</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🎨</div>
+          <h3>主题自定义</h3>
+          <p>支持浅色/深色主题，可自定义颜色和样式</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">📎</div>
+          <h3>文件上传</h3>
+          <p>支持图片、文档等文件上传和预览</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">📱</div>
+          <h3>响应式设计</h3>
+          <p>完美适配桌面和移动设备</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🔔</div>
+          <h3>消息通知</h3>
+          <p>未读消息角标提醒，不错过任何消息</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">💾</div>
+          <h3>对话持久化</h3>
+          <p>本地存储对话历史，刷新页面不丢失</p>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>AGI Framework - 统一智能框架</p>
+    </footer>
+  </div>
+
+  <!-- SDK 示例脚本 -->
+  <script src="embed.js"></script>
+  <script>
+    let sdkChat = null;
+    let iframeChat = null;
+
+    function toggleChat(type) {
+      if (type === 'sdk') {
+        if (!sdkChat) {
+          sdkChat = AgiChat.create({
+            apiUrl: 'http://localhost:8000',
+            apiKey: 'demo-key',
+            theme: 'light',
+            position: 'bottom-right',
+            primaryColor: '#667eea',
+            title: 'AI 助手 (SDK)',
+            subtitle: 'SDK 方式嵌入',
+            greeting: '你好！这是通过 SDK 方式嵌入的聊天组件。',
+            placeholder: '输入消息...',
+            allowAttachments: true,
+            autoOpen: true
+          });
+          
+          // 监听事件
+          sdkChat.on('messageReceived', (msg) => {
+            console.log('收到消息:', msg);
+          });
+        } else {
+          sdkChat.toggle();
+        }
+      } else if (type === 'iframe') {
+        if (!iframeChat) {
+          // 创建 iframe
+          const iframe = document.createElement('iframe');
+          iframe.src = 'iframe.html?apiUrl=http://localhost:8000&theme=light&primaryColor=%23764ba2&title=AI%20助手%20(Iframe)&greeting=你好！这是通过%20Iframe%20方式嵌入的聊天组件。&position=bottom-left';
+          iframe.style.cssText = 'position: fixed; bottom: 20px; left: 20px; width: 380px; height: 600px; border: none; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 999999;';
+          document.body.appendChild(iframe);
+          iframeChat = iframe;
+        } else {
+          iframeChat.style.display = iframeChat.style.display === 'none' ? 'block' : 'none';
+        }
+      }
+    }
+  </script>
+</body>
+</html>

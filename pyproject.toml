@@ -1,0 +1,263 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agi-unified-framework"
+version = "2.0.0"
+description = "AGI Unified Framework - A comprehensive framework for AGI model training, deployment, and management"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+authors = [
+    { name = "AGI Unified Framework Team" },
+]
+keywords = [
+    "agi",
+    "deep-learning",
+    "llm",
+    "transformer",
+    "training",
+    "deployment",
+    "federated-learning",
+    "multi-agent",
+    "computer-vision",
+    "nlp",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    # Core ML
+    "torch>=2.0.0",
+    "transformers>=4.35.0",
+    "numpy>=1.24.0",
+    "scipy>=1.11.0",
+
+    # API
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic>=2.5.0",
+
+    # Data processing
+    "pandas>=2.1.0",
+
+    # Configuration
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0.0",
+
+    # Logging
+    "structlog>=23.2.0",
+
+    # Async HTTP
+    "aiohttp>=3.9.0",
+    "httpx>=0.25.0",
+
+    # Security
+    "cryptography>=41.0.0",
+
+    # CLI & Display
+    "tqdm>=4.66.0",
+    "rich>=13.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-benchmark>=4.0.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.1.0",
+    "mypy>=1.5.0",
+    "pre-commit>=3.5.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+]
+
+test = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-benchmark>=4.0.0",
+    "pytest-cov>=4.1.0",
+    "pytest-xdist>=3.3.0",
+    "pytest-timeout>=2.1.0",
+    "pytest-mock>=3.11.0",
+    "factory-boy>=3.3.0",
+    "coverage[toml]>=7.0.0",
+]
+
+docs = [
+    "sphinx>=7.0.0",
+    "sphinx-rtd-theme>=2.0.0",
+    "sphinx-autodoc-typehints>=1.24.0",
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.4.0",
+    "mkdocstrings[python]>=0.24.0",
+]
+
+vision = [
+    "torchvision>=0.15.0",
+    "pillow>=10.0.0",
+    "opencv-python>=4.8.0",
+    "diffusers>=0.24.0",
+    "accelerate>=0.25.0",
+]
+
+audio = [
+    "torchaudio>=2.0.0",
+    "librosa>=0.10.0",
+    "soundfile>=0.12.0",
+]
+
+rag = [
+    "sentence-transformers>=2.2.0",
+    "faiss-cpu>=1.7.0",
+    "chromadb>=0.4.0",
+    "langchain>=0.1.0",
+]
+
+federated = [
+    "grpcio>=1.59.0",
+    "grpcio-tools>=1.59.0",
+    "protobuf>=4.25.0",
+]
+
+monitoring = [
+    "prometheus-client>=0.19.0",
+    "opentelemetry-api>=1.20.0",
+    "opentelemetry-sdk>=1.20.0",
+    "opentelemetry-exporter-prometheus>=0.41.0",
+]
+
+deployment = [
+    "docker>=6.1.0",
+    "kubernetes>=28.1.0",
+    "gunicorn>=21.2.0",
+]
+
+all = [
+    "agi-unified-framework[dev,test,docs,vision,audio,rag,federated,monitoring,deployment]",
+]
+
+[project.scripts]
+agi = "cli.main:main"
+agi-serve = "scripts.serve:main"
+agi-train = "scripts.train:main"
+agi-evaluate = "scripts.evaluate:main"
+
+[project.urls]
+Homepage = "https://github.com/agi-unified-framework/agi-unified-framework"
+Documentation = "https://agi-unified-framework.readthedocs.io"
+Repository = "https://github.com/agi-unified-framework/agi-unified-framework"
+Issues = "https://github.com/agi-unified-framework/agi-unified-framework/issues"
+Changelog = "https://github.com/agi-unified-framework/agi-unified-framework/releases"
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "agi_unified_framework/",
+    "config/",
+    "deployment/",
+    "web/",
+    "tests/",
+    "requirements.txt",
+]
+
+[tool.ruff]
+target-version = "py39"
+line-length = 120
+src = ["agi_unified_framework"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "C4",   # flake8-comprehensions
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "B008",  # do not perform function calls in argument defaults
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["agi_unified_framework"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["transformers.*", "torch.*", "torchvision.*", "diffusers.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "testing"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks integration tests",
+    "e2e: marks end-to-end tests",
+    "gpu: marks tests that require GPU",
+    "benchmark: marks benchmark tests",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
+[tool.coverage.run]
+source = ["agi_unified_framework"]
+branch = true
+omit = [
+    "tests/*",
+    "testing/*",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
+fail_under = 60
+
+[tool.black]
+target-version = ["py39", "py310", "py311", "py312"]
+line-length = 120
+
+[tool.isort]
+profile = "black"
+line_length = 120
+known_first_party = ["agi_unified_framework"]

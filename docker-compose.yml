@@ -1,0 +1,484 @@
+# =============================================================================
+# UFO AGI 统一框架 - Docker Compose 配置
+# =============================================================================
+# 使用方法:
+#   docker-compose up -d          - 后台启动所有服务
+#   docker-compose down           - 停止所有服务
+#   docker-compose logs -f        - 查看实时日志
+#   docker-compose ps             - 查看运行状态
+#   docker-compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
+#                                 - 使用GPU支持启动
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ===========================================================================
+  # UFO AGI 主应用
+  # ===========================================================================
+  ufo-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ufo-agi:latest
+    container_name: ufo-agi-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - DB_HOST=ufo-db
+      - DB_PORT=5432
+      - DB_USER=agi_user
+      - DB_PASSWORD=${DB_PASSWORD:-agi_password}
+      - DB_NAME=agi_framework
+      - REDIS_HOST=ufo-redis
+      - REDIS_PORT=6379
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-your-jwt-secret-key-change-in-production}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      # GPU相关环境变量
+      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
+      - CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-all}
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./uploads:/app/uploads
+      - ./.env:/app/.env:ro
+      # GPU支持挂载
+      - type: bind
+        source: /usr/bin/nvidia-smi
+        target: /usr/bin/nvidia-smi
+        read_only: true
+      - type: bind
+        source: /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1
+        target: /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1
+        read_only: true
+    depends_on:
+      ufo-db:
+        condition: service_healthy
+      ufo-redis:
+        condition: service_healthy
+    networks:
+      - ufo-network
+    # 资源限制配置
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+          # GPU资源配置（需要nvidia-docker2或Docker 19.03+）
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    # 健康检查优化
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    # 安全选项
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    read_only: false
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+
+  # ===========================================================================
+  # UFO AGI GPU Worker (独立GPU训练服务)
+  # ===========================================================================
+  ufo-gpu-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.gpu
+    image: ufo-agi-gpu:latest
+    container_name: ufo-agi-gpu-worker
+    restart: unless-stopped
+    profiles:
+      - gpu
+      - training
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - DB_HOST=ufo-db
+      - DB_PORT=5432
+      - DB_USER=agi_user
+      - DB_PASSWORD=${DB_PASSWORD:-agi_password}
+      - DB_NAME=agi_framework
+      - REDIS_HOST=ufo-redis
+      - REDIS_PORT=6379
+      - WORKER_TYPE=gpu
+      - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
+      - CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-all}
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./checkpoints:/app/checkpoints
+      - ./models:/app/models
+      - ./.env:/app/.env:ro
+    depends_on:
+      ufo-db:
+        condition: service_healthy
+      ufo-redis:
+        condition: service_healthy
+    networks:
+      - ufo-network
+    # GPU资源配置
+    deploy:
+      resources:
+        limits:
+          cpus: '8.0'
+          memory: 32G
+        reservations:
+          cpus: '2.0'
+          memory: 4G
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "python", "-c", "import torch; print(torch.cuda.is_available())"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 120s
+    # 安全选项
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    # 运行时配置（需要nvidia-container-runtime）
+    runtime: nvidia
+
+  # ===========================================================================
+  # PostgreSQL 数据库
+  # ===========================================================================
+  ufo-db:
+    image: postgres:15-alpine
+    container_name: ufo-agi-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=agi_user
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-agi_password}
+      - POSTGRES_DB=agi_framework
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - ufo-network
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    # 健康检查
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agi_user -d agi_framework"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    # 安全选项
+    security_opt:
+      - no-new-privileges:true
+
+  # ===========================================================================
+  # Redis 缓存
+  # ===========================================================================
+  ufo-redis:
+    image: redis:7-alpine
+    container_name: ufo-agi-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 2gb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - ufo-network
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    # 安全选项
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETGID
+      - SETUID
+
+  # ===========================================================================
+  # Celery Worker (异步任务处理)
+  # ===========================================================================
+  ufo-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ufo-agi:latest
+    container_name: ufo-agi-worker
+    restart: unless-stopped
+    command: celery -A api.celery_app worker --loglevel=info --concurrency=4
+    environment:
+      - APP_ENV=production
+      - DB_HOST=ufo-db
+      - DB_PORT=5432
+      - DB_USER=agi_user
+      - DB_PASSWORD=${DB_PASSWORD:-agi_password}
+      - DB_NAME=agi_framework
+      - REDIS_HOST=ufo-redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./uploads:/app/uploads
+    depends_on:
+      ufo-db:
+        condition: service_healthy
+      ufo-redis:
+        condition: service_healthy
+    networks:
+      - ufo-network
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    # 健康检查
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A api.celery_app inspect ping || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    # 安全选项
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+
+  # ===========================================================================
+  # Celery Beat (定时任务调度)
+  # ===========================================================================
+  ufo-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ufo-agi:latest
+    container_name: ufo-agi-beat
+    restart: unless-stopped
+    command: celery -A api.celery_app beat --loglevel=info
+    environment:
+      - APP_ENV=production
+      - DB_HOST=ufo-db
+      - DB_PORT=5432
+      - DB_USER=agi_user
+      - DB_PASSWORD=${DB_PASSWORD:-agi_password}
+      - DB_NAME=agi_framework
+      - REDIS_HOST=ufo-redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      ufo-db:
+        condition: service_healthy
+      ufo-redis:
+        condition: service_healthy
+      ufo-worker:
+        condition: service_started
+    networks:
+      - ufo-network
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    # 安全选项
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETGID
+      - SETUID
+
+  # ===========================================================================
+  # Nginx 反向代理 (可选)
+  # ===========================================================================
+  ufo-nginx:
+    image: nginx:alpine
+    container_name: ufo-agi-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      ufo-app:
+        condition: service_healthy
+    networks:
+      - ufo-network
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    profiles:
+      - with-nginx
+
+  # ===========================================================================
+  # Prometheus 监控 (可选)
+  # ===========================================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ufo-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - ufo-network
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    profiles:
+      - monitoring
+
+  # ===========================================================================
+  # Grafana 可视化 (可选)
+  # ===========================================================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ufo-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    networks:
+      - ufo-network
+    depends_on:
+      - prometheus
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    profiles:
+      - monitoring
+
+# =============================================================================
+# 数据卷
+# =============================================================================
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+# =============================================================================
+# 网络
+# =============================================================================
+networks:
+  ufo-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

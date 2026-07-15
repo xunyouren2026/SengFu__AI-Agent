@@ -1,0 +1,225 @@
+# =============================================================================
+# AGI Unified Framework - Kubernetes Ingress
+# =============================================================================
+# 定义外部HTTP/HTTPS路由规则，将流量转发到集群内部服务
+# 支持TLS终止、路径重写、速率限制和认证
+# =============================================================================
+
+---
+# 主Ingress - 使用NGINX Ingress Controller
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: agi-framework-ingress
+  namespace: agi-framework-prod
+  labels:
+    app.kubernetes.io/name: agi-framework
+    app.kubernetes.io/component: ingress
+    app.kubernetes.io/part-of: agi-unified-framework
+  annotations:
+    # Ingress Controller选择
+    kubernetes.io/ingress.class: "nginx"
+    
+    # 证书管理
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    acme.cert-manager.io/http01-edit-in-place: "true"
+    
+    # SSL/TLS配置
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    
+    # 代理配置
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    
+    # 请求大小限制
+    nginx.ingress.kubernetes.io/client-max-body-size: "100m"
+    
+    # 速率限制
+    nginx.ingress.kubernetes.io/limit-rps: "10"
+    nginx.ingress.kubernetes.io/limit-connections: "5"
+    
+    # 重写规则
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    
+    # 会话亲和性
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/session-cookie-name: "agi_session"
+    nginx.ingress.kubernetes.io/session-cookie-expires: "172800"
+    nginx.ingress.kubernetes.io/session-cookie-max-age: "172800"
+    
+    # CORS配置
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,X-Request-ID"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    
+    # 日志配置
+    nginx.ingress.kubernetes.io/log-format-upstream: '$remote_addr - $remote_user [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" $request_length $request_time [$proxy_upstream_name] [$proxy_alternative_upstream_name] $upstream_addr $upstream_response_length $upstream_response_time $upstream_status $req_id'
+    
+    # 监控
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "10254"
+spec:
+  # TLS配置
+  tls:
+    - hosts:
+        - api.agi-framework.com
+        - www.agi-framework.com
+      secretName: agi-framework-tls
+  
+  # 路由规则
+  rules:
+    # API服务路由
+    - host: api.agi-framework.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: agi-framework-api
+                port:
+                  number: 80
+          - path: /api/v1
+            pathType: Prefix
+            backend:
+              service:
+                name: agi-framework-api
+                port:
+                  number: 80
+          - path: /health
+            pathType: Exact
+            backend:
+              service:
+                name: agi-framework-api
+                port:
+                  number: 80
+          - path: /metrics
+            pathType: Exact
+            backend:
+              service:
+                name: agi-framework-api
+                port:
+                  number: 9090
+    
+    # Web前端路由
+    - host: www.agi-framework.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: agi-framework-web
+                port:
+                  number: 80
+
+---
+# WebSocket Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: agi-framework-ws-ingress
+  namespace: agi-framework-prod
+  labels:
+    app.kubernetes.io/name: agi-framework
+    app.kubernetes.io/component: websocket-ingress
+    app.kubernetes.io/part-of: agi-unified-framework
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    
+    # WebSocket支持
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "3600"
+    
+    # 升级连接
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+    
+    # 会话亲和性 - 确保WebSocket连接到同一Pod
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/session-cookie-name: "ws_session"
+spec:
+  tls:
+    - hosts:
+        - ws.agi-framework.com
+      secretName: agi-framework-ws-tls
+  rules:
+    - host: ws.agi-framework.com
+      http:
+        paths:
+          - path: /ws
+            pathType: Prefix
+            backend:
+              service:
+                name: agi-framework-api
+                port:
+                  number: 80
+
+---
+# 内部服务Ingress（仅内网访问）
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: agi-framework-internal-ingress
+  namespace: agi-framework-prod
+  labels:
+    app.kubernetes.io/name: agi-framework
+    app.kubernetes.io/component: internal-ingress
+    app.kubernetes.io/part-of: agi-unified-framework
+  annotations:
+    kubernetes.io/ingress.class: "nginx-internal"
+    
+    # 内部负载均衡器
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    
+    # 白名单限制（仅允许内网IP）
+    nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+    
+    # 基础认证
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: basic-auth
+    nginx.ingress.kubernetes.io/auth-realm: "Authentication Required"
+spec:
+  rules:
+    - host: internal.agi-framework.local
+      http:
+        paths:
+          - path: /flower
+            pathType: Prefix
+            backend:
+              service:
+                name: celery-flower
+                port:
+                  number: 5555
+          - path: /admin
+            pathType: Prefix
+            backend:
+              service:
+                name: agi-framework-api
+                port:
+                  number: 80
+
+---
+# 默认后端Ingress（处理404请求）
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: default-backend
+  namespace: agi-framework-prod
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  defaultBackend:
+    service:
+      name: agi-framework-api
+      port:
+        number: 80

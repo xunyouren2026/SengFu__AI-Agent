@@ -1,0 +1,1134 @@
+/* ============================================================
+   AGI Unified Framework - CSS Variables
+   Version: 1.0.0
+   Description: Complete CSS custom properties system including
+   colors, typography, spacing, shadows, animations, and themes.
+   ============================================================ */
+
+/* ============================================================
+   1. ROOT VARIABLES - Light Theme (Default)
+   ============================================================ */
+:root {
+  /* ----------------------------------------------------------
+     1.1 PRIMARY COLOR PALETTE (Blue)
+     ---------------------------------------------------------- */
+  --primary-50: #eff6ff;
+  --primary-100: #dbeafe;
+  --primary-200: #bfdbfe;
+  --primary-300: #93c5fd;
+  --primary-400: #60a5fa;
+  --primary-500: #3b82f6;
+  --primary-600: #2563eb;
+  --primary-700: #1d4ed8;
+  --primary-800: #1e40af;
+  --primary-900: #1e3a8a;
+  --primary-950: #172554;
+
+  /* ----------------------------------------------------------
+     1.2 SECONDARY COLOR PALETTE (Purple)
+     ---------------------------------------------------------- */
+  --secondary-50: #faf5ff;
+  --secondary-100: #f3e8ff;
+  --secondary-200: #e9d5ff;
+  --secondary-300: #d8b4fe;
+  --secondary-400: #c084fc;
+  --secondary-500: #a855f7;
+  --secondary-600: #9333ea;
+  --secondary-700: #7e22ce;
+  --secondary-800: #6b21a8;
+  --secondary-900: #581c87;
+  --secondary-950: #3b0764;
+
+  /* ----------------------------------------------------------
+     1.3 SEMANTIC COLORS - Success (Green)
+     ---------------------------------------------------------- */
+  --success-50: #f0fdf4;
+  --success-100: #dcfce7;
+  --success-200: #bbf7d0;
+  --success-300: #86efac;
+  --success-400: #4ade80;
+  --success-500: #22c55e;
+  --success-600: #16a34a;
+  --success-700: #15803d;
+  --success-800: #166534;
+  --success-900: #14532d;
+  --success-950: #052e16;
+
+  /* ----------------------------------------------------------
+     1.4 SEMANTIC COLORS - Warning (Amber)
+     ---------------------------------------------------------- */
+  --warning-50: #fffbeb;
+  --warning-100: #fef3c7;
+  --warning-200: #fde68a;
+  --warning-300: #fcd34d;
+  --warning-400: #fbbf24;
+  --warning-500: #f59e0b;
+  --warning-600: #d97706;
+  --warning-700: #b45309;
+  --warning-800: #92400e;
+  --warning-900: #78350f;
+  --warning-950: #451a03;
+
+  /* ----------------------------------------------------------
+     1.5 SEMANTIC COLORS - Danger/Error (Red)
+     ---------------------------------------------------------- */
+  --danger-50: #fef2f2;
+  --danger-100: #fee2e2;
+  --danger-200: #fecaca;
+  --danger-300: #fca5a5;
+  --danger-400: #f87171;
+  --danger-500: #ef4444;
+  --danger-600: #dc2626;
+  --danger-700: #b91c1c;
+  --danger-800: #991b1b;
+  --danger-900: #7f1d1d;
+  --danger-950: #450a0a;
+
+  /* ----------------------------------------------------------
+     1.6 SEMANTIC COLORS - Info (Cyan)
+     ---------------------------------------------------------- */
+  --info-50: #ecfeff;
+  --info-100: #cffafe;
+  --info-200: #a5f3fc;
+  --info-300: #67e8f9;
+  --info-400: #22d3ee;
+  --info-500: #06b6d4;
+  --info-600: #0891b2;
+  --info-700: #0e7490;
+  --info-800: #155e75;
+  --info-900: #164e63;
+  --info-950: #083344;
+
+  /* ----------------------------------------------------------
+     1.7 NEUTRAL COLOR PALETTE (Gray)
+     ---------------------------------------------------------- */
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --gray-950: #030712;
+
+  /* ----------------------------------------------------------
+     1.8 BACKGROUND COLORS
+     ---------------------------------------------------------- */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --bg-tertiary: #f3f4f6;
+  --bg-elevated: #ffffff;
+  --bg-overlay: rgba(0, 0, 0, 0.5);
+  --bg-scrim: rgba(0, 0, 0, 0.6);
+  --bg-hover: rgba(0, 0, 0, 0.04);
+  --bg-disabled: #f3f4f6;
+
+  /* ----------------------------------------------------------
+     1.9 TEXT COLORS
+     ---------------------------------------------------------- */
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-tertiary: #6b7280;
+  --text-caption: #9ca3af;
+  --text-disabled: #d1d5db;
+  --text-inverse: #ffffff;
+  --text-link: #2563eb;
+  --text-link-hover: #1d4ed8;
+  --text-heading: #111827;
+
+  /* ----------------------------------------------------------
+     1.10 BORDER COLORS
+     ---------------------------------------------------------- */
+  --border-default: #e5e7eb;
+  --border-hover: #d1d5db;
+  --border-focus: #3b82f6;
+  --border-active: #2563eb;
+  --border-disabled: #e5e7eb;
+  --border-error: #ef4444;
+  --border-success: #22c55e;
+
+  /* ----------------------------------------------------------
+     1.11 SPACING SCALE (4px base unit)
+     ---------------------------------------------------------- */
+  --space-0: 0px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-9: 36px;
+  --space-10: 40px;
+  --space-11: 44px;
+  --space-12: 48px;
+  --space-14: 56px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+  --space-28: 112px;
+  --space-32: 128px;
+
+  /* ----------------------------------------------------------
+     1.12 FONT FAMILIES
+     ---------------------------------------------------------- */
+  --font-family-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-family-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --font-family-display: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* ----------------------------------------------------------
+     1.13 FONT SIZES
+     ---------------------------------------------------------- */
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 30px;
+  --text-4xl: 36px;
+  --text-5xl: 48px;
+
+  /* ----------------------------------------------------------
+     1.14 FONT WEIGHTS
+     ---------------------------------------------------------- */
+  --font-thin: 100;
+  --font-extralight: 200;
+  --font-light: 300;
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  --font-extrabold: 800;
+  --font-black: 900;
+
+  /* ----------------------------------------------------------
+     1.15 LINE HEIGHTS
+     ---------------------------------------------------------- */
+  --leading-none: 1;
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+  --leading-loose: 2;
+
+  /* ----------------------------------------------------------
+     1.16 LETTER SPACING
+     ---------------------------------------------------------- */
+  --tracking-tighter: -0.05em;
+  --tracking-tight: -0.025em;
+  --tracking-normal: 0em;
+  --tracking-wide: 0.025em;
+  --tracking-wider: 0.05em;
+  --tracking-widest: 0.1em;
+
+  /* ----------------------------------------------------------
+     1.17 BORDER RADIUS
+     ---------------------------------------------------------- */
+  --radius-none: 0px;
+  --radius-sm: 2px;
+  --radius-base: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-3xl: 24px;
+  --radius-full: 9999px;
+
+  /* ----------------------------------------------------------
+     1.18 BOX SHADOWS
+     ---------------------------------------------------------- */
+  --shadow-none: none;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-base: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+  --shadow-focus: 0 0 0 3px rgba(59, 130, 246, 0.5);
+  --shadow-error: 0 0 0 3px rgba(239, 68, 68, 0.5);
+  --shadow-success: 0 0 0 3px rgba(34, 197, 94, 0.5);
+
+  /* ----------------------------------------------------------
+     1.19 ANIMATION DURATIONS
+     ---------------------------------------------------------- */
+  --duration-instant: 0ms;
+  --duration-fast: 100ms;
+  --duration-normal: 200ms;
+  --duration-moderate: 300ms;
+  --duration-slow: 500ms;
+  --duration-slower: 700ms;
+  --duration-slowest: 1000ms;
+
+  /* ----------------------------------------------------------
+     1.20 ANIMATION EASING FUNCTIONS
+     ---------------------------------------------------------- */
+  --ease-linear: linear;
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --ease-elastic: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ----------------------------------------------------------
+     1.21 Z-INDEX SCALE
+     ---------------------------------------------------------- */
+  --z-negative: -1;
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+  --z-overlay-backdrop: 400;
+  --z-drawer: 500;
+  --z-modal: 600;
+  --z-popover: 700;
+  --z-tooltip: 800;
+  --z-toast: 900;
+  --z-maximum: 9999;
+
+  /* ----------------------------------------------------------
+     1.22 BREAKPOINTS
+     ---------------------------------------------------------- */
+  --bp-sm: 640px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
+  --bp-xl: 1280px;
+  --bp-2xl: 1536px;
+
+  /* ----------------------------------------------------------
+     1.23 CONTAINER WIDTHS
+     ---------------------------------------------------------- */
+  --container-sm: 640px;
+  --container-md: 768px;
+  --container-lg: 1024px;
+  --container-xl: 1280px;
+  --container-2xl: 1536px;
+
+  /* ----------------------------------------------------------
+     1.24 LAYOUT DIMENSIONS
+     ---------------------------------------------------------- */
+  --header-height: 56px;
+  --footer-height: 48px;
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 64px;
+  --content-padding: 24px;
+  --content-max-width: 1200px;
+
+  /* ----------------------------------------------------------
+     1.25 SCROLLBAR COLORS
+     ---------------------------------------------------------- */
+  --scrollbar-track: #f1f5f9;
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb-hover: #94a3b8;
+
+  /* ----------------------------------------------------------
+     1.26 FOCUS RING
+     ---------------------------------------------------------- */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  --focus-ring-color: #3b82f6;
+
+  /* ----------------------------------------------------------
+     1.27 OPACITY VALUES
+     ---------------------------------------------------------- */
+  --opacity-0: 0;
+  --opacity-25: 0.25;
+  --opacity-50: 0.5;
+  --opacity-75: 0.75;
+  --opacity-100: 1;
+  --opacity-disabled: 0.5;
+  --opacity-hover: 0.8;
+
+  /* ----------------------------------------------------------
+     1.28 BLUR VALUES
+     ---------------------------------------------------------- */
+  --blur-none: 0;
+  --blur-sm: 4px;
+  --blur-base: 8px;
+  --blur-md: 12px;
+  --blur-lg: 16px;
+  --blur-xl: 24px;
+  --blur-2xl: 40px;
+  --blur-3xl: 64px;
+
+  /* ----------------------------------------------------------
+     1.29 TRANSFORM SCALE
+     ---------------------------------------------------------- */
+  --scale-0: 0;
+  --scale-50: 0.5;
+  --scale-75: 0.75;
+  --scale-90: 0.9;
+  --scale-95: 0.95;
+  --scale-100: 1;
+  --scale-105: 1.05;
+  --scale-110: 1.1;
+  --scale-125: 1.25;
+  --scale-150: 1.5;
+
+  /* ----------------------------------------------------------
+     1.30 ROTATE VALUES
+     ---------------------------------------------------------- */
+  --rotate-0: 0deg;
+  --rotate-45: 45deg;
+  --rotate-90: 90deg;
+  --rotate-180: 180deg;
+  --rotate-270: 270deg;
+
+  /* ----------------------------------------------------------
+     1.31 TRANSLATE VALUES
+     ---------------------------------------------------------- */
+  --translate-0: 0px;
+  --translate-1: 4px;
+  --translate-2: 8px;
+  --translate-4: 16px;
+  --translate-8: 32px;
+  --translate-full: 100%;
+
+  /* ----------------------------------------------------------
+     1.32 SKEW VALUES
+     ---------------------------------------------------------- */
+  --skew-0: 0deg;
+  --skew-1: 1deg;
+  --skew-2: 2deg;
+  --skew-3: 3deg;
+  --skew-6: 6deg;
+  --skew-12: 12deg;
+
+  /* ----------------------------------------------------------
+     1.33 GRADIENTS
+     ---------------------------------------------------------- */
+  --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  --gradient-secondary: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%);
+  --gradient-success: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  --gradient-danger: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  --gradient-dark: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  --gradient-light: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+
+  /* ----------------------------------------------------------
+     1.34 FORM ELEMENTS
+     ---------------------------------------------------------- */
+  --input-height-sm: 32px;
+  --input-height-base: 40px;
+  --input-height-lg: 48px;
+  --input-padding-x: 12px;
+  --input-padding-y: 8px;
+  --input-border-width: 1px;
+  --input-border-radius: 6px;
+  --input-bg: #ffffff;
+  --input-bg-disabled: #f3f4f6;
+  --input-border-color: #d1d5db;
+  --input-border-color-hover: #9ca3af;
+  --input-border-color-focus: #3b82f6;
+  --input-border-color-error: #ef4444;
+  --input-placeholder-color: #9ca3af;
+  --input-text-color: #111827;
+  --input-text-color-disabled: #6b7280;
+
+  /* ----------------------------------------------------------
+     1.35 BUTTON DIMENSIONS
+     ---------------------------------------------------------- */
+  --btn-height-xs: 24px;
+  --btn-height-sm: 32px;
+  --btn-height-base: 40px;
+  --btn-height-lg: 48px;
+  --btn-height-xl: 56px;
+  --btn-padding-x-xs: 8px;
+  --btn-padding-x-sm: 12px;
+  --btn-padding-x-base: 16px;
+  --btn-padding-x-lg: 20px;
+  --btn-padding-x-xl: 24px;
+  --btn-border-radius: 6px;
+  --btn-font-weight: 500;
+
+  /* ----------------------------------------------------------
+     1.36 CARD DIMENSIONS
+     ---------------------------------------------------------- */
+  --card-padding-sm: 16px;
+  --card-padding-base: 24px;
+  --card-padding-lg: 32px;
+  --card-border-radius: 8px;
+  --card-border-width: 1px;
+  --card-border-color: #e5e7eb;
+  --card-bg: #ffffff;
+  --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+
+  /* ----------------------------------------------------------
+     1.37 MODAL DIMENSIONS
+     ---------------------------------------------------------- */
+  --modal-padding: 24px;
+  --modal-border-radius: 12px;
+  --modal-bg: #ffffff;
+  --modal-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --modal-backdrop-bg: rgba(0, 0, 0, 0.5);
+  --modal-max-width-sm: 400px;
+  --modal-max-width-md: 560px;
+  --modal-max-width-lg: 720px;
+  --modal-max-width-xl: 960px;
+
+  /* ----------------------------------------------------------
+     1.38 TOAST DIMENSIONS
+     ---------------------------------------------------------- */
+  --toast-padding: 16px;
+  --toast-border-radius: 8px;
+  --toast-bg: #ffffff;
+  --toast-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --toast-max-width: 400px;
+
+  /* ----------------------------------------------------------
+     1.39 TOOLTIP DIMENSIONS
+     ---------------------------------------------------------- */
+  --tooltip-padding-x: 12px;
+  --tooltip-padding-y: 8px;
+  --tooltip-border-radius: 6px;
+  --tooltip-bg: #1f2937;
+  --tooltip-text-color: #ffffff;
+  --tooltip-font-size: 12px;
+  --tooltip-arrow-size: 6px;
+
+  /* ----------------------------------------------------------
+     1.40 DROPDOWN DIMENSIONS
+     ---------------------------------------------------------- */
+  --dropdown-padding: 8px;
+  --dropdown-border-radius: 8px;
+  --dropdown-bg: #ffffff;
+  --dropdown-border-color: #e5e7eb;
+  --dropdown-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --dropdown-item-padding-x: 12px;
+  --dropdown-item-padding-y: 8px;
+  --dropdown-item-hover-bg: #f3f4f6;
+
+  /* ----------------------------------------------------------
+     1.41 AVATAR DIMENSIONS
+     ---------------------------------------------------------- */
+  --avatar-size-xs: 24px;
+  --avatar-size-sm: 32px;
+  --avatar-size-base: 40px;
+  --avatar-size-lg: 48px;
+  --avatar-size-xl: 64px;
+  --avatar-size-2xl: 96px;
+  --avatar-border-radius: 9999px;
+  --avatar-bg: #e5e7eb;
+  --avatar-text-color: #4b5563;
+
+  /* ----------------------------------------------------------
+     1.42 BADGE DIMENSIONS
+     ---------------------------------------------------------- */
+  --badge-padding-x: 8px;
+  --badge-padding-y: 2px;
+  --badge-border-radius: 9999px;
+  --badge-font-size: 12px;
+  --badge-font-weight: 600;
+
+  /* ----------------------------------------------------------
+     1.43 TAG DIMENSIONS
+     ---------------------------------------------------------- */
+  --tag-padding-x: 10px;
+  --tag-padding-y: 4px;
+  --tag-border-radius: 4px;
+  --tag-font-size: 12px;
+  --tag-font-weight: 500;
+
+  /* ----------------------------------------------------------
+     1.44 PROGRESS BAR DIMENSIONS
+     ---------------------------------------------------------- */
+  --progress-height-sm: 4px;
+  --progress-height-base: 8px;
+  --progress-height-lg: 12px;
+  --progress-border-radius: 9999px;
+  --progress-bg: #e5e7eb;
+  --progress-fill-bg: #3b82f6;
+
+  /* ----------------------------------------------------------
+     1.45 SKELETON DIMENSIONS
+     ---------------------------------------------------------- */
+  --skeleton-bg: #e5e7eb;
+  --skeleton-shimmer: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  --skeleton-border-radius: 4px;
+
+  /* ----------------------------------------------------------
+     1.46 TABLE DIMENSIONS
+     ---------------------------------------------------------- */
+  --table-padding-x: 16px;
+  --table-padding-y: 12px;
+  --table-border-color: #e5e7eb;
+  --table-header-bg: #f9fafb;
+  --table-row-hover-bg: #f3f4f6;
+  --table-stripe-bg: #f9fafb;
+
+  /* ----------------------------------------------------------
+     1.47 TAB DIMENSIONS
+     ---------------------------------------------------------- */
+  --tab-padding-x: 16px;
+  --tab-padding-y: 12px;
+  --tab-border-width: 2px;
+  --tab-border-color: transparent;
+  --tab-border-color-active: #3b82f6;
+  --tab-text-color: #6b7280;
+  --tab-text-color-active: #2563eb;
+
+  /* ----------------------------------------------------------
+     1.48 PAGINATION DIMENSIONS
+     ---------------------------------------------------------- */
+  --pagination-item-size: 36px;
+  --pagination-item-border-radius: 6px;
+  --pagination-item-bg: #ffffff;
+  --pagination-item-border-color: #e5e7eb;
+  --pagination-item-hover-bg: #f3f4f6;
+  --pagination-item-active-bg: #3b82f6;
+  --pagination-item-active-text-color: #ffffff;
+
+  /* ----------------------------------------------------------
+     1.49 BREADCRUMB DIMENSIONS
+     ---------------------------------------------------------- */
+  --breadcrumb-padding-y: 8px;
+  --breadcrumb-separator-color: #d1d5db;
+  --breadcrumb-text-color: #6b7280;
+  --breadcrumb-text-color-active: #111827;
+  --breadcrumb-separator: "/";
+
+  /* ----------------------------------------------------------
+     1.50 SIDEBAR NAV DIMENSIONS
+     ---------------------------------------------------------- */
+  --sidebar-nav-item-padding-x: 16px;
+  --sidebar-nav-item-padding-y: 10px;
+  --sidebar-nav-item-border-radius: 6px;
+  --sidebar-nav-item-hover-bg: #f3f4f6;
+  --sidebar-nav-item-active-bg: #eff6ff;
+  --sidebar-nav-item-active-text-color: #2563eb;
+  --sidebar-nav-item-icon-size: 20px;
+  --sidebar-nav-item-text-color: #4b5563;
+  --sidebar-nav-item-font-size: 14px;
+
+  /* ----------------------------------------------------------
+     1.51 SEARCH INPUT DIMENSIONS
+     ---------------------------------------------------------- */
+  --search-input-height: 40px;
+  --search-input-padding-x: 12px;
+  --search-input-padding-left: 40px;
+  --search-input-border-radius: 8px;
+  --search-input-bg: #f3f4f6;
+  --search-input-bg-focus: #ffffff;
+  --search-input-border-color-focus: #3b82f6;
+  --search-input-icon-color: #9ca3af;
+  --search-input-placeholder-color: #9ca3af;
+
+  /* ----------------------------------------------------------
+     1.52 STAT CARD DIMENSIONS
+     ---------------------------------------------------------- */
+  --stat-card-padding: 20px;
+  --stat-card-border-radius: 12px;
+  --stat-card-bg: #ffffff;
+  --stat-card-border-color: #e5e7eb;
+  --stat-card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  --stat-card-value-font-size: 30px;
+  --stat-card-value-font-weight: 700;
+  --stat-card-label-font-size: 14px;
+  --stat-card-label-color: #6b7280;
+
+  /* ----------------------------------------------------------
+     1.53 SWITCH DIMENSIONS
+     ---------------------------------------------------------- */
+  --switch-width: 44px;
+  --switch-height: 24px;
+  --switch-border-radius: 9999px;
+  --switch-bg: #d1d5db;
+  --switch-bg-checked: #3b82f6;
+  --switch-thumb-size: 20px;
+  --switch-thumb-bg: #ffffff;
+  --switch-thumb-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  /* ----------------------------------------------------------
+     1.54 SLIDER DIMENSIONS
+     ---------------------------------------------------------- */
+  --slider-height: 4px;
+  --slider-border-radius: 2px;
+  --slider-track-bg: #e5e7eb;
+  --slider-fill-bg: #3b82f6;
+  --slider-thumb-size: 16px;
+  --slider-thumb-bg: #ffffff;
+  --slider-thumb-border-color: #3b82f6;
+  --slider-thumb-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+
+  /* ----------------------------------------------------------
+     1.55 CHECKBOX & RADIO DIMENSIONS
+     ---------------------------------------------------------- */
+  --checkbox-size: 16px;
+  --checkbox-border-radius: 4px;
+  --checkbox-border-color: #d1d5db;
+  --checkbox-border-color-checked: #3b82f6;
+  --checkbox-bg-checked: #3b82f6;
+  --checkbox-check-color: #ffffff;
+  --radio-size: 16px;
+  --radio-border-color: #d1d5db;
+  --radio-border-color-checked: #3b82f6;
+  --radio-dot-color: #3b82f6;
+
+  /* ----------------------------------------------------------
+     1.56 FILE UPLOAD DIMENSIONS
+     ---------------------------------------------------------- */
+  --file-upload-padding: 24px;
+  --file-upload-border-radius: 8px;
+  --file-upload-border-color: #d1d5db;
+  --file-upload-border-color-hover: #3b82f6;
+  --file-upload-border-style: dashed;
+  --file-upload-border-width: 2px;
+  --file-upload-bg: #f9fafb;
+  --file-upload-bg-hover: #eff6ff;
+
+  /* ----------------------------------------------------------
+     1.57 TRANSITION DEFAULTS
+     ---------------------------------------------------------- */
+  --transition-all: all var(--duration-normal) var(--ease-in-out);
+  --transition-colors: color var(--duration-normal) var(--ease-in-out), background-color var(--duration-normal) var(--ease-in-out), border-color var(--duration-normal) var(--ease-in-out);
+  --transition-opacity: opacity var(--duration-normal) var(--ease-in-out);
+  --transition-transform: transform var(--duration-normal) var(--ease-in-out);
+  --transition-shadow: box-shadow var(--duration-normal) var(--ease-in-out);
+
+  /* ----------------------------------------------------------
+     1.58 ICON SIZES
+     ---------------------------------------------------------- */
+  --icon-size-xs: 12px;
+  --icon-size-sm: 16px;
+  --icon-size-base: 20px;
+  --icon-size-lg: 24px;
+  --icon-size-xl: 32px;
+  --icon-size-2xl: 40px;
+
+  /* ----------------------------------------------------------
+     1.59 DIVIDER
+     ---------------------------------------------------------- */
+  --divider-color: #e5e7eb;
+  --divider-width: 1px;
+  --divider-margin-y: 16px;
+
+  /* ----------------------------------------------------------
+     1.60 LOADING SPINNER
+     ---------------------------------------------------------- */
+  --spinner-size-sm: 16px;
+  --spinner-size-base: 24px;
+  --spinner-size-lg: 32px;
+  --spinner-color: #3b82f6;
+  --spinner-track-color: #e5e7eb;
+  --spinner-border-width: 2px;
+  --spinner-animation-duration: 1s;
+}
+
+/* ============================================================
+   2. LIGHT THEME EXPLICIT
+   ============================================================ */
+[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --bg-tertiary: #f3f4f6;
+  --bg-elevated: #ffffff;
+  --bg-overlay: rgba(0, 0, 0, 0.5);
+  --bg-scrim: rgba(0, 0, 0, 0.6);
+  --bg-hover: rgba(0, 0, 0, 0.04);
+  --bg-disabled: #f3f4f6;
+
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-tertiary: #6b7280;
+  --text-caption: #9ca3af;
+  --text-disabled: #d1d5db;
+  --text-inverse: #ffffff;
+  --text-link: #2563eb;
+  --text-link-hover: #1d4ed8;
+  --text-heading: #111827;
+
+  --border-default: #e5e7eb;
+  --border-hover: #d1d5db;
+  --border-focus: #3b82f6;
+  --border-active: #2563eb;
+  --border-disabled: #e5e7eb;
+  --border-error: #ef4444;
+  --border-success: #22c55e;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-base: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+  --scrollbar-track: #f1f5f9;
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb-hover: #94a3b8;
+
+  --input-bg: #ffffff;
+  --input-bg-disabled: #f3f4f6;
+  --input-border-color: #d1d5db;
+  --input-border-color-hover: #9ca3af;
+  --input-border-color-focus: #3b82f6;
+  --input-placeholder-color: #9ca3af;
+  --input-text-color: #111827;
+  --input-text-color-disabled: #6b7280;
+
+  --card-bg: #ffffff;
+  --card-border-color: #e5e7eb;
+  --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+
+  --modal-bg: #ffffff;
+  --modal-backdrop-bg: rgba(0, 0, 0, 0.5);
+
+  --toast-bg: #ffffff;
+  --dropdown-bg: #ffffff;
+  --tooltip-bg: #1f2937;
+  --tooltip-text-color: #ffffff;
+
+  --table-header-bg: #f9fafb;
+  --table-row-hover-bg: #f3f4f6;
+  --table-stripe-bg: #f9fafb;
+
+  --skeleton-bg: #e5e7eb;
+}
+
+/* ============================================================
+   3. DARK THEME
+   ============================================================ */
+[data-theme="dark"] {
+  /* ----------------------------------------------------------
+     3.1 PRIMARY COLOR PALETTE (Blue) - Dark Mode
+     ---------------------------------------------------------- */
+  --primary-50: #172554;
+  --primary-100: #1e3a8a;
+  --primary-200: #1e40af;
+  --primary-300: #1d4ed8;
+  --primary-400: #2563eb;
+  --primary-500: #3b82f6;
+  --primary-600: #60a5fa;
+  --primary-700: #93c5fd;
+  --primary-800: #bfdbfe;
+  --primary-900: #dbeafe;
+  --primary-950: #eff6ff;
+
+  /* ----------------------------------------------------------
+     3.2 SECONDARY COLOR PALETTE (Purple) - Dark Mode
+     ---------------------------------------------------------- */
+  --secondary-50: #3b0764;
+  --secondary-100: #581c87;
+  --secondary-200: #6b21a8;
+  --secondary-300: #7e22ce;
+  --secondary-400: #9333ea;
+  --secondary-500: #a855f7;
+  --secondary-600: #c084fc;
+  --secondary-700: #d8b4fe;
+  --secondary-800: #e9d5ff;
+  --secondary-900: #f3e8ff;
+  --secondary-950: #faf5ff;
+
+  /* ----------------------------------------------------------
+     3.3 SEMANTIC COLORS - Success - Dark Mode
+     ---------------------------------------------------------- */
+  --success-50: #052e16;
+  --success-100: #14532d;
+  --success-200: #166534;
+  --success-300: #15803d;
+  --success-400: #16a34a;
+  --success-500: #22c55e;
+  --success-600: #4ade80;
+  --success-700: #86efac;
+  --success-800: #bbf7d0;
+  --success-900: #dcfce7;
+  --success-950: #f0fdf4;
+
+  /* ----------------------------------------------------------
+     3.4 SEMANTIC COLORS - Warning - Dark Mode
+     ---------------------------------------------------------- */
+  --warning-50: #451a03;
+  --warning-100: #78350f;
+  --warning-200: #92400e;
+  --warning-300: #b45309;
+  --warning-400: #d97706;
+  --warning-500: #f59e0b;
+  --warning-600: #fbbf24;
+  --warning-700: #fcd34d;
+  --warning-800: #fde68a;
+  --warning-900: #fef3c7;
+  --warning-950: #fffbeb;
+
+  /* ----------------------------------------------------------
+     3.5 SEMANTIC COLORS - Danger/Error - Dark Mode
+     ---------------------------------------------------------- */
+  --danger-50: #450a0a;
+  --danger-100: #7f1d1d;
+  --danger-200: #991b1b;
+  --danger-300: #b91c1c;
+  --danger-400: #dc2626;
+  --danger-500: #ef4444;
+  --danger-600: #f87171;
+  --danger-700: #fca5a5;
+  --danger-800: #fecaca;
+  --danger-900: #fee2e2;
+  --danger-950: #fef2f2;
+
+  /* ----------------------------------------------------------
+     3.6 SEMANTIC COLORS - Info - Dark Mode
+     ---------------------------------------------------------- */
+  --info-50: #083344;
+  --info-100: #164e63;
+  --info-200: #155e75;
+  --info-300: #0e7490;
+  --info-400: #0891b2;
+  --info-500: #06b6d4;
+  --info-600: #22d3ee;
+  --info-700: #67e8f9;
+  --info-800: #a5f3fc;
+  --info-900: #cffafe;
+  --info-950: #ecfeff;
+
+  /* ----------------------------------------------------------
+     3.7 NEUTRAL COLOR PALETTE (Gray) - Dark Mode
+     ---------------------------------------------------------- */
+  --gray-50: #030712;
+  --gray-100: #111827;
+  --gray-200: #1f2937;
+  --gray-300: #374151;
+  --gray-400: #4b5563;
+  --gray-500: #6b7280;
+  --gray-600: #9ca3af;
+  --gray-700: #d1d5db;
+  --gray-800: #e5e7eb;
+  --gray-900: #f3f4f6;
+  --gray-950: #f9fafb;
+
+  /* ----------------------------------------------------------
+     3.8 BACKGROUND COLORS - Dark Mode
+     ---------------------------------------------------------- */
+  --bg-primary: #030712;
+  --bg-secondary: #111827;
+  --bg-tertiary: #1f2937;
+  --bg-elevated: #1f2937;
+  --bg-overlay: rgba(0, 0, 0, 0.7);
+  --bg-scrim: rgba(0, 0, 0, 0.8);
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  --bg-disabled: #1f2937;
+
+  /* ----------------------------------------------------------
+     3.9 TEXT COLORS - Dark Mode
+     ---------------------------------------------------------- */
+  --text-primary: #f9fafb;
+  --text-secondary: #d1d5db;
+  --text-tertiary: #9ca3af;
+  --text-caption: #6b7280;
+  --text-disabled: #4b5563;
+  --text-inverse: #111827;
+  --text-link: #60a5fa;
+  --text-link-hover: #93c5fd;
+  --text-heading: #f9fafb;
+
+  /* ----------------------------------------------------------
+     3.10 BORDER COLORS - Dark Mode
+     ---------------------------------------------------------- */
+  --border-default: #374151;
+  --border-hover: #4b5563;
+  --border-focus: #3b82f6;
+  --border-active: #60a5fa;
+  --border-disabled: #374151;
+  --border-error: #f87171;
+  --border-success: #4ade80;
+
+  /* ----------------------------------------------------------
+     3.11 BOX SHADOWS - Dark Mode
+     ---------------------------------------------------------- */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-base: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.3);
+  --shadow-focus: 0 0 0 3px rgba(59, 130, 246, 0.4);
+  --shadow-error: 0 0 0 3px rgba(239, 68, 68, 0.4);
+  --shadow-success: 0 0 0 3px rgba(34, 197, 94, 0.4);
+
+  /* ----------------------------------------------------------
+     3.12 SCROLLBAR COLORS - Dark Mode
+     ---------------------------------------------------------- */
+  --scrollbar-track: #1f2937;
+  --scrollbar-thumb: #4b5563;
+  --scrollbar-thumb-hover: #6b7280;
+
+  /* ----------------------------------------------------------
+     3.13 FORM ELEMENTS - Dark Mode
+     ---------------------------------------------------------- */
+  --input-bg: #111827;
+  --input-bg-disabled: #1f2937;
+  --input-border-color: #374151;
+  --input-border-color-hover: #4b5563;
+  --input-border-color-focus: #3b82f6;
+  --input-placeholder-color: #6b7280;
+  --input-text-color: #f9fafb;
+  --input-text-color-disabled: #6b7280;
+
+  /* ----------------------------------------------------------
+     3.14 CARD - Dark Mode
+     ---------------------------------------------------------- */
+  --card-bg: #111827;
+  --card-border-color: #374151;
+  --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.4);
+
+  /* ----------------------------------------------------------
+     3.15 MODAL - Dark Mode
+     ---------------------------------------------------------- */
+  --modal-bg: #111827;
+  --modal-backdrop-bg: rgba(0, 0, 0, 0.7);
+
+  /* ----------------------------------------------------------
+     3.16 TOAST - Dark Mode
+     ---------------------------------------------------------- */
+  --toast-bg: #1f2937;
+
+  /* ----------------------------------------------------------
+     3.17 DROPDOWN - Dark Mode
+     ---------------------------------------------------------- */
+  --dropdown-bg: #1f2937;
+  --dropdown-border-color: #374151;
+  --dropdown-item-hover-bg: #374151;
+
+  /* ----------------------------------------------------------
+     3.18 TOOLTIP - Dark Mode
+     ---------------------------------------------------------- */
+  --tooltip-bg: #f9fafb;
+  --tooltip-text-color: #111827;
+
+  /* ----------------------------------------------------------
+     3.19 TABLE - Dark Mode
+     ---------------------------------------------------------- */
+  --table-header-bg: #111827;
+  --table-row-hover-bg: #1f2937;
+  --table-stripe-bg: #111827;
+
+  /* ----------------------------------------------------------
+     3.20 SKELETON - Dark Mode
+     ---------------------------------------------------------- */
+  --skeleton-bg: #374151;
+
+  /* ----------------------------------------------------------
+     3.21 SIDEBAR NAV - Dark Mode
+     ---------------------------------------------------------- */
+  --sidebar-nav-item-hover-bg: #1f2937;
+  --sidebar-nav-item-active-bg: #1e3a8a;
+  --sidebar-nav-item-active-text-color: #60a5fa;
+  --sidebar-nav-item-text-color: #d1d5db;
+
+  /* ----------------------------------------------------------
+     3.22 SEARCH INPUT - Dark Mode
+     ---------------------------------------------------------- */
+  --search-input-bg: #1f2937;
+  --search-input-bg-focus: #1f2937;
+  --search-input-border-color-focus: #3b82f6;
+  --search-input-icon-color: #6b7280;
+  --search-input-placeholder-color: #6b7280;
+
+  /* ----------------------------------------------------------
+     3.23 STAT CARD - Dark Mode
+     ---------------------------------------------------------- */
+  --stat-card-bg: #111827;
+  --stat-card-border-color: #374151;
+
+  /* ----------------------------------------------------------
+     3.24 PAGINATION - Dark Mode
+     ---------------------------------------------------------- */
+  --pagination-item-bg: #111827;
+  --pagination-item-border-color: #374151;
+  --pagination-item-hover-bg: #1f2937;
+
+  /* ----------------------------------------------------------
+     3.25 FILE UPLOAD - Dark Mode
+     ---------------------------------------------------------- */
+  --file-upload-bg: #111827;
+  --file-upload-bg-hover: #1e3a8a;
+  --file-upload-border-color: #4b5563;
+  --file-upload-border-color-hover: #3b82f6;
+
+  /* ----------------------------------------------------------
+     3.26 PROGRESS BAR - Dark Mode
+     ---------------------------------------------------------- */
+  --progress-bg: #374151;
+
+  /* ----------------------------------------------------------
+     3.27 SWITCH - Dark Mode
+     ---------------------------------------------------------- */
+  --switch-bg: #4b5563;
+  --switch-bg-checked: #3b82f6;
+
+  /* ----------------------------------------------------------
+     3.28 SLIDER - Dark Mode
+     ---------------------------------------------------------- */
+  --slider-track-bg: #4b5563;
+  --slider-fill-bg: #3b82f6;
+
+  /* ----------------------------------------------------------
+     3.29 DIVIDER - Dark Mode
+     ---------------------------------------------------------- */
+  --divider-color: #374151;
+
+  /* ----------------------------------------------------------
+     3.30 AVATAR - Dark Mode
+     ---------------------------------------------------------- */
+  --avatar-bg: #374151;
+  --avatar-text-color: #d1d5db;
+}
+
+/* ============================================================
+   4. THEME TRANSITION
+   ============================================================ */
+[data-theme],
+[data-theme] *,
+[data-theme] *::before,
+[data-theme] *::after {
+  transition: background-color var(--duration-moderate) var(--ease-in-out),
+    border-color var(--duration-moderate) var(--ease-in-out),
+    color var(--duration-moderate) var(--ease-in-out),
+    fill var(--duration-moderate) var(--ease-in-out),
+    stroke var(--duration-moderate) var(--ease-in-out);
+}
+
+/* ============================================================
+   5. HIGH CONTRAST MODE SUPPORT
+   ============================================================ */
+@media (prefers-contrast: high) {
+  :root {
+    --border-default: #000000;
+    --border-hover: #000000;
+    --border-focus: #000000;
+    --text-primary: #000000;
+    --text-secondary: #000000;
+    --focus-ring-width: 3px;
+  }
+
+  [data-theme="dark"] {
+    --border-default: #ffffff;
+    --border-hover: #ffffff;
+    --border-focus: #ffffff;
+    --text-primary: #ffffff;
+    --text-secondary: #ffffff;
+  }
+}
+
+/* ============================================================
+   6. REDUCED MOTION SUPPORT
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-instant: 0ms;
+    --duration-fast: 0ms;
+    --duration-normal: 0ms;
+    --duration-moderate: 0ms;
+    --duration-slow: 0ms;
+    --duration-slower: 0ms;
+    --duration-slowest: 0ms;
+  }
+}
+
+/* ============================================================
+   END OF VARIABLES.CSS
+   ============================================================ */

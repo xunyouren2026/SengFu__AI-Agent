@@ -1,0 +1,785 @@
+openapi: 3.0.3
+info:
+  title: AGI Unified Framework API
+  description: |
+    AGI Unified Framework 提供完整的AI系统能力API，包括：
+    
+    - **核心服务**: LLM推理、记忆管理、工具调用
+    - **多模态**: 图像、音频、视频处理
+    - **多智能体**: 智能体管理、任务协调
+    - **安全**: 审计、沙箱执行、数据保护
+    
+  version: 1.0.0
+  contact:
+    name: AGI Framework Team
+    email: support@agi-framework.org
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000/api/v1
+    description: 本地开发服务器
+  - url: https://api.agi-framework.org/v1
+    description: 生产服务器
+
+tags:
+  - name: core
+    description: 核心服务
+  - name: llm
+    description: LLM服务
+  - name: multimodal
+    description: 多模态服务
+  - name: agents
+    description: 智能体管理
+  - name: tools
+    description: 工具调用
+  - name: security
+    description: 安全服务
+
+paths:
+  # ==================== 核心服务 ====================
+  /health:
+    get:
+      tags: [core]
+      summary: 健康检查
+      description: 检查服务健康状态
+      responses:
+        '200':
+          description: 服务健康
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, degraded, unhealthy]
+                  version:
+                    type: string
+                  uptime:
+                    type: number
+                    description: 运行时间(秒)
+
+  /version:
+    get:
+      tags: [core]
+      summary: 获取版本信息
+      responses:
+        '200':
+          description: 版本信息
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionInfo'
+
+  # ==================== LLM服务 ====================
+  /llm/chat/completions:
+    post:
+      tags: [llm]
+      summary: 聊天补全
+      description: 使用LLM生成聊天回复
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatCompletionRequest'
+      responses:
+        '200':
+          description: 补全结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatCompletionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /llm/embeddings:
+    post:
+      tags: [llm]
+      summary: 生成嵌入向量
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmbeddingRequest'
+      responses:
+        '200':
+          description: 嵌入向量
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmbeddingResponse'
+
+  # ==================== 多模态服务 ====================
+  /multimodal/vqa:
+    post:
+      tags: [multimodal]
+      summary: 视觉问答
+      description: 对图像进行提问
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VQARequest'
+      responses:
+        '200':
+          description: VQA结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VQAResponse'
+
+  /multimodal/caption:
+    post:
+      tags: [multimodal]
+      summary: 图像描述生成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaptionRequest'
+      responses:
+        '200':
+          description: 描述结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaptionResponse'
+
+  /multimodal/ocr:
+    post:
+      tags: [multimodal]
+      summary: OCR文字识别
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OCRRequest'
+      responses:
+        '200':
+          description: OCR结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OCRResponse'
+
+  /multimodal/detect:
+    post:
+      tags: [multimodal]
+      summary: 物体检测
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DetectionRequest'
+      responses:
+        '200':
+          description: 检测结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetectionResponse'
+
+  # ==================== 智能体管理 ====================
+  /agents:
+    get:
+      tags: [agents]
+      summary: 列出所有智能体
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, all]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+      responses:
+        '200':
+          description: 智能体列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentList'
+
+    post:
+      tags: [agents]
+      summary: 创建智能体
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentCreate'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+
+  /agents/{agent_id}:
+    get:
+      tags: [agents]
+      summary: 获取智能体详情
+      parameters:
+        - $ref: '#/components/parameters/AgentId'
+      responses:
+        '200':
+          description: 智能体详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [agents]
+      summary: 删除智能体
+      parameters:
+        - $ref: '#/components/parameters/AgentId'
+      responses:
+        '204':
+          description: 删除成功
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /agents/{agent_id}/execute:
+    post:
+      tags: [agents]
+      summary: 执行智能体任务
+      parameters:
+        - $ref: '#/components/parameters/AgentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentTask'
+      responses:
+        '200':
+          description: 执行结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentResult'
+
+  # ==================== 工具调用 ====================
+  /tools:
+    get:
+      tags: [tools]
+      summary: 列出可用工具
+      responses:
+        '200':
+          description: 工具列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tool'
+
+  /tools/{tool_name}/execute:
+    post:
+      tags: [tools]
+      summary: 执行工具
+      parameters:
+        - name: tool_name
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: 工具参数
+      responses:
+        '200':
+          description: 执行结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolResult'
+
+  # ==================== 安全服务 ====================
+  /security/audit/logs:
+    get:
+      tags: [security]
+      summary: 获取审计日志
+      parameters:
+        - name: start_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: end_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: event_type
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 审计日志
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLogList'
+
+  /security/sandbox/execute:
+    post:
+      tags: [security]
+      summary: 沙箱执行
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SandboxRequest'
+      responses:
+        '200':
+          description: 执行结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SandboxResult'
+
+components:
+  parameters:
+    AgentId:
+      name: agent_id
+      in: path
+      required: true
+      description: 智能体ID
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    BadRequest:
+      description: 请求无效
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: 未授权
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: 资源不存在
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    RateLimited:
+      description: 请求过多
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+    VersionInfo:
+      type: object
+      properties:
+        version:
+          type: string
+        commit:
+          type: string
+        build_time:
+          type: string
+          format: date-time
+
+    ChatCompletionRequest:
+      type: object
+      required: [messages]
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+        model:
+          type: string
+          default: gpt-4
+        temperature:
+          type: number
+          minimum: 0
+          maximum: 2
+          default: 0.7
+        max_tokens:
+          type: integer
+          minimum: 1
+        stream:
+          type: boolean
+          default: false
+
+    Message:
+      type: object
+      required: [role, content]
+      properties:
+        role:
+          type: string
+          enum: [system, user, assistant]
+        content:
+          type: string
+        name:
+          type: string
+
+    ChatCompletionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        choices:
+          type: array
+          items:
+            type: object
+            properties:
+              message:
+                $ref: '#/components/schemas/Message'
+              finish_reason:
+                type: string
+        usage:
+          $ref: '#/components/schemas/Usage'
+
+    Usage:
+      type: object
+      properties:
+        prompt_tokens:
+          type: integer
+        completion_tokens:
+          type: integer
+        total_tokens:
+          type: integer
+
+    EmbeddingRequest:
+      type: object
+      required: [input]
+      properties:
+        input:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+        model:
+          type: string
+
+    EmbeddingResponse:
+      type: object
+      properties:
+        embeddings:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+
+    VQARequest:
+      type: object
+      required: [image, question]
+      properties:
+        image:
+          type: string
+          description: Base64编码的图像
+        question:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+
+    VQAResponse:
+      type: object
+      properties:
+        answer:
+          type: string
+        confidence:
+          type: number
+        reasoning:
+          type: string
+
+    CaptionRequest:
+      type: object
+      required: [image]
+      properties:
+        image:
+          type: string
+        style:
+          type: string
+          enum: [concise, detailed, creative]
+        max_length:
+          type: integer
+
+    CaptionResponse:
+      type: object
+      properties:
+        caption:
+          type: string
+        confidence:
+          type: number
+
+    OCRRequest:
+      type: object
+      required: [image]
+      properties:
+        image:
+          type: string
+        languages:
+          type: array
+          items:
+            type: string
+
+    OCRResponse:
+      type: object
+      properties:
+        text:
+          type: string
+        text_boxes:
+          type: array
+          items:
+            type: object
+            properties:
+              text:
+                type: string
+              x:
+                type: number
+              y:
+                type: number
+              width:
+                type: number
+              height:
+                type: number
+              confidence:
+                type: number
+
+    DetectionRequest:
+      type: object
+      required: [image]
+      properties:
+        image:
+          type: string
+        confidence_threshold:
+          type: number
+          default: 0.5
+        classes:
+          type: array
+          items:
+            type: string
+
+    DetectionResponse:
+      type: object
+      properties:
+        detections:
+          type: array
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+              confidence:
+                type: number
+              bbox:
+                type: object
+                properties:
+                  x:
+                    type: number
+                  y:
+                    type: number
+                  width:
+                    type: number
+                  height:
+                    type: number
+
+    AgentCreate:
+      type: object
+      required: [name, type]
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        config:
+          type: object
+        capabilities:
+          type: array
+          items:
+            type: string
+
+    Agent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, busy]
+        created_at:
+          type: string
+          format: date-time
+        config:
+          type: object
+
+    AgentList:
+      type: object
+      properties:
+        agents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Agent'
+        total:
+          type: integer
+
+    AgentTask:
+      type: object
+      required: [task]
+      properties:
+        task:
+          type: string
+        context:
+          type: object
+        timeout:
+          type: integer
+
+    AgentResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        result:
+          type: object
+        error:
+          type: string
+        execution_time:
+          type: number
+
+    Tool:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        parameters:
+          type: object
+        returns:
+          type: object
+
+    ToolResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        result:
+          type: object
+        error:
+          type: string
+
+    AuditLogList:
+      type: object
+      properties:
+        logs:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              event_type:
+                type: string
+              user_id:
+                type: string
+              details:
+                type: object
+        total:
+          type: integer
+
+    SandboxRequest:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+        language:
+          type: string
+          enum: [python, javascript, bash]
+          default: python
+        timeout:
+          type: integer
+          default: 30
+        resources:
+          type: object
+          properties:
+            memory_mb:
+              type: integer
+            cpu_limit:
+              type: number
+
+    SandboxResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        stdout:
+          type: string
+        stderr:
+          type: string
+        exit_code:
+          type: integer
+        execution_time:
+          type: number
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []

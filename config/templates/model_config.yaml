@@ -1,0 +1,438 @@
+# =============================================================================
+# AGI Unified Framework - 模型配置模板
+# =============================================================================
+# 描述: 定义深度学习模型的架构配置，支持Transformer/CNN/RNN/MoE等主流架构
+#       包含超参数搜索空间定义，便于自动超参优化
+# 版本: 2.0.0
+# 用法: 根据目标任务选择对应架构配置段，修改超参数后使用
+# =============================================================================
+
+version: "2.0.0"
+
+# -----------------------------------------------------------------------------
+# 模型基本信息
+# -----------------------------------------------------------------------------
+model:
+  # 模型名称标识 (默认: "default")
+  name: "default"
+
+  # 模型版本号 (默认: "1.0.0")
+  version: "1.0.0"
+
+  # 模型架构类型，可选值: transformer, bert, gpt, t5, llama, mistral,
+  #   resnet, vgg, vision_transformer, lstm, gru, unet, diffusion, gan, vae
+  architecture: "transformer"
+
+  # 模型描述信息 (默认: null)
+  description: null
+
+  # 模型精度: "fp32", "fp16", "bf16", "fp8", "mixed" (默认: "bf16")
+  precision: "bf16"
+
+  # 设备类型: "auto"(自动选择), "cuda", "cpu", "mps"(Apple Silicon), "tpu"
+  device: "auto"
+
+  # 随机种子，确保可复现性 (默认: 42)
+  seed: 42
+
+  # 是否启用梯度检查点以节省显存 (默认: false)
+  gradient_checkpointing: false
+
+  # 预训练模型路径，用于微调场景 (默认: null)
+  pretrained_model_path: null
+
+  # 模型保存路径 (默认: "./checkpoints")
+  checkpoint_dir: "./checkpoints"
+
+# -----------------------------------------------------------------------------
+# Transformer 架构配置
+# -----------------------------------------------------------------------------
+# 适用于 GPT/BERT/T5/LLaMA/Mistral 等基于Transformer的模型
+transformer:
+  # 词表大小 (默认: 50257)
+  vocab_size: 50257
+
+  # 隐藏层维度 (默认: 768)
+  hidden_size: 768
+
+  # Transformer层数 (默认: 12)
+  num_layers: 12
+
+  # 多头注意力的头数 (默认: 12)
+  num_heads: 12
+
+  # FFN中间层维度 (默认: 3072)
+  intermediate_size: 3072
+
+  # 最大位置编码长度 (默认: 1024)
+  max_position_embeddings: 1024
+
+  # Dropout比率 (默认: 0.1)
+  dropout_rate: 0.1
+
+  # 注意力Dropout比率 (默认: 0.1)
+  attention_dropout_rate: 0.1
+
+  # 激活函数: "relu", "gelu", "silu"(swish), "tanh", "leaky_relu" (默认: "gelu")
+  activation_function: "gelu"
+
+  # 归一化类型: "layer_norm", "batch_norm", "rms_norm" (默认: "layer_norm")
+  normalization_type: "layer_norm"
+
+  # LayerNorm epsilon值 (默认: 1e-5)
+  layer_norm_eps: 1e-5
+
+  # 是否在注意力层使用偏置 (默认: true)
+  use_bias: true
+
+  # 是否共享词嵌入和输出层权重 (默认: true)
+  tie_word_embeddings: true
+
+  # RoPE旋转位置编码的theta参数 (默认: 10000.0)
+  rope_theta: 10000.0
+
+  # 是否启用Flash Attention加速 (默认: true)
+  use_flash_attention: true
+
+  # 是否使用旋转位置编码(RoPE)，LLaMA/Mistral等推荐开启 (默认: false)
+  use_rotary_embeddings: false
+
+  # 滑动窗口注意力大小，null表示不限制 (默认: null)
+  sliding_window: null
+
+  # GQA/MQA的KV头数，null则等于num_heads (默认: null)
+  num_key_value_heads: null
+
+  # 是否使用交叉注意力，适用于编码器-解码器架构 (默认: false)
+  use_cross_attention: false
+
+  # 是否使用ALiBi位置编码 (默认: false)
+  use_alibi: false
+
+# -----------------------------------------------------------------------------
+# CNN 架构配置
+# -----------------------------------------------------------------------------
+# 适用于 ResNet/VGG/EfficientNet 等卷积神经网络
+cnn:
+  # 输入图像通道数: 1(灰度), 3(RGB) (默认: 3)
+  input_channels: 3
+
+  # 分类任务类别数 (默认: 1000)
+  num_classes: 1000
+
+  # 网络总层数 (默认: 50)
+  num_layers: 50
+
+  # 基础通道数 (默认: 64)
+  base_channels: 64
+
+  # 通道数递增倍率 (默认: 2.0)
+  channel_multiplier: 2.0
+
+  # 各层卷积核大小列表 (默认: [3, 3, 3, 3])
+  kernel_sizes: [3, 3, 3, 3]
+
+  # 各层步长列表 (默认: [2, 1, 1, 1])
+  strides: [2, 1, 1, 1]
+
+  # 是否使用BatchNorm (默认: true)
+  use_batch_norm: true
+
+  # 是否使用残差连接 (默认: true)
+  use_residual: true
+
+  # Dropout比率 (默认: 0.0)
+  dropout_rate: 0.0
+
+  # 全局池化类型: "avg"(平均池化), "max"(最大池化) (默认: "avg")
+  global_pooling: "avg"
+
+  # 输入图像尺寸 [height, width] (默认: [224, 224])
+  input_size: [224, 224]
+
+# -----------------------------------------------------------------------------
+# RNN 架构配置
+# -----------------------------------------------------------------------------
+# 适用于 LSTM/GRU 等循环神经网络
+rnn:
+  # 词表大小 (默认: 10000)
+  vocab_size: 10000
+
+  # 词嵌入维度 (默认: 300)
+  embedding_dim: 300
+
+  # 隐藏层维度 (默认: 512)
+  hidden_size: 512
+
+  # RNN层数 (默认: 2)
+  num_layers: 2
+
+  # RNN类型: "lstm", "gru", "rnn" (默认: "lstm")
+  rnn_type: "lstm"
+
+  # 是否使用双向RNN (默认: false)
+  bidirectional: false
+
+  # Dropout比率 (默认: 0.3)
+  dropout_rate: 0.3
+
+  # 输出类别数 (默认: 2)
+  num_classes: 2
+
+  # 最大序列长度 (默认: 512)
+  max_seq_length: 512
+
+  # 是否使用预训练词嵌入 (默认: false)
+  pretrained_embeddings: false
+
+  # 预训练词嵌入文件路径 (默认: null)
+  embedding_path: null
+
+# -----------------------------------------------------------------------------
+# MoE (Mixture of Experts) 配置
+# -----------------------------------------------------------------------------
+# 适用于稀疏混合专家模型
+moe:
+  # 是否启用MoE架构 (默认: false)
+  enabled: false
+
+  # 专家数量 (默认: 8)
+  num_experts: 8
+
+  # 每个token激活的专家数量 (默认: 2)
+  num_experts_per_token: 2
+
+  # 负载均衡损失系数 (默认: 0.01)
+  load_balance_loss_coef: 0.01
+
+  # 专家路由类型: "top_k"(Top-K路由), "switch"(Switch路由), "hash"(Hash路由)
+  #   (默认: "top_k")
+  router_type: "top_k"
+
+  # 是否启用专家并行 (默认: false)
+  expert_parallel: false
+
+  # 容量因子，控制每个专家处理的token数量上限 (默认: 1.0)
+  capacity_factor: 1.0
+
+  # 是否丢弃超出容量的token (默认: true)
+  drop_tokens: true
+
+  # 辅助损失系数 (默认: 0.01)
+  auxiliary_loss_coef: 0.01
+
+# -----------------------------------------------------------------------------
+# 超参数搜索空间
+# -----------------------------------------------------------------------------
+# 定义用于自动超参优化(AutoML)的搜索空间
+hyperparameter_search:
+  # 是否启用超参搜索 (默认: false)
+  enabled: false
+
+  # 搜索策略: "grid"(网格搜索), "random"(随机搜索), "bayesian"(贝叶斯优化),
+  #   "optuna"(Optuna框架), "hyperopt"(Hyperopt框架)
+  strategy: "bayesian"
+
+  # 最大试验次数 (默认: 50)
+  max_trials: 50
+
+  # 并行试验数 (默认: 1)
+  parallel_trials: 1
+
+  # 优化目标: "loss"(最小化损失), "accuracy"(最大化准确率),
+  #   "f1"(最大化F1分数), "bleu"(最大化BLEU)
+  objective: "loss"
+
+  # 搜索空间定义
+  search_space:
+    # 学习率搜索范围 (对数均匀分布)
+    learning_rate:
+      type: "log_uniform"
+      min: 1e-6
+      max: 1e-3
+
+    # 权重衰减搜索范围 (对数均匀分布)
+    weight_decay:
+      type: "log_uniform"
+      min: 1e-5
+      max: 0.1
+
+    # Dropout搜索范围 (均匀分布)
+    dropout_rate:
+      type: "uniform"
+      min: 0.0
+      max: 0.5
+
+    # 隐藏层维度候选值 (离散选择)
+    hidden_size:
+      type: "categorical"
+      choices: [256, 512, 768, 1024, 1280, 1536]
+
+    # 层数候选值 (离散选择)
+    num_layers:
+      type: "categorical"
+      choices: [6, 12, 24, 32, 48]
+
+    # 注意力头数候选值 (离散选择)
+    num_heads:
+      type: "categorical"
+      choices: [8, 12, 16, 24, 32]
+
+    # 批次大小候选值 (离散选择)
+    batch_size:
+      type: "categorical"
+      choices: [8, 16, 32, 64, 128]
+
+    # 温度系数候选值 (离散选择)
+    warmup_ratio:
+      type: "uniform"
+      min: 0.0
+      max: 0.2
+
+  # 早停配置
+  early_stopping:
+    # 是否启用早停 (默认: true)
+    enabled: true
+    # 监控指标 (默认: "loss")
+    monitor: "loss"
+    # 耐心值，连续多少轮无改善则停止 (默认: 10)
+    patience: 10
+    # 最小改善量 (默认: 1e-4)
+    min_delta: 1e-4
+
+# -----------------------------------------------------------------------------
+# 模型量化配置
+# -----------------------------------------------------------------------------
+# 用于模型推理时的量化压缩
+quantization:
+  # 是否启用量化 (默认: false)
+  enabled: false
+
+  # 量化方法: "dynamic"(动态量化), "static"(静态量化), "qat"(量化感知训练),
+  #   "gptq"(GPTQ), "awq"(AWQ), "bitsandbytes"
+  method: "dynamic"
+
+  # 量化精度: "int8", "int4", "fp8", "fp4" (默认: "int8")
+  precision: "int8"
+
+  # 量化后端: "pytorch"(PyTorch原生), "onnx"(ONNX Runtime),
+  #   "tensorrt"(TensorRT), "openvino"(OpenVINO)
+  backend: "pytorch"
+
+  # 是否校准量化 (仅静态量化需要) (默认: false)
+  calibration: false
+
+  # 校准数据集路径 (默认: null)
+  calibration_dataset: null
+
+  # 校准样本数量 (默认: 1000)
+  calibration_samples: 1000
+
+# -----------------------------------------------------------------------------
+# 模型蒸馏配置
+# -----------------------------------------------------------------------------
+# 用于知识蒸馏训练
+distillation:
+  # 是否启用知识蒸馏 (默认: false)
+  enabled: false
+
+  # 教师模型路径 (默认: null)
+  teacher_model_path: null
+
+  # 蒸馏损失系数 (默认: 0.5)
+  distillation_loss_coef: 0.5
+
+  # 学生任务损失系数 (默认: 0.5)
+  student_loss_coef: 0.5
+
+  # 蒸馏温度参数，值越大软标签越平滑 (默认: 4.0)
+  temperature: 4.0
+
+  # 中间层蒸馏: 是否匹配教师和学生的中间层特征 (默认: false)
+  intermediate_distillation: false
+
+  # 中间层匹配的层名列表 (默认: [])
+  intermediate_layer_names: []
+
+# =============================================================================
+# 多环境配置覆盖
+# =============================================================================
+
+environments:
+  # 开发环境 - 小模型快速迭代
+  dev:
+    model:
+      architecture: "transformer"
+      precision: "fp16"
+      gradient_checkpointing: false
+    transformer:
+      hidden_size: 256
+      num_layers: 6
+      num_heads: 8
+      intermediate_size: 1024
+      max_position_embeddings: 512
+      use_flash_attention: false
+    hyperparameter_search:
+      enabled: false
+    quantization:
+      enabled: false
+    distillation:
+      enabled: false
+
+  # 测试环境 - 中等规模模型验证
+  test:
+    model:
+      architecture: "transformer"
+      precision: "bf16"
+      gradient_checkpointing: true
+    transformer:
+      hidden_size: 768
+      num_layers: 12
+      num_heads: 12
+      intermediate_size: 3072
+      max_position_embeddings: 1024
+      use_flash_attention: true
+    hyperparameter_search:
+      enabled: true
+      strategy: "random"
+      max_trials: 10
+    quantization:
+      enabled: true
+      method: "dynamic"
+      precision: "int8"
+    distillation:
+      enabled: false
+
+  # 生产环境 - 大规模模型全功能
+  prod:
+    model:
+      architecture: "transformer"
+      precision: "bf16"
+      gradient_checkpointing: true
+    transformer:
+      hidden_size: 4096
+      num_layers: 32
+      num_heads: 32
+      intermediate_size: 11008
+      max_position_embeddings: 4096
+      use_flash_attention: true
+      use_rotary_embeddings: true
+      normalization_type: "rms_norm"
+      num_key_value_heads: 8
+    moe:
+      enabled: true
+      num_experts: 8
+      num_experts_per_token: 2
+      expert_parallel: true
+    hyperparameter_search:
+      enabled: true
+      strategy: "bayesian"
+      max_trials: 100
+      parallel_trials: 4
+    quantization:
+      enabled: true
+      method: "gptq"
+      precision: "int4"
+    distillation:
+      enabled: true
+      temperature: 4.0

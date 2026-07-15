@@ -1,0 +1,190 @@
+---
+- name: Update package cache
+  apt:
+    update_cache: yes
+    cache_valid_time: "{{ apt_cache_valid_time | default(3600) }}"
+  when: ansible_os_family == "Debian"
+- name: Upgrade all packages
+  apt:
+    upgrade: dist
+    autoremove: yes
+    autoclean: yes
+  when: ansible_os_family == "Debian"
+- name: Install common packages
+  package:
+    name:
+      - curl
+      - wget
+      - git
+      - vim
+      - htop
+      - net-tools
+      - tcpdump
+      - strace
+      - lsof
+      - unzip
+      - zip
+      - tar
+      - gzip
+      - bzip2
+      - xz-utils
+      - ca-certificates
+      - gnupg
+      - lsb-release
+      - tzdata
+      - ntp
+      - ntpdate
+      - cron
+      - rsyslog
+      - logrotate
+      - fail2ban
+      - ufw
+    state: present
+- name: Set timezone
+  timezone:
+    name: "{{ timezone | default('UTC') }}"
+- name: Configure system limits
+  pam_limits:
+    domain: "*"
+    limit_type: "{{ item.type }}"
+    limit_item: "{{ item.item }}"
+    value: "{{ item.value }}"
+  loop:
+    - { type: "soft", item: "nofile", value: "65536" }
+    - { type: "hard", item: "nofile", value: "65536" }
+    - { type: "soft", item: "nproc", value: "65536" }
+    - { type: "hard", item: "nproc", value: "65536" }
+- name: Disable unnecessary services
+  systemd:
+    name: "{{ item }}"
+    state: stopped
+    enabled: no
+  loop:
+    - "telnet"
+    - "rsh"
+    - "rlogin"
+    - "vsftpd"
+  ignore_errors: yes
+- name: Configure fail2ban
+  template:
+    src: jail.local.j2
+    dest: /etc/fail2ban/jail.local
+    mode: "0644"
+  notify: Restart fail2ban
+- name: Configure UFW default policies
+  ufw:
+    direction: "{{ item.direction }}"
+    policy: "{{ item.policy }}"
+  loop:
+    - { direction: "incoming", policy: "deny" }
+    - { direction: "outgoing", policy: "allow" }
+- name: Allow SSH through firewall
+  ufw:
+    rule: allow
+    direction: in
+    port: "22"
+    proto: tcp
+- name: Enable UFW
+  ufw:
+    state: enabled
+- name: Create application user
+  user:
+    name: "{{ app_user | default('agiuser') }}"
+    comment: "AGI Application User"
+    shell: /bin/bash
+    home: "{{ app_home | default('/opt/agi') }}"
+    create_home: yes
+    system: yes
+- name: Configure sysctl parameters
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_file: /etc/sysctl.d/99-agi.conf
+  loop:
+    - { name: "net.core.somaxconn", value: "65535" }
+    - { name: "net.ipv4.tcp_tw_reuse", value: "1" }
+    - { name: "net.ipv4.ip_local_port_range", value: "1024 65535" }
+    - { name: "fs.file-max", value: "65536" }
+- name: Configure logrotate
+  template:
+    src: logrotate.conf.j2
+    dest: /etc/logrotate.d/agi-unified
+    mode: "0644"
+- name: Setup cron for log cleanup
+  cron:
+    name: "Cleanup old logs"
+    job: "find /var/log/agi-unified -type f -mtime +30 -delete"
+    minute: "0"
+    hour: "3"
+    state: present
+- name: Setup cron for system maintenance
+  cron:
+    name: "System maintenance"
+    job: "apt-get autoremove -y && apt-get autoclean -y"
+    minute: "30"
+    hour: "4"
+    day: "*/7"
+    state: present
+- name: Configure rsyslog for application logs
+  template:
+    src: rsyslog.conf.j2
+    dest: /etc/rsyslog.d/60-agi-unified.conf
+    mode: "0644"
+  notify: Restart rsyslog
+- name: Create log directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ app_user | default('agiuser') }}"
+    group: "{{ app_user | default('agiuser') }}"
+  loop:
+    - "/var/log/agi-unified"
+    - "/var/log/agi-unified/api"
+    - "/var/log/agi-unified/worker"
+    - "/var/log/agi-unified/nginx"
+- name: Ensure log directory permissions
+  file:
+    path: /var/log/agi-unified
+    state: directory
+    mode: "0755"
+    recurse: yes
+- name: Setup security motd
+  template:
+    src: motd.j2
+    dest: /etc/motd
+    mode: "0644"
+- name: Disable SSH password authentication
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^PasswordAuthentication"
+    line: "PasswordAuthentication no"
+  notify: Restart SSH
+- name: Disable SSH root login
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^PermitRootLogin"
+    line: "PermitRootLogin no"
+  notify: Restart SSH
+- name: Configure SSH idle timeout
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    line: "{{ item }}"
+  loop:
+    - "ClientAliveInterval 300"
+    - "ClientAliveCountMax 2"
+  notify: Restart SSH
+handlers:
+  - name: Restart fail2ban
+    systemd:
+      name: fail2ban
+      state: restarted
+  - name: Restart rsyslog
+    systemd:
+      name: rsyslog
+      state: restarted
+  - name: Restart SSH
+    systemd:
+      name: sshd
+      state: restarted

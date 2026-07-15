@@ -1,0 +1,716 @@
+# =============================================================================
+# AGI Unified Framework - Helm Chart Values
+# =============================================================================
+# 默认配置值，可在安装时通过 --set 或 -f values-override.yaml 覆盖
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 全局配置
+# -----------------------------------------------------------------------------
+global:
+  # 镜像仓库配置
+  imageRegistry: "registry.company.com"
+  imagePullSecrets:
+    - name: regcred
+  
+  # 存储配置
+  storageClass: "standard"
+  
+  # 监控配置
+  monitoring:
+    enabled: true
+    prometheus:
+      enabled: true
+    grafana:
+      enabled: true
+  
+  # 安全配置
+  security:
+    tls:
+      enabled: true
+    networkPolicy:
+      enabled: true
+    podSecurityPolicy:
+      enabled: false
+    rbac:
+      create: true
+  
+  # 环境标签
+  environment: production
+  
+  # 通用标签
+  commonLabels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: agi-unified-framework
+
+# -----------------------------------------------------------------------------
+# 镜像配置
+# -----------------------------------------------------------------------------
+image:
+  registry: ""
+  repository: agi-framework
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+# -----------------------------------------------------------------------------
+# API服务配置
+# -----------------------------------------------------------------------------
+api:
+  enabled: true
+  replicaCount: 3
+  
+  image:
+    repository: ""
+    tag: ""
+    pullPolicy: IfNotPresent
+  
+  # 服务配置
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8000
+    nodePort: null
+    annotations: {}
+    labels: {}
+    externalTrafficPolicy: Cluster
+    sessionAffinity: None
+  
+  # 资源限制
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+      ephemeral-storage: 10Gi
+      nvidia.com/gpu: 0
+    requests:
+      cpu: 500m
+      memory: 1Gi
+      ephemeral-storage: 1Gi
+  
+  # 自动扩缩容
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+    targetCustomMetrics: []
+    behavior:
+      scaleUp:
+        stabilizationWindowSeconds: 60
+        policies:
+          - type: Percent
+            value: 100
+            periodSeconds: 60
+          - type: Pods
+            value: 4
+            periodSeconds: 60
+        selectPolicy: Max
+      scaleDown:
+        stabilizationWindowSeconds: 300
+        policies:
+          - type: Percent
+            value: 50
+            periodSeconds: 120
+          - type: Pods
+            value: 2
+            periodSeconds: 60
+        selectPolicy: Min
+  
+  # 健康检查 - Liveness Probe
+  livenessProbe:
+    enabled: true
+    httpGet:
+      path: /health
+      port: http
+      scheme: HTTP
+    initialDelaySeconds: 60
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 3
+    successThreshold: 1
+    terminationGracePeriodSeconds: 30
+  
+  # 健康检查 - Readiness Probe
+  readinessProbe:
+    enabled: true
+    httpGet:
+      path: /ready
+      port: http
+      scheme: HTTP
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+  
+  # 健康检查 - Startup Probe
+  startupProbe:
+    enabled: true
+    httpGet:
+      path: /health
+      port: http
+      scheme: HTTP
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+    successThreshold: 1
+  
+  # 环境变量
+  env: []
+  # 示例:
+  # - name: APP_NAME
+  #   value: "AGI Unified Framework"
+  # - name: DATABASE_URL
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: database-secret
+  #       key: url
+  
+  # 密钥引用
+  envFromSecrets: []
+  # 示例:
+  # - name: agi-framework-secrets
+  #   optional: false
+  
+  # 配置映射引用
+  envFromConfigMaps: []
+  # 示例:
+  # - name: agi-framework-config
+  #   optional: false
+  
+  # 持久化卷
+  persistence:
+    enabled: true
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    size: 10Gi
+    mountPath: /app/data
+    annotations: {}
+    labels: {}
+    selector: {}
+    volumeName: ""
+    volumeBindingMode: ""
+  
+  # Ingress配置
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    labels: {}
+    hosts:
+      - host: api.agi-framework.com
+        paths:
+          - path: /
+            pathType: Prefix
+            service:
+              name: ""
+              port: ""
+    tls:
+      - secretName: agi-framework-tls
+        hosts:
+          - api.agi-framework.com
+    extraHosts: []
+    extraPaths: []
+    extraTls: []
+  
+  # Pod安全上下文
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    fsGroupChangePolicy: OnRootMismatch
+    seccompProfile:
+      type: RuntimeDefault
+  
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+    seccompProfile:
+      type: RuntimeDefault
+  
+  # 亲和性配置
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                    - agi-framework-api
+            topologyKey: kubernetes.io/hostname
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms: []
+      preferredDuringSchedulingIgnoredDuringExecution: []
+  
+  # 容忍配置
+  tolerations: []
+  # 示例:
+  # - key: "dedicated"
+  #   operator: "Equal"
+  #   value: "gpu"
+  #   effect: "NoSchedule"
+  
+  # 拓扑分布约束
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: DoNotSchedule
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/name: agi-framework-api
+    - maxSkew: 1
+      topologyKey: topology.kubernetes.io/zone
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/name: agi-framework-api
+  
+  # Pod中断预算
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2
+    maxUnavailable: ""
+    annotations: {}
+    labels: {}
+  
+  # 网络策略
+  networkPolicy:
+    enabled: true
+    allowExternal: true
+    allowExternalEgress: true
+    ingressRules: []
+    egressRules: []
+    extraIngress: []
+    extraEgress: []
+  
+  # 初始化容器
+  initContainers: []
+  
+  # 额外容器
+  extraContainers: []
+  
+  # 额外卷
+  extraVolumes: []
+  
+  # 额外卷挂载
+  extraVolumeMounts: []
+  
+  # Pod注解
+  podAnnotations: {}
+  
+  # Pod标签
+  podLabels: {}
+  
+  # 服务账号
+  serviceAccount:
+    create: true
+    name: ""
+    annotations: {}
+    labels: {}
+    automountServiceAccountToken: true
+  
+  # 水平扩缩容指标
+  customMetrics:
+    - type: Pods
+      pods:
+        metric:
+          name: http_requests_per_second
+        target:
+          type: AverageValue
+          averageValue: "100"
+
+# -----------------------------------------------------------------------------
+# Celery Worker配置
+# -----------------------------------------------------------------------------
+worker:
+  enabled: true
+  replicaCount: 2
+  
+  image:
+    repository: ""
+    tag: ""
+    pullPolicy: IfNotPresent
+  
+  # Worker特定配置
+  command:
+    - celery
+    - -A
+    - api.celery_app
+    - worker
+    - --loglevel=info
+    - --concurrency=4
+    - -Q
+    - default,high_priority,low_priority
+  
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+      ephemeral-storage: 10Gi
+      nvidia.com/gpu: 0
+    requests:
+      cpu: 500m
+      memory: 1Gi
+      ephemeral-storage: 1Gi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 75
+    targetMemoryUtilizationPercentage: 80
+    behavior:
+      scaleUp:
+        stabilizationWindowSeconds: 60
+        policies:
+          - type: Percent
+            value: 100
+            periodSeconds: 60
+      scaleDown:
+        stabilizationWindowSeconds: 300
+        policies:
+          - type: Percent
+            value: 50
+            periodSeconds: 120
+  
+  env: []
+  envFromSecrets: []
+  envFromConfigMaps: []
+  
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+  
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+  
+  affinity: {}
+  tolerations: []
+  topologySpreadConstraints: []
+  
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+    maxUnavailable: ""
+
+# -----------------------------------------------------------------------------
+# Celery Beat配置（定时任务）
+# -----------------------------------------------------------------------------
+beat:
+  enabled: true
+  replicaCount: 1
+  
+  image:
+    repository: ""
+    tag: ""
+    pullPolicy: IfNotPresent
+  
+  command:
+    - celery
+    - -A
+    - api.celery_app
+    - beat
+    - --loglevel=info
+    - --scheduler
+    - django_celery_beat.schedulers:DatabaseScheduler
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+      ephemeral-storage: 1Gi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+      ephemeral-storage: 100Mi
+  
+  persistence:
+    enabled: true
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    size: 1Gi
+    mountPath: /app/celerybeat
+  
+  env: []
+  envFromSecrets: []
+  envFromConfigMaps: []
+  
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+  
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+
+# -----------------------------------------------------------------------------
+# 依赖服务配置
+# -----------------------------------------------------------------------------
+
+# PostgreSQL配置
+postgresql:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: bitnami/postgresql
+    tag: "16"
+  auth:
+    username: agi_user
+    password: ""
+    database: agi_framework
+    existingSecret: ""
+    secretKeys:
+      adminPasswordKey: postgres-password
+      userPasswordKey: password
+      replicationPasswordKey: replication-password
+  primary:
+    persistence:
+      enabled: true
+      storageClass: ""
+      accessMode: ReadWriteOnce
+      size: 50Gi
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+      requests:
+        cpu: 500m
+        memory: 1Gi
+    podDisruptionBudget:
+      enabled: true
+      minAvailable: 1
+
+# Redis配置
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: true
+    password: ""
+    existingSecret: ""
+    existingSecretPasswordKey: ""
+  master:
+    persistence:
+      enabled: true
+      storageClass: ""
+      size: 10Gi
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+    podDisruptionBudget:
+      enabled: true
+      minAvailable: 1
+  replica:
+    replicaCount: 0
+
+# MinIO配置
+minio:
+  enabled: true
+  mode: standalone
+  auth:
+    rootUser: minioadmin
+    rootPassword: ""
+    existingSecret: ""
+  persistence:
+    enabled: true
+    storageClass: ""
+    size: 100Gi
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+
+# -----------------------------------------------------------------------------
+# 监控配置
+# -----------------------------------------------------------------------------
+prometheus:
+  enabled: true
+  prometheus:
+    prometheusSpec:
+      retention: 30d
+      retentionSize: "50GB"
+      resources:
+        limits:
+          cpu: 2000m
+          memory: 4Gi
+        requests:
+          cpu: 500m
+          memory: 1Gi
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: ""
+            resources:
+              requests:
+                storage: 50Gi
+  grafana:
+    enabled: true
+    admin:
+      existingSecret: ""
+      userKey: admin-user
+      passwordKey: admin-password
+    persistence:
+      enabled: true
+      storageClassName: ""
+      size: 10Gi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+# -----------------------------------------------------------------------------
+# Ingress配置
+# -----------------------------------------------------------------------------
+ingress:
+  nginx:
+    enabled: true
+    controller:
+      replicaCount: 2
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+        requests:
+          cpu: 100m
+          memory: 256Mi
+      service:
+        annotations:
+          service.beta.kubernetes.io/aws-load-balancer-type: nlb
+      podDisruptionBudget:
+        enabled: true
+        minAvailable: 1
+
+# -----------------------------------------------------------------------------
+# 证书管理配置
+# -----------------------------------------------------------------------------
+certManager:
+  enabled: true
+  installCRDs: true
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 32Mi
+
+# -----------------------------------------------------------------------------
+# 链路追踪配置
+# -----------------------------------------------------------------------------
+jaeger:
+  enabled: true
+  agent:
+    enabled: true
+    resources:
+      limits:
+        cpu: 500m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 64Mi
+  collector:
+    enabled: true
+    service:
+      zipkin:
+        port: 9411
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+  query:
+    enabled: true
+    service:
+      type: ClusterIP
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+  storage:
+    type: memory
+    options:
+      memory:
+        max-traces: 100000
+
+# -----------------------------------------------------------------------------
+# 网络策略配置
+# -----------------------------------------------------------------------------
+networkPolicy:
+  enabled: true
+  defaultDeny: false
+  ingress:
+    enabled: true
+    allowFromNamespaces: []
+    allowFromPods: []
+  egress:
+    enabled: true
+    allowToDNS: true
+    allowToServices: []
+
+# -----------------------------------------------------------------------------
+# 备份配置
+# -----------------------------------------------------------------------------
+backup:
+  enabled: false
+  schedule: "0 2 * * *"
+  retention: 7
+  storage:
+    type: s3
+    s3:
+      bucket: ""
+      region: ""
+      endpoint: ""
+      accessKeyId: ""
+      secretAccessKey: ""
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi

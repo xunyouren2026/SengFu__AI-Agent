@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AGI可视化系统演示 - AGI Unified Framework</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px 40px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            color: #00d4ff;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            color: #888;
+            font-size: 14px;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 20px 40px;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-tab {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #a0a0a0;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        
+        .nav-tab:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+        
+        .nav-tab.active {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: #fff;
+            border-color: transparent;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            color: #00d4ff;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+        
+        .chart-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .chart-card h3 {
+            font-size: 16px;
+            color: #fff;
+            margin-bottom: 16px;
+        }
+        
+        .chart-container {
+            width: 100%;
+            height: 300px;
+        }
+        
+        .control-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .control-group {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .control-label {
+            font-size: 14px;
+            color: #a0a0a0;
+            min-width: 100px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+        }
+        
+        .btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            font-size: 13px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #2ecc71;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-dot.disconnected {
+            background: #e74c3c;
+            animation: none;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .metric-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .metric-label {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+        
+        .metric-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #00d4ff;
+        }
+        
+        .metric-change {
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        
+        .metric-change.positive {
+            color: #2ecc71;
+        }
+        
+        .metric-change.negative {
+            color: #e74c3c;
+        }
+        
+        .agi-viz-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 24px;
+        }
+        
+        .agi-viz-title {
+            font-size: 16px;
+            color: #fff;
+            margin-bottom: 16px;
+        }
+        
+        .agi-viz-canvas {
+            width: 100%;
+            height: 400px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+        
+        .log-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .log-entry {
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .log-time {
+            color: #666;
+            margin-right: 8px;
+        }
+        
+        .log-info { color: #3498db; }
+        .log-success { color: #2ecc71; }
+        .log-warning { color: #f39c12; }
+        .log-error { color: #e74c3c; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔮 AGI可视化系统演示</h1>
+        <p>生产级数据可视化与实时同步系统</p>
+    </div>
+    
+    <div class="nav-tabs">
+        <div class="nav-tab active" data-tab="basic">基础图表</div>
+        <div class="nav-tab" data-tab="agi">AGI专用</div>
+        <div class="nav-tab" data-tab="realtime">实时监控</div>
+        <div class="nav-tab" data-tab="websocket">WebSocket同步</div>
+    </div>
+    
+    <div class="content">
+        <!-- 基础图表 -->
+        <div class="tab-content active" id="tab-basic">
+            <h2 class="section-title">基础统计图表</h2>
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <h3>📈 折线图</h3>
+                    <div class="chart-container" id="lineChart"></div>
+                </div>
+                <div class="chart-card">
+                    <h3>📊 柱状图</h3>
+                    <div class="chart-container" id="barChart"></div>
+                </div>
+                <div class="chart-card">
+                    <h3>🥧 饼图</h3>
+                    <div class="chart-container" id="pieChart"></div>
+                </div>
+                <div class="chart-card">
+                    <h3>⚫ 散点图</h3>
+                    <div class="chart-container" id="scatterChart"></div>
+                </div>
+            </div>
+            
+            <div class="control-panel">
+                <div class="control-group">
+                    <span class="control-label">数据操作:</span>
+                    <button class="btn" onclick="updateBasicCharts()">🔄 更新数据</button>
+                    <button class="btn secondary" onclick="randomizeData()">🎲 随机数据</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- AGI专用 -->
+        <div class="tab-content" id="tab-agi">
+            <h2 class="section-title">AGI专用可视化</h2>
+            
+            <div class="agi-viz-container">
+                <h3 class="agi-viz-title">🧠 神经网络结构</h3>
+                <div class="agi-viz-canvas" id="neuralNetwork"></div>
+            </div>
+            
+            <div class="agi-viz-container">
+                <h3 class="agi-viz-title">🔥 注意力热力图</h3>
+                <div class="agi-viz-canvas" id="attentionHeatmap"></div>
+            </div>
+            
+            <div class="agi-viz-container">
+                <h3 class="agi-viz-title">💭 思维链可视化</h3>
+                <div class="agi-viz-canvas" id="thoughtChain"></div>
+            </div>
+            
+            <div class="agi-viz-container">
+                <h3 class="agi-viz-title">🌐 知识图谱</h3>
+                <div class="agi-viz-canvas" id="knowledgeGraph"></div>
+            </div>
+            
+            <div class="control-panel">
+                <div class="control-group">
+                    <span class="control-label">神经网络:</span>
+                    <button class="btn" onclick="animateNeuralNetwork()">▶ 前向传播动画</button>
+                    <button class="btn secondary" onclick="updateActivations()">⚡ 更新激活值</button>
+                </div>
+                <div class="control-group">
+                    <span class="control-label">思维链:</span>
+                    <button class="btn" onclick="addThought()">➕ 添加思考步骤</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 实时监控 -->
+        <div class="tab-content" id="tab-realtime">
+            <h2 class="section-title">实时监控仪表盘</h2>
+            
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">CPU使用率</div>
+                    <div class="metric-value" id="cpuMetric">0%</div>
+                    <div class="metric-change positive" id="cpuChange">+0%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">内存使用</div>
+                    <div class="metric-value" id="memoryMetric">0GB</div>
+                    <div class="metric-change positive" id="memoryChange">+0%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">推理速度</div>
+                    <div class="metric-value" id="inferenceMetric">0</div>
+                    <div class="metric-change positive" id="inferenceChange">+0%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">活跃连接</div>
+                    <div class="metric-value" id="connectionMetric">0</div>
+                    <div class="metric-change positive" id="connectionChange">+0%</div>
+                </div>
+            </div>
+            
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <h3>📈 实时性能监控</h3>
+                    <div class="chart-container" id="realtimeChart"></div>
+                </div>
+                <div class="chart-card">
+                    <h3>🎯 资源使用仪表盘</h3>
+                    <div class="chart-container" id="gaugeChart"></div>
+                </div>
+            </div>
+            
+            <div class="agi-viz-container">
+                <h3 class="agi-viz-title">📜 系统日志流</h3>
+                <div class="log-container" id="logStream"></div>
+            </div>
+            
+            <div class="control-panel">
+                <div class="control-group">
+                    <span class="control-label">模拟控制:</span>
+                    <button class="btn" id="startSimulation" onclick="startSimulation()">▶ 开始模拟</button>
+                    <button class="btn secondary" id="stopSimulation" onclick="stopSimulation()" disabled>⏹ 停止模拟</button>
+                </div>
+                <div class="control-group">
+                    <span class="control-label">更新策略:</span>
+                    <select id="updateStrategy" onchange="changeUpdateStrategy()">
+                        <option value="realtime">实时更新</option>
+                        <option value="adaptive" selected>自适应更新</option>
+                        <option value="throttle">节流更新</option>
+                        <option value="debounce">防抖更新</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- WebSocket同步 -->
+        <div class="tab-content" id="tab-websocket">
+            <h2 class="section-title">WebSocket实时同步</h2>
+            
+            <div class="control-panel">
+                <div class="control-group">
+                    <span class="control-label">连接状态:</span>
+                    <div class="status-indicator" id="wsStatus">
+                        <span class="status-dot disconnected"></span>
+                        <span id="wsStatusText">未连接</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <span class="control-label">操作:</span>
+                    <button class="btn" onclick="connectWebSocket()">🔗 连接</button>
+                    <button class="btn secondary" onclick="disconnectWebSocket()">🔌 断开</button>
+                </div>
+                <div class="control-group">
+                    <span class="control-label">测试消息:</span>
+                    <input type="text" id="wsMessage" placeholder="输入消息..." style="padding: 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.3); color: #fff;">
+                    <button class="btn" onclick="sendMessage()">📤 发送</button>
+                </div>
+            </div>
+            
+            <div class="agi-viz-container">
+                <h3 class="agi-viz-title">📨 消息日志</h3>
+                <div class="log-container" id="wsLog"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import {
+            LineChart, BarChart, PieChart, ScatterChart
+        } from './js/visualization-charts.js';
+        import {
+            NeuralNetworkVisualizer, AttentionHeatmap, ThoughtChainVisualizer, KnowledgeGraphVisualizer
+        } from './js/visualization-agi.js';
+        import {
+            RealtimeDataManager, RealtimeDashboard, WebSocketSyncManager
+        } from './js/visualization-realtime.js';
+        
+        // 全局变量
+        window.charts = {};
+        window.agiViz = {};
+        window.realtimeManager = null;
+        window.wsManager = null;
+        window.simulationInterval = null;
+        
+        // 标签页切换
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+            });
+        });
+        
+        // 初始化基础图表
+        function initBasicCharts() {
+            // 折线图
+            const lineData = Array.from({ length: 20 }, (_, i) => ({
+                x: i,
+                y: Math.sin(i * 0.5) * 50 + 50 + Math.random() * 20
+            }));
+            window.charts.line = new LineChart('lineChart', {
+                line: { smooth: true, showArea: true }
+            });
+            window.charts.line.setData(lineData);
+            
+            // 柱状图
+            const barData = [
+                { x: 'A', y: 45 },
+                { x: 'B', y: 78 },
+                { x: 'C', y: 32 },
+                { x: 'D', y: 65 },
+                { x: 'E', y: 90 }
+            ];
+            window.charts.bar = new BarChart('barChart');
+            window.charts.bar.setData(barData);
+            
+            // 饼图
+            const pieData = [
+                { x: '分类A', y: 30 },
+                { x: '分类B', y: 25 },
+                { x: '分类C', y: 20 },
+                { x: '分类D', y: 15 },
+                { x: '分类E', y: 10 }
+            ];
+            window.charts.pie = new PieChart('pieChart', {
+                pie: { innerRadius: 0.5 }
+            });
+            window.charts.pie.setData(pieData);
+            
+            // 散点图
+            const scatterData = Array.from({ length: 50 }, () => ({
+                x: Math.random() * 100,
+                y: Math.random() * 100,
+                size: Math.random() * 20 + 5
+            }));
+            window.charts.scatter = new ScatterChart('scatterChart');
+            window.charts.scatter.setData(scatterData);
+        }
+        
+        // 初始化AGI可视化
+        function initAGIViz() {
+            // 神经网络
+            window.agiViz.neural = new NeuralNetworkVisualizer('neuralNetwork', {
+                width: 800,
+                height: 400
+            });
+            window.agiViz.neural.setArchitecture([4, 6, 6, 3]);
+            
+            // 注意力热力图
+            window.agiViz.attention = new AttentionHeatmap('attentionHeatmap', {
+                width: 600,
+                height: 600,
+                cellSize: 30
+            });
+            const tokens = ['The', 'cat', 'sat', 'on', 'the', 'mat'];
+            const attentionMatrix = tokens.map(() => 
+                tokens.map(() => Math.random())
+            );
+            window.agiViz.attention.setData(tokens, attentionMatrix);
+            
+            // 思维链
+            window.agiViz.thought = new ThoughtChainVisualizer('thoughtChain', {
+                width: 800,
+                height: 200
+            });
+            window.agiViz.thought.setThoughts([
+                { type: 'observation', content: '观察问题' },
+                { type: 'reasoning', content: '分析问题结构' },
+                { type: 'reasoning', content: '制定解决方案' },
+                { type: 'conclusion', content: '得出结论' }
+            ]);
+            
+            // 知识图谱
+            window.agiViz.knowledge = new KnowledgeGraphVisualizer('knowledgeGraph', {
+                width: 800,
+                height: 400
+            });
+            const nodes = [
+                { id: 'AI', label: '人工智能', type: 'concept' },
+                { id: 'ML', label: '机器学习', type: 'concept' },
+                { id: 'DL', label: '深度学习', type: 'concept' },
+                { id: 'NN', label: '神经网络', type: 'concept' },
+                { id: 'AGI', label: '通用人工智能', type: 'concept' }
+            ];
+            const links = [
+                { source: 'AI', target: 'ML', label: '包含' },
+                { source: 'ML', target: 'DL', label: '包含' },
+                { source: 'DL', target: 'NN', label: '基于' },
+                { source: 'AI', target: 'AGI', label: '目标' }
+            ];
+            window.agiViz.knowledge.setData(nodes, links);
+        }
+        
+        // 初始化实时监控
+        function initRealtime() {
+            window.realtimeManager = new RealtimeDataManager({
+                updateStrategy: 'adaptive'
+            });
+            
+            // 创建数据流
+            ['cpu', 'memory', 'inference', 'connections'].forEach(stream => {
+                window.realtimeManager.createStream(stream, {
+                    maxPoints: 100
+                });
+            });
+            
+            // 订阅更新
+            window.realtimeManager.subscribe('cpu', (data) => {
+                if (data.length > 0) {
+                    const latest = data[data.length - 1];
+                    document.getElementById('cpuMetric').textContent = 
+                        Math.round(latest.value) + '%';
+                }
+            });
+            
+            window.realtimeManager.subscribe('memory', (data) => {
+                if (data.length > 0) {
+                    const latest = data[data.length - 1];
+                    document.getElementById('memoryMetric').textContent = 
+                        (latest.value / 1024).toFixed(1) + 'GB';
+                }
+            });
+            
+            window.realtimeManager.subscribe('inference', (data) => {
+                if (data.length > 0) {
+                    const latest = data[data.length - 1];
+                    document.getElementById('inferenceMetric').textContent = 
+                        Math.round(latest.value);
+                }
+            });
+            
+            window.realtimeManager.subscribe('connections', (data) => {
+                if (data.length > 0) {
+                    const latest = data[data.length - 1];
+                    document.getElementById('connectionMetric').textContent = 
+                        Math.round(latest.value);
+                }
+            });
+        }
+        
+        // 全局函数
+        window.updateBasicCharts = () => {
+            const lineData = Array.from({ length: 20 }, (_, i) => ({
+                x: i,
+                y: Math.sin(i * 0.5 + Date.now() / 1000) * 50 + 50 + Math.random() * 20
+            }));
+            window.charts.line.setData(lineData);
+            
+            const barData = [
+                { x: 'A', y: Math.random() * 100 },
+                { x: 'B', y: Math.random() * 100 },
+                { x: 'C', y: Math.random() * 100 },
+                { x: 'D', y: Math.random() * 100 },
+                { x: 'E', y: Math.random() * 100 }
+            ];
+            window.charts.bar.setData(barData);
+        };
+        
+        window.randomizeData = () => {
+            const scatterData = Array.from({ length: 50 }, () => ({
+                x: Math.random() * 100,
+                y: Math.random() * 100,
+                size: Math.random() * 20 + 5
+            }));
+            window.charts.scatter.setData(scatterData);
+        };
+        
+        window.animateNeuralNetwork = () => {
+            window.agiViz.neural.forwardPass([]);
+        };
+        
+        window.updateActivations = () => {
+            const activations = {};
+            window.agiViz.neural.nodes.forEach(node => {
+                activations[node.id] = Math.random() * 2 - 1;
+            });
+            window.agiViz.neural.setActivations(activations);
+        };
+        
+        window.addThought = () => {
+            const types = ['observation', 'reasoning', 'conclusion', 'question', 'action'];
+            const contents = ['新的观察', '深入推理', '验证结论', '提出问题', '执行动作'];
+            const i = Math.floor(Math.random() * types.length);
+            window.agiViz.thought.addThought({
+                type: types[i],
+                content: contents[i] + ' ' + Date.now()
+            });
+        };
+        
+        window.startSimulation = () => {
+            document.getElementById('startSimulation').disabled = true;
+            document.getElementById('stopSimulation').disabled = false;
+            
+            window.simulationInterval = setInterval(() => {
+                window.realtimeManager.addData('cpu', Math.random() * 100);
+                window.realtimeManager.addData('memory', Math.random() * 16384);
+                window.realtimeManager.addData('inference', Math.random() * 1000);
+                window.realtimeManager.addData('connections', Math.floor(Math.random() * 100));
+                
+                // 添加日志
+                const logContainer = document.getElementById('logStream');
+                const levels = ['info', 'success', 'warning', 'error'];
+                const level = levels[Math.floor(Math.random() * levels.length)];
+                const time = new Date().toLocaleTimeString();
+                logContainer.innerHTML += `
+                    <div class="log-entry">
+                        <span class="log-time">${time}</span>
+                        <span class="log-${level}">[${level.toUpperCase()}]</span>
+                        系统状态更新 - CPU: ${Math.round(Math.random() * 100)}%
+                    </div>
+                `;
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }, 1000);
+        };
+        
+        window.stopSimulation = () => {
+            document.getElementById('startSimulation').disabled = false;
+            document.getElementById('stopSimulation').disabled = true;
+            
+            if (window.simulationInterval) {
+                clearInterval(window.simulationInterval);
+                window.simulationInterval = null;
+            }
+        };
+        
+        window.changeUpdateStrategy = () => {
+            const strategy = document.getElementById('updateStrategy').value;
+            // 重新创建管理器以应用新策略
+            window.realtimeManager.destroy();
+            window.realtimeManager = new RealtimeDataManager({
+                updateStrategy: strategy
+            });
+            initRealtime();
+        };
+        
+        window.connectWebSocket = () => {
+            // 模拟WebSocket连接
+            window.wsManager = new WebSocketSyncManager({
+                url: 'wss://echo.websocket.org/' // 使用echo服务进行测试
+            });
+            
+            window.wsManager.on('connection', (data) => {
+                const statusEl = document.getElementById('wsStatus');
+                const statusText = document.getElementById('wsStatusText');
+                
+                if (data.status === 'connected') {
+                    statusEl.querySelector('.status-dot').classList.remove('disconnected');
+                    statusText.textContent = '已连接';
+                } else {
+                    statusEl.querySelector('.status-dot').classList.add('disconnected');
+                    statusText.textContent = '已断开';
+                }
+            });
+            
+            window.wsManager.on('message', (data) => {
+                const logContainer = document.getElementById('wsLog');
+                const time = new Date().toLocaleTimeString();
+                logContainer.innerHTML += `
+                    <div class="log-entry">
+                        <span class="log-time">${time}</span>
+                        <span class="log-info">[RECV]</span>
+                        ${JSON.stringify(data)}
+                    </div>
+                `;
+                logContainer.scrollTop = logContainer.scrollHeight;
+            });
+            
+            window.wsManager.connect();
+        };
+        
+        window.disconnectWebSocket = () => {
+            if (window.wsManager) {
+                window.wsManager.disconnect();
+            }
+        };
+        
+        window.sendMessage = () => {
+            const message = document.getElementById('wsMessage').value;
+            if (message && window.wsManager) {
+                window.wsManager.send({ type: 'test', message });
+                
+                const logContainer = document.getElementById('wsLog');
+                const time = new Date().toLocaleTimeString();
+                logContainer.innerHTML += `
+                    <div class="log-entry">
+                        <span class="log-time">${time}</span>
+                        <span class="log-success">[SEND]</span>
+                        ${message}
+                    </div>
+                `;
+                logContainer.scrollTop = logContainer.scrollHeight;
+                
+                document.getElementById('wsMessage').value = '';
+            }
+        };
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            initBasicCharts();
+            initAGIViz();
+            initRealtime();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>通知中心 - AGI 统一框架</title>
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- 空状态提示 -->
+    <div id="empty-state" style="display:none; background:#fff3cd; border:1px solid #ffc107; 
+         border-radius:8px; padding:15px; margin:20px; text-align:center; color:#856404;">
+        ⚠️ 暂无数据，请确保后端服务已启动
+    </div>
+    
+    <div class="app-container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-cube"></i>
+                    <span>AGI 框架</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="../index.html"><i class="fas fa-home"></i><span>首页</span></a></li>
+                    <li><a href="dashboard.html"><i class="fas fa-chart-line"></i><span>仪表盘</span></a></li>
+                    <li><a href="agents.html"><i class="fas fa-robot"></i><span>智能体</span></a></li>
+                    <li><a href="workflows.html"><i class="fas fa-project-diagram"></i><span>工作流</span></a></li>
+                    <li><a href="knowledge.html"><i class="fas fa-brain"></i><span>知识库</span></a></li>
+                    <li><a href="plugins.html"><i class="fas fa-puzzle-piece"></i><span>插件</span></a></li>
+                    <li><a href="settings.html"><i class="fas fa-cog"></i><span>设置</span></a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 顶部导航 -->
+            <header class="top-header">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="header-right">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="搜索通知...">
+                    </div>
+                    <div class="header-actions">
+                        <button class="action-btn" id="markAllRead">
+                            <i class="fas fa-check-double"></i>
+                            <span>全部已读</span>
+                        </button>
+                        <button class="action-btn" id="clearAll">
+                            <i class="fas fa-trash"></i>
+                            <span>清空</span>
+                        </button>
+                    </div>
+                    <div class="user-menu">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=user" alt="用户" class="avatar">
+                        <span id="username">管理员</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 页面内容 -->
+            <div class="page-content">
+                <!-- 页面标题 -->
+                <div class="page-header">
+                    <h1><i class="fas fa-bell"></i> 通知中心</h1>
+                    <p>查看系统通知、任务提醒和消息</p>
+                </div>
+
+                <!-- 通知统计 -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon unread">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="unreadCount">0</span>
+                            <span class="stat-label">未读通知</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon total">
+                            <i class="fas fa-inbox"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="totalCount">0</span>
+                            <span class="stat-label">总通知数</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon today">
+                            <i class="fas fa-calendar-day"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="todayCount">0</span>
+                            <span class="stat-label">今日通知</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 通知过滤器 -->
+                <div class="filter-bar">
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" data-filter="all">
+                            <i class="fas fa-list"></i> 全部
+                        </button>
+                        <button class="filter-tab" data-filter="unread">
+                            <i class="fas fa-envelope"></i> 未读
+                        </button>
+                        <button class="filter-tab" data-filter="system">
+                            <i class="fas fa-cog"></i> 系统
+                        </button>
+                        <button class="filter-tab" data-filter="task">
+                            <i class="fas fa-tasks"></i> 任务
+                        </button>
+                        <button class="filter-tab" data-filter="alert">
+                            <i class="fas fa-exclamation-triangle"></i> 告警
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 通知列表 -->
+                <div class="notifications-container">
+                    <div id="notificationsList" class="notifications-list">
+                        <!-- 通知项目将通过JS动态加载 -->
+                        <div class="loading-state">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>加载通知中...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 分页 -->
+                <div class="pagination" id="pagination">
+                    <button class="btn btn-secondary" id="prevPage" disabled>
+                        <i class="fas fa-chevron-left"></i> 上一页
+                    </button>
+                    <span class="page-info" id="pageInfo">第 1 页 / 共 1 页</span>
+                    <button class="btn btn-secondary" id="nextPage" disabled>
+                        下一页 <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 通知详情弹窗 -->
+    <div class="modal" id="notificationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-bell"></i> 通知详情</h3>
+                <button class="close-btn" id="closeModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="notificationDetail">
+                <!-- 动态内容 -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="closeDetailBtn">关闭</button>
+                <button class="btn btn-primary" id="markReadBtn">标记为已读</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/utils.js"></script>
+    <script src="../js/state.js"></script>
+    <script src="../js/api-client.js"></script>
+    <script src="../js/common-utils.js"></script>
+    <script src="../js/app-bundle.js"></script>
+    <script>
+        // 页面特定的通知功能
+        document.addEventListener('DOMContentLoaded', function() {
+            let currentFilter = 'all';
+            let currentPage = 1;
+            let notifications = [];
+
+            // 加载通知数据
+            async function loadNotifications() {
+                try {
+                    const response = await fetch('/api/v1/notifications?limit=50&skip=0', {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        notifications = data.notifications || [];
+                        updateStats();
+                        renderNotifications();
+                    } else {
+                        // 使用模拟数据
+                        notifications = getMockNotifications();
+                        updateStats();
+                        renderNotifications();
+                    }
+                } catch (error) {
+                    console.error('加载通知失败:', error);
+                    notifications = getMockNotifications();
+                    updateStats();
+                    renderNotifications();
+                }
+            }
+
+            // 模拟通知数据
+            function getMockNotifications() {
+                return [
+                    {
+                        id: 1,
+                        title: '系统更新完成',
+                        message: 'AGI 框架已成功更新到 v2.1.0 版本，新功能包括增强的 RAG 支持和改进的 Agent 性能。',
+                        type: 'system',
+                        is_read: false,
+                        created_at: new Date(Date.now() - 3600000).toISOString()
+                    },
+                    {
+                        id: 2,
+                        title: '任务执行成功',
+                        message: '工作流 "数据清洗流程" 已成功完成，处理了 1,234 条记录。',
+                        type: 'task',
+                        is_read: false,
+                        created_at: new Date(Date.now() - 7200000).toISOString()
+                    },
+                    {
+                        id: 3,
+                        title: '存储空间告警',
+                        message: '知识库存储空间使用率超过 80%，建议清理旧文档或扩展存储。',
+                        type: 'alert',
+                        is_read: true,
+                        created_at: new Date(Date.now() - 86400000).toISOString()
+                    },
+                    {
+                        id: 4,
+                        title: '新插件可用',
+                        message: '发现 3 个新插件可用：PDF 解析器、图像识别、语音识别。',
+                        type: 'system',
+                        is_read: true,
+                        created_at: new Date(Date.now() - 172800000).toISOString()
+                    },
+                    {
+                        id: 5,
+                        title: 'Agent 训练完成',
+                        message: '自定义 Agent "客服助手" 训练已完成，准确率达到 94.5%。',
+                        type: 'task',
+                        is_read: false,
+                        created_at: new Date(Date.now() - 180000).toISOString()
+                    }
+                ];
+            }
+
+            // 更新统计
+            function updateStats() {
+                const unread = notifications.filter(n => !n.is_read).length;
+                const today = notifications.filter(n => {
+                    const date = new Date(n.created_at);
+                    const today = new Date();
+                    return date.toDateString() === today.toDateString();
+                }).length;
+
+                document.getElementById('unreadCount').textContent = unread;
+                document.getElementById('totalCount').textContent = notifications.length;
+                document.getElementById('todayCount').textContent = today;
+            }
+
+            // 渲染通知列表
+            function renderNotifications() {
+                const container = document.getElementById('notificationsList');
+                const filtered = currentFilter === 'all' 
+                    ? notifications 
+                    : notifications.filter(n => n.type === currentFilter || (currentFilter === 'unread' && !n.is_read));
+
+                if (filtered.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-bell-slash"></i>
+                            <p>暂无通知</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = filtered.map(notification => `
+                    <div class="notification-item ${notification.is_read ? 'read' : 'unread'}" data-id="${notification.id}">
+                        <div class="notification-icon ${notification.type}">
+                            <i class="fas ${getIconForType(notification.type)}"></i>
+                        </div>
+                        <div class="notification-content">
+                            <h4>${notification.title}</h4>
+                            <p>${notification.message}</p>
+                            <span class="notification-time">${formatTime(notification.created_at)}</span>
+                        </div>
+                        <div class="notification-actions">
+                            ${!notification.is_read ? `
+                                <button class="action-btn mark-read" title="标记为已读">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            ` : ''}
+                            <button class="action-btn delete" title="删除">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+                // 绑定事件
+                bindNotificationEvents();
+            }
+
+            // 获取类型图标
+            function getIconForType(type) {
+                const icons = {
+                    system: 'fa-cog',
+                    task: 'fa-tasks',
+                    alert: 'fa-exclamation-triangle',
+                    info: 'fa-info-circle'
+                };
+                return icons[type] || 'fa-bell';
+            }
+
+            // 格式化时间
+            function formatTime(isoString) {
+                const date = new Date(isoString);
+                const now = new Date();
+                const diff = now - date;
+                
+                if (diff < 60000) return '刚刚';
+                if (diff < 3600000) return `${Math.floor(diff / 60000)} 分钟前`;
+                if (diff < 86400000) return `${Math.floor(diff / 3600000)} 小时前`;
+                if (diff < 604800000) return `${Math.floor(diff / 86400000)} 天前`;
+                return date.toLocaleDateString('zh-CN');
+            }
+
+            // 绑定通知事件
+            function bindNotificationEvents() {
+                document.querySelectorAll('.notification-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        if (!e.target.closest('.action-btn')) {
+                            const id = parseInt(item.dataset.id);
+                            showNotificationDetail(id);
+                        }
+                    });
+                });
+
+                document.querySelectorAll('.mark-read').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const id = parseInt(btn.closest('.notification-item').dataset.id);
+                        markAsRead(id);
+                    });
+                });
+
+                document.querySelectorAll('.delete').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const id = parseInt(btn.closest('.notification-item').dataset.id);
+                        deleteNotification(id);
+                    });
+                });
+            }
+
+            // 显示通知详情
+            function showNotificationDetail(id) {
+                const notification = notifications.find(n => n.id === id);
+                if (!notification) return;
+
+                document.getElementById('notificationDetail').innerHTML = `
+                    <div class="notification-detail">
+                        <div class="detail-header">
+                            <span class="badge ${notification.type}">${notification.type}</span>
+                            <span class="time">${new Date(notification.created_at).toLocaleString('zh-CN')}</span>
+                        </div>
+                        <h4>${notification.title}</h4>
+                        <p>${notification.message}</p>
+                    </div>
+                `;
+
+                document.getElementById('notificationModal').classList.add('active');
+                
+                // 自动标记为已读
+                if (!notification.is_read) {
+                    markAsRead(id);
+                }
+            }
+
+            // 标记为已读
+            async function markAsRead(id) {
+                const notification = notifications.find(n => n.id === id);
+                if (notification) {
+                    notification.is_read = true;
+                    updateStats();
+                    renderNotifications();
+
+                    // 同步到服务器
+                    try {
+                        await fetch(`/api/v1/notifications/${id}/read`, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                            }
+                        });
+                    } catch (error) {
+                        console.error('标记已读失败:', error);
+                    }
+                }
+            }
+
+            // 删除通知
+            async function deleteNotification(id) {
+                if (!confirm('确定要删除这条通知吗？')) return;
+
+                notifications = notifications.filter(n => n.id !== id);
+                updateStats();
+                renderNotifications();
+
+                try {
+                    await fetch(`/api/v1/notifications/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                        }
+                    });
+                } catch (error) {
+                    console.error('删除通知失败:', error);
+                }
+            }
+
+            // 过滤器标签
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    currentFilter = tab.dataset.filter;
+                    renderNotifications();
+                });
+            });
+
+            // 全部已读
+            document.getElementById('markAllRead').addEventListener('click', async () => {
+                notifications.forEach(n => n.is_read = true);
+                updateStats();
+                renderNotifications();
+
+                try {
+                    await fetch('/api/v1/notifications/read-all', {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                        }
+                    });
+                } catch (error) {
+                    console.error('标记全部已读失败:', error);
+                }
+            });
+
+            // 清空通知
+            document.getElementById('clearAll').addEventListener('click', async () => {
+                if (!confirm('确定要清空所有通知吗？此操作不可恢复。')) return;
+
+                notifications = [];
+                updateStats();
+                renderNotifications();
+
+                try {
+                    await fetch('/api/v1/notifications', {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                        }
+                    });
+                } catch (error) {
+                    console.error('清空通知失败:', error);
+                }
+            });
+
+            // 关闭弹窗
+            document.getElementById('closeModal').addEventListener('click', () => {
+                document.getElementById('notificationModal').classList.remove('active');
+            });
+
+            document.getElementById('closeDetailBtn').addEventListener('click', () => {
+                document.getElementById('notificationModal').classList.remove('active');
+            });
+
+            document.getElementById('markReadBtn').addEventListener('click', () => {
+                document.getElementById('notificationModal').classList.remove('active');
+            });
+
+            // 初始化
+            loadNotifications();
+        });
+    </script>
+
+    <style>
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .stat-icon.unread { background: var(--warning-light); color: var(--warning); }
+        .stat-icon.total { background: var(--primary-light); color: var(--primary); }
+        .stat-icon.today { background: var(--success-light); color: var(--success); }
+
+        .stat-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .filter-bar {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-tab {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-tab:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .filter-tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .notifications-container {
+            background: var(--card-bg);
+            border-radius: 12px;
+            min-height: 400px;
+        }
+
+        .notifications-list {
+            padding: 1rem;
+        }
+
+        .notification-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .notification-item:hover {
+            background: var(--bg-secondary);
+        }
+
+        .notification-item.unread {
+            background: var(--primary-light);
+            border-left-color: var(--primary);
+        }
+
+        .notification-item.read {
+            opacity: 0.7;
+        }
+
+        .notification-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .notification-icon.system { background: var(--info-light); color: var(--info); }
+        .notification-icon.task { background: var(--success-light); color: var(--success); }
+        .notification-icon.alert { background: var(--danger-light); color: var(--danger); }
+        .notification-icon.info { background: var(--primary-light); color: var(--primary); }
+
+        .notification-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .notification-content h4 {
+            margin: 0 0 0.25rem 0;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .notification-content p {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .notification-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .notification-actions {
+            display: flex;
+            gap: 0.5rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .notification-item:hover .notification-actions {
+            opacity: 1;
+        }
+
+        .notification-actions .action-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .notification-actions .action-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .notification-actions .action-btn.delete:hover {
+            background: var(--danger);
+        }
+
+        .loading-state,
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .loading-state i,
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .page-info {
+            color: var(--text-secondary);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.125rem;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            padding: 1rem 1.25rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .notification-detail .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .notification-detail .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .notification-detail .badge.system { background: var(--info-light); color: var(--info); }
+        .notification-detail .badge.task { background: var(--success-light); color: var(--success); }
+        .notification-detail .badge.alert { background: var(--danger-light); color: var(--danger); }
+
+        .notification-detail h4 {
+            margin: 0 0 1rem 0;
+            color: var(--text-primary);
+        }
+
+        .notification-detail p {
+            margin: 0;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-tabs {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .notification-actions {
+                opacity: 1;
+            }
+        }
+    </style>
+
+    <script src="../static/js/api-client.js"></script>
+    <script src="../static/js/page-realization.js"></script>
+    <script src="../static/js/page-realization-loader.js"></script>
+</body>
+</html>

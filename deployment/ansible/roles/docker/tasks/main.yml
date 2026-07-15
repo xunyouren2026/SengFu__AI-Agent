@@ -1,0 +1,148 @@
+---
+- name: Check if Docker is installed
+  command: docker --version
+  register: docker_check
+  ignore_errors: yes
+  changed_when: no
+- name: Add Docker GPG key
+  apt_key:
+    url: https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg
+    state: present
+  when: ansible_os_family == "Debian" and docker_check.rc != 0
+- name: Add Docker repository
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+    state: present
+  when: ansible_os_family == "Debian" and docker_check.rc != 0
+- name: Install Docker CE
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: yes
+  when: ansible_os_family == "Debian" and docker_check.rc != 0
+- name: Install Docker via script
+  shell: |
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    sh get-docker.sh
+    rm get-docker.sh
+  when: docker_check.rc != 0
+  notify:
+    - Start Docker
+    - Enable Docker
+- name: Check Docker Compose standalone version
+  command: docker-compose --version
+  register: compose_check
+  ignore_errors: yes
+  changed_when: no
+- name: Install Docker Compose standalone
+  get_url:
+    url: https://github.com/docker/compose/releases/download/{{ docker_compose_version | default('v2.20.0') }}/docker-compose-linux-x86_64
+    dest: /usr/local/bin/docker-compose
+    mode: "0755"
+  when: compose_check.rc != 0
+- name: Create Docker group
+  group:
+    name: docker
+    state: present
+- name: Add users to Docker group
+  user:
+    name: "{{ item }}"
+    groups: docker
+    append: yes
+  loop: "{{ docker_users | default(['root']) }}"
+- name: Configure Docker daemon
+  template:
+    src: daemon.json.j2
+    dest: /etc/docker/daemon.json
+    mode: "0644"
+  notify: Restart Docker
+- name: Create Docker config directory
+  file:
+    path: /etc/docker
+    state: directory
+    mode: "0755"
+- name: Create Docker data directory
+  file:
+    path: "{{ docker_data_dir | default('/var/lib/docker') }}"
+    state: directory
+    mode: "0755"
+- name: Configure Docker logrotate
+  template:
+    src: logrotate.j2
+    dest: /etc/logrotate.d/docker
+    mode: "0644"
+- name: Pull required Docker images
+  docker_image:
+    name: "{{ item }}"
+    source: pull
+    force_source: "{{ docker_force_pull | default(false) }}"
+  loop: "{{ docker_images | default([]) }}"
+  ignore_errors: yes
+- name: Create Docker networks
+  docker_network:
+    name: "{{ item.name }}"
+    driver: "{{ item.driver | default('bridge') }}"
+    ipam_driver: "{{ item.ipam_driver | default('default') }}"
+    subnet: "{{ item.subnet | default(omit) }}"
+    driver_options: "{{ item.driver_options | default(omit) }}"
+    state: "{{ item.state | default('present') }}"
+  loop: "{{ docker_networks | default([]) }}"
+  when: docker_networks is defined
+- name: Create Docker volumes
+  docker_volume:
+    name: "{{ item.name }}"
+    driver: "{{ item.driver | default('local') }}"
+    driver_options: "{{ item.driver_options | default(omit) }}"
+    state: "{{ item.state | default('present') }}"
+  loop: "{{ docker_volumes | default([]) }}"
+  when: docker_volumes is defined
+- name: Prune unused Docker resources
+  docker_prune:
+    containers: yes
+    images: yes
+    networks: yes
+    volumes: "{{ docker_prune_volumes | default(false) }}"
+    builder_cache: yes
+  when: docker_auto_prune | default(false)
+- name: Setup Docker systemd drop-in
+  template:
+    src: docker-systemd.j2
+    dest: /etc/systemd/system/docker.service.d/override.conf
+    mode: "0644"
+  notify: Daemon-reload
+- name: Wait for Docker to be ready
+  wait_for:
+    port: 2375
+    host: unixsock
+    delay: 5
+    timeout: 30
+  when: docker_tcp_enabled | default(false)
+  ignore_errors: yes
+- name: Verify Docker installation
+  command: docker info
+  register: docker_info
+  changed_when: no
+- name: Display Docker info
+  debug:
+    var: docker_info.stdout_lines[:10]
+handlers:
+  - name: Start Docker
+    systemd:
+      name: docker
+      state: started
+  - name: Enable Docker
+    systemd:
+      name: docker
+      enabled: yes
+  - name: Restart Docker
+    systemd:
+      name: docker
+      state: restarted
+  - name: Daemon-reload
+    systemd:
+      daemon_reload: yes

@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AGI Unified Framework - 现代化导航</title>
+    <style>
+        /* ========== CSS变量 ========== */
+        :root {
+            /* 主色调 */
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --primary-dark: #4f46e5;
+            --primary-bg: rgba(99, 102, 241, 0.1);
+            
+            /* 侧边栏 */
+            --sidebar-width: 280px;
+            --sidebar-collapsed: 72px;
+            --sidebar-bg: #0f172a;
+            --sidebar-hover: rgba(255, 255, 255, 0.05);
+            --sidebar-active: rgba(99, 102, 241, 0.15);
+            --sidebar-border: rgba(255, 255, 255, 0.08);
+            --sidebar-text: #94a3b8;
+            --sidebar-text-active: #f1f5f9;
+            --sidebar-section: #64748b;
+            
+            /* 内容区 */
+            --content-bg: #f8fafc;
+            --card-bg: #ffffff;
+            --card-border: #e2e8f0;
+            
+            /* 其他 */
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            
+            /* 动画 */
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ========== 重置样式 ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--content-bg);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* ========== 侧边栏 ========== */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--sidebar-bg);
+            position: fixed;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+            z-index: 100;
+            overflow: hidden;
+        }
+
+        .sidebar.collapsed {
+            width: var(--sidebar-collapsed);
+        }
+
+        /* Logo区域 */
+        .sidebar-logo {
+            height: 64px;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--sidebar-border);
+            flex-shrink: 0;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .logo-icon svg {
+            width: 20px;
+            height: 20px;
+            fill: white;
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .logo-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .logo-subtitle {
+            font-size: 11px;
+            color: var(--sidebar-text);
+        }
+
+        .sidebar.collapsed .logo-text {
+            opacity: 0;
+            width: 0;
+        }
+
+        /* 折叠按钮 */
+        .sidebar-toggle {
+            position: absolute;
+            right: -12px;
+            top: 24px;
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+            transition: var(--transition);
+            z-index: 10;
+        }
+
+        .sidebar-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .sidebar-toggle svg {
+            width: 14px;
+            height: 14px;
+            fill: white;
+            transition: var(--transition);
+        }
+
+        .sidebar.collapsed .sidebar-toggle svg {
+            transform: rotate(180deg);
+        }
+
+        /* 导航区域 */
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 16px 0;
+        }
+
+        .sidebar-nav::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: var(--sidebar-border);
+            border-radius: 2px;
+        }
+
+        /* 导航分组 */
+        .nav-section {
+            margin-bottom: 8px;
+        }
+
+        .nav-section-title {
+            display: flex;
+            align-items: center;
+            padding: 8px 20px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--sidebar-section);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            user-select: none;
+            transition: var(--transition);
+        }
+
+        .nav-section-title:hover {
+            color: var(--sidebar-text);
+        }
+
+        .nav-section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--sidebar-border);
+            margin-left: 12px;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .nav-section-title:hover::after {
+            opacity: 1;
+        }
+
+        .nav-section-icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .nav-section.collapsed .nav-section-icon {
+            transform: rotate(-90deg);
+        }
+
+        .sidebar.collapsed .nav-section-title {
+            justify-content: center;
+            padding: 8px;
+        }
+
+        .sidebar.collapsed .nav-section-title span {
+            display: none;
+        }
+
+        .sidebar.collapsed .nav-section-title::after {
+            display: none;
+        }
+
+        /* 导航列表 */
+        .nav-list {
+            list-style: none;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .nav-section.collapsed .nav-list {
+            max-height: 0 !important;
+        }
+
+        /* 导航项 */
+        .nav-item {
+            position: relative;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            color: var(--sidebar-text);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: var(--transition);
+            position: relative;
+            gap: 12px;
+        }
+
+        .nav-link:hover {
+            color: var(--sidebar-text-active);
+            background: var(--sidebar-hover);
+        }
+
+        .nav-link.active {
+            color: var(--sidebar-text-active);
+            background: var(--sidebar-active);
+        }
+
+        .nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 24px;
+            background: var(--primary);
+            border-radius: 0 3px 3px 0;
+        }
+
+        /* 图标 */
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            border-radius: 6px;
+            transition: var(--transition);
+        }
+
+        .nav-icon svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+            opacity: 0.9;
+        }
+
+        .nav-link:hover .nav-icon,
+        .nav-link.active .nav-icon {
+            background: var(--primary-bg);
+        }
+
+        .nav-link.active .nav-icon svg {
+            fill: var(--primary);
+            opacity: 1;
+        }
+
+        /* 文本 */
+        .nav-text {
+            flex: 1;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .sidebar.collapsed .nav-text {
+            opacity: 0;
+            width: 0;
+        }
+
+        /* 徽章 */
+        .nav-badge {
+            padding: 2px 8px;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 10px;
+            flex-shrink: 0;
+        }
+
+        .nav-badge.new {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+        }
+
+        .nav-badge.count {
+            background: var(--danger);
+            color: white;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .nav-badge.beta {
+            background: var(--warning);
+            color: white;
+        }
+
+        .sidebar.collapsed .nav-badge {
+            display: none;
+        }
+
+        /* 箭头 */
+        .nav-arrow {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+
+        .nav-arrow svg {
+            width: 12px;
+            height: 12px;
+            fill: currentColor;
+            opacity: 0.5;
+        }
+
+        .nav-item.expanded .nav-arrow {
+            transform: rotate(90deg);
+        }
+
+        .sidebar.collapsed .nav-arrow {
+            display: none;
+        }
+
+        /* 子菜单 */
+        .nav-submenu {
+            list-style: none;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 8px;
+            margin: 4px 12px;
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.3s ease;
+        }
+
+        .nav-item.expanded .nav-submenu {
+            max-height: 500px;
+        }
+
+        .nav-submenu .nav-link {
+            padding: 8px 20px 8px 52px;
+            font-size: 13px;
+        }
+
+        .nav-submenu .nav-link::before {
+            display: none;
+        }
+
+        .sidebar.collapsed .nav-submenu {
+            display: none;
+        }
+
+        /* 用户区域 */
+        .sidebar-user {
+            padding: 16px;
+            border-top: 1px solid var(--sidebar-border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .user-info {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: var(--sidebar-text);
+        }
+
+        .sidebar.collapsed .user-info {
+            opacity: 0;
+            width: 0;
+        }
+
+        /* ========== 主内容区 ========== */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 24px;
+            transition: var(--transition);
+            min-height: 100vh;
+        }
+
+        .sidebar.collapsed + .main-content {
+            margin-left: var(--sidebar-collapsed);
+        }
+
+        .page-header {
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .page-desc {
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        /* 卡片网格 */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .card-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .card-desc {
+            font-size: 13px;
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        /* ========== SVG图标定义 ========== */
+        .icon-defs {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- SVG图标定义 -->
+    <svg class="icon-defs">
+        <symbol id="icon-dashboard" viewBox="0 0 24 24">
+            <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+        </symbol>
+        <symbol id="icon-chat" viewBox="0 0 24 24">
+            <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+        </symbol>
+        <symbol id="icon-model" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.07 5 7.41 0 2.08-.8 3.98-2.1 5.39z"/>
+        </symbol>
+        <symbol id="icon-orchestration" viewBox="0 0 24 24">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+        </symbol>
+        <symbol id="icon-workflow" viewBox="0 0 24 24">
+            <path d="M22 11V3h-7v3H9V3H2v8h7V8h2v10h3v3h7v-8h-7v3h-2V8h2v3h7zM7 9H4V5h3v4zm10 6h3v4h-3v-4zm0-10h3v4h-3V5z"/>
+        </symbol>
+        <symbol id="icon-agent" viewBox="0 0 24 24">
+            <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+        </symbol>
+        <symbol id="icon-cognitive" viewBox="0 0 24 24">
+            <path d="M12 2a9 9 0 0 0-9 9c0 4.17 2.84 7.67 6.69 8.69L12 22l2.31-2.31C18.16 18.67 21 15.17 21 11a9 9 0 0 0-9-9zm0 2c3.87 0 7 3.13 7 7 0 3.47-2.56 6.36-5.89 6.89L12 18l-1.11-1.11C7.56 16.36 5 13.47 5 10c0-3.87 3.13-7 7-7zm-1 3v6l5.25 3.15.75-1.23-4.5-2.67V7h-1.5z"/>
+        </symbol>
+        <symbol id="icon-training" viewBox="0 0 24 24">
+            <path d="M5 16c0 3.87 3.13 7 7 7s7-3.13 7-7v-4H5v4zM16.42 7.21l1.45-2.45-1.73-1.02-1.45 2.45c-1.04-.44-2.19-.69-3.42-.69-4.97 0-9 4.03-9 9h2c0-3.87 3.13-7 7-7s7 3.13 7 7h2c0-1.55-.4-3-1.08-4.28l1.45-2.45-1.73-1.02-1.45 2.45c-.52-.32-1.08-.58-1.67-.78l.59-1.02-1.73-1.02-.59 1.02c-.63-.12-1.29-.18-1.96-.18z"/>
+        </symbol>
+        <symbol id="icon-video" viewBox="0 0 24 24">
+            <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
+        </symbol>
+        <symbol id="icon-image" viewBox="0 0 24 24">
+            <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+        </symbol>
+        <symbol id="icon-audio" viewBox="0 0 24 24">
+            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+        </symbol>
+        <symbol id="icon-3d" viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </symbol>
+        <symbol id="icon-physics" viewBox="0 0 24 24">
+            <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4s1.79-4 4-4h.71C7.37 7.69 9.48 6 12 6c3.04 0 5.5 2.46 5.5 5.5v.5H19c1.66 0 3 1.34 3 3s-1.34 3-3 3z"/>
+        </symbol>
+        <symbol id="icon-computer" viewBox="0 0 24 24">
+            <path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h4v2H8v2h8v-2h-2v-2h6zM4 6h16v10H4V6z"/>
+        </symbol>
+        <symbol id="icon-security" viewBox="0 0 24 24">
+            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+        </symbol>
+        <symbol id="icon-federated" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        </symbol>
+        <symbol id="icon-rag" viewBox="0 0 24 24">
+            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-1-3V3.5L18.5 9H15z"/>
+        </symbol>
+        <symbol id="icon-channel" viewBox="0 0 24 24">
+            <path d="M21 6h-7.59l3.29-3.29L16 2l-4 4-4-4-.71.71L10.59 6H3c-1.1 0-2 .89-2 2v12c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.11-.9-2-2-2zm0 14H3V8h18v12zM9 10v8l7-4z"/>
+        </symbol>
+        <symbol id="icon-plugin" viewBox="0 0 24 24">
+            <path d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11z"/>
+        </symbol>
+        <symbol id="icon-personality" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 5c1.93 0 3.5 1.57 3.5 3.5S13.93 14 12 14s-3.5-1.57-3.5-3.5S10.07 7 12 7zm0 12.5c-2.03 0-4.43-.82-6-2.34.03-1.99 4-3.16 6-3.16s5.97 1.17 6 3.16c-1.57 1.52-3.97 2.34-6 2.34z"/>
+        </symbol>
+        <symbol id="icon-data" viewBox="0 0 24 24">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+        </symbol>
+        <symbol id="icon-alignment" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        </symbol>
+        <symbol id="icon-robot" viewBox="0 0 24 24">
+            <path d="M12 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM9 7H7v2h2V7zm8 0h-2v2h2V7zm-5 3c-2.21 0-4 1.79-4 4v5h8v-5c0-2.21-1.79-4-4-4zm-6 4H4v5h2v-5zm14 0h-2v5h2v-5z"/>
+        </symbol>
+        <symbol id="icon-monitor" viewBox="0 0 24 24">
+            <path d="M20 12c0-1.1.9-2 2-2V6c0-1.1-.9-2-2-2H4c-1.1 0-1.99.9-1.99 2v4c1.1 0 1.99.9 1.99 2s-.89 2-2 2v4c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-4c-1.1 0-2-.9-2-2zm-4 4H8v-2h8v2zm0-4H8v-2h8v2z"/>
+        </symbol>
+        <symbol id="icon-hardware" viewBox="0 0 24 24">
+            <path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h4v2H8v2h8v-2h-2v-2h6zM4 6h16v10H4V6z"/>
+        </symbol>
+        <symbol id="icon-settings" viewBox="0 0 24 24">
+            <path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.46.17-.49.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.49-.41l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+        </symbol>
+        <symbol id="icon-help" viewBox="0 0 24 24">
+            <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/>
+        </symbol>
+        <symbol id="icon-arrow" viewBox="0 0 24 24">
+            <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+        </symbol>
+        <symbol id="icon-collapse" viewBox="0 0 24 24">
+            <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+        </symbol>
+    </svg>
+
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <!-- Logo -->
+        <div class="sidebar-logo">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" fill="white"/></svg>
+            </div>
+            <div class="logo-text">
+                <span class="logo-title">AGI Framework</span>
+                <span class="logo-subtitle">Unified Platform</span>
+            </div>
+        </div>
+
+        <!-- 折叠按钮 -->
+        <button class="sidebar-toggle" id="sidebarToggle">
+            <svg><use href="#icon-collapse"/></svg>
+        </button>
+
+        <!-- 导航 -->
+        <nav class="sidebar-nav">
+            <!-- 主要功能 -->
+            <div class="nav-section" data-section="main">
+                <div class="nav-section-title">
+                    <span class="nav-section-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><use href="#icon-arrow"/></svg></span>
+                    <span>主要功能</span>
+                </div>
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="pages/dashboard.html" class="nav-link active" data-page="dashboard">
+                            <span class="nav-icon"><svg><use href="#icon-dashboard"/></svg></span>
+                            <span class="nav-text">仪表盘</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="pages/chat.html" class="nav-link" data-page="chat">
+                            <span class="nav-icon"><svg><use href="#icon-chat"/></svg></span>
+                            <span class="nav-text">智能对话</span>
+                            <span class="nav-badge count">3</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="pages/model-manager.html" class="nav-link" data-page="models">
+                            <span class="nav-icon"><svg><use href="#icon-model"/></svg></span>
+                            <span class="nav-text">模型管理</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="pages/orchestration.html" class="nav-link" data-page="orchestration">
+                            <span class="nav-icon"><svg><use href="#icon-orchestration"/></svg></span>
+                            <span class="nav-text">模型编排</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="pages/workflow.html" class="nav-link" data-page="workflow">
+                            <span class="nav-icon"><svg><use href="#icon-workflow"/></svg></span>
+                            <span class="nav-text">工作流</span>
+                            <span class="nav-badge new">NEW</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- AI系统 -->
+            <div class="nav-section" data-section="ai">
+                <div class="nav-section-title">
+                    <span class="nav-section-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><use href="#icon-arrow"/></svg></span>
+                    <span>AI系统</span>
+                </div>
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="pages/multiagent.html" class="nav-link" data-page="multiagent">
+                            <span class="nav-icon"><svg><use href="#icon-agent"/></svg></span>
+                            <span class="nav-text">多智能体</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="pages/cognitive.html" class="nav-link" data-page="cognitive">
+                            <span class="nav-icon"><svg><use href="#icon-cognitive"/></svg></span>
+                            <span class="nav-text">认知系统</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="pages/training.html" class="nav-link" data-page="training">
+                            <span class="nav-icon"><svg><use href="#icon-training"/></svg></span>
+                            <span class="nav-text">训练中心</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 内容生成 -->
+            <div class="nav-section" data-section="generation">
+                <div class="nav-section-title">
+                    <span class="nav-section-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><use href="#icon-arrow"/></svg></span>
+                    <span>内容生成</span>
+                </div>
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="pages/video-gen.html" class="nav-link" data-page="video">
+                            <span class="nav-icon"><svg><use href="#icon-video"/></svg></span>
+                            <span class="nav-text">视频生成</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="pages/image-gen.html" class="nav-link" data-page="image">
+                            <span class="nav-icon"><svg><use href="#icon-image"/></svg></span>
+                            <span class="nav-text">图像生成</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="pages/audio-gen.html" class="nav-link" data-page="audio">
+                            <span class="nav-icon"><svg><use href="#icon-audio"/></svg></span>
+                            <span class="nav-text">音频生成</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="pages/3d-gen.html" class="nav-link" data-page="3d">
+                            <span class="nav-icon"><svg><use href="#icon-3d"/></svg></span>
+                            <span class="nav-text">3D生成</span>
+                            <span class="nav-badge beta">BETA</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 高级功能 -->
+            <div class="nav-section" data-section="advanced">
+                <div class="nav-section-title">
+                    <span class="nav-section-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><use href="#icon-arrow"/></svg></span>
+                    <span>高级功能</span>
+                </div>
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="pages/physics-engine.html" class="nav-link" data-page="physics">
+                            <span class="nav-icon"><svg><use href="#icon-physics"/></svg></span>
+                            <span class="nav-text">物理引擎</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="pages/computer-use.html" class="nav-link" data-page="computer">
+                            <span class="nav-icon"><svg><use href="#icon-computer"/></svg></span>
+                            <span class="nav-text">计算机使用</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="pages/security.html" class="nav-link" data-page="security">
+                            <span class="nav-icon"><svg><use href="#icon-security"/></svg></span>
+                            <span class="nav-text">安全中心</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="pages/federated.html" class="nav-link" data-page="federated">
+                            <span class="nav-icon"><svg><use href="#icon-federated"/></svg></span>
+                            <span class="nav-text">联邦学习</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="pages/rag.html" class="nav-link" data-page="rag">
+                            <span class="nav-icon"><svg><use href="#icon-rag"/></svg></span>
+                            <span class="nav-text">知识检索</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="pages/channels.html" class="nav-link" data-page="channels">
+                            <span class="nav-icon"><svg><use href="#icon-channel"/></svg></span>
+                            <span class="nav-text">渠道管理</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="pages/plugins.html" class="nav-link" data-page="plugins">
+                            <span class="nav-icon"><svg><use href="#icon-plugin"/></svg></span>
+                            <span class="nav-text">插件市场</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="pages/personality.html" class="nav-link" data-page="personality">
+                            <span class="nav-icon"><svg><use href="#icon-personality"/></svg></span>
+                            <span class="nav-text">人格引擎</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="pages/data-pipeline.html" class="nav-link" data-page="data">
+                            <span class="nav-icon"><svg><use href="#icon-data"/></svg></span>
+                            <span class="nav-text">数据管道</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="pages/alignment.html" class="nav-link" data-page="alignment">
+                            <span class="nav-icon"><svg><use href="#icon-alignment"/></svg></span>
+                            <span class="nav-text">价值对齐</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="pages/robot.html" class="nav-link" data-page="robot">
+                            <span class="nav-icon"><svg><use href="#icon-robot"/></svg></span>
+                            <span class="nav-text">机器人控制</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 系统管理 -->
+            <div class="nav-section" data-section="system">
+                <div class="nav-section-title">
+                    <span class="nav-section-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><use href="#icon-arrow"/></svg></span>
+                    <span>系统管理</span>
+                </div>
+                <ul class="nav-list">
+                    <li class="nav-item">
+                        <a href="pages/telemetry.html" class="nav-link" data-page="telemetry">
+                            <span class="nav-icon"><svg><use href="#icon-monitor"/></svg></span>
+                            <span class="nav-text">监控遥测</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="pages/hardware.html" class="nav-link" data-page="hardware">
+                            <span class="nav-icon"><svg><use href="#icon-hardware"/></svg></span>
+                            <span class="nav-text">硬件管理</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="pages/settings.html" class="nav-link" data-page="settings">
+                            <span class="nav-icon"><svg><use href="#icon-settings"/></svg></span>
+                            <span class="nav-text">系统设置</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="pages/help.html" class="nav-link" data-page="help">
+                            <span class="nav-icon"><svg><use href="#icon-help"/></svg></span>
+                            <span class="nav-text">帮助文档</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- 用户区域 -->
+        <div class="sidebar-user">
+            <div class="user-avatar">A</div>
+            <div class="user-info">
+                <div class="user-name">Admin</div>
+                <div class="user-role">超级管理员</div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- 主内容 -->
+    <main class="main-content">
+        <div class="page-header">
+            <h1 class="page-title">仪表盘</h1>
+            <p class="page-desc">欢迎使用 AGI Unified Framework，一个统一的AI能力平台</p>
+        </div>
+
+        <div class="card-grid">
+            <div class="card">
+                <div class="card-icon" style="background: linear-gradient(135deg, #6366f1, #818cf8);">
+                    <svg viewBox="0 0 24 24" fill="white"><use href="#icon-chat"/></svg>
+                </div>
+                <h3 class="card-title">智能对话</h3>
+                <p class="card-desc">支持多模型对话、流式输出、Markdown渲染、代码高亮等功能</p>
+            </div>
+            <div class="card">
+                <div class="card-icon" style="background: linear-gradient(135deg, #10b981, #34d399);">
+                    <svg viewBox="0 0 24 24" fill="white"><use href="#icon-model"/></svg>
+                </div>
+                <h3 class="card-title">模型管理</h3>
+                <p class="card-desc">管理多个AI模型、配置API密钥、设置负载均衡策略</p>
+            </div>
+            <div class="card">
+                <div class="card-icon" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">
+                    <svg viewBox="0 0 24 24" fill="white"><use href="#icon-workflow"/></svg>
+                </div>
+                <h3 class="card-title">工作流编排</h3>
+                <p class="card-desc">可视化DAG编辑器、拖拽节点、自动执行AI工作流</p>
+            </div>
+            <div class="card">
+                <div class="card-icon" style="background: linear-gradient(135deg, #ef4444, #f87171);">
+                    <svg viewBox="0 0 24 24" fill="white"><use href="#icon-agent"/></svg>
+                </div>
+                <h3 class="card-title">多智能体</h3>
+                <p class="card-desc">智能体注册、联盟形成、辩论可视化、知识迁移</p>
+            </div>
+            <div class="card">
+                <div class="card-icon" style="background: linear-gradient(135deg, #3b82f6, #60a5fa);">
+                    <svg viewBox="0 0 24 24" fill="white"><use href="#icon-training"/></svg>
+                </div>
+                <h3 class="card-title">训练中心</h3>
+                <p class="card-desc">GRPO/RLHF/DPO训练、分布式训练、超参数搜索</p>
+            </div>
+            <div class="card">
+                <div class="card-icon" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa);">
+                    <svg viewBox="0 0 24 24" fill="white"><use href="#icon-image"/></svg>
+                </div>
+                <h3 class="card-title">图像生成</h3>
+                <p class="card-desc">SD文生图、ControlNet、Inpainting、IP-Adapter</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // 侧边栏折叠
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebarToggle');
+        
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        });
+
+        // 恢复折叠状态
+        if (localStorage.getItem('sidebarCollapsed') === 'true') {
+            sidebar.classList.add('collapsed');
+        }
+
+        // 分组折叠
+        document.querySelectorAll('.nav-section-title').forEach(title => {
+            title.addEventListener('click', () => {
+                const section = title.closest('.nav-section');
+                section.classList.toggle('collapsed');
+            });
+        });
+
+        // 导航链接点击
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                // 移除其他active
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                // 添加当前active
+                link.classList.add('active');
+            });
+        });
+
+        // 鼠标悬停显示tooltip（折叠模式下）
+        sidebar.addEventListener('mousemove', (e) => {
+            if (!sidebar.classList.contains('collapsed')) return;
+            
+            const link = e.target.closest('.nav-link');
+            if (link) {
+                const text = link.querySelector('.nav-text');
+                if (text) {
+                    link.title = text.textContent;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

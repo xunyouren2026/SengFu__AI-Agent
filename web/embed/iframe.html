@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AGI Chat Widget</title>
+  <link rel="stylesheet" href="embed.css">
+</head>
+<body>
+  <div class="agi-chat" id="chat-container">
+    <!-- Header -->
+    <header class="agi-chat-header">
+      <div class="agi-chat-avatar" id="avatar">
+        🤖
+      </div>
+      <div class="agi-chat-header-info">
+        <h1 class="agi-chat-header-title" id="title">AGI Assistant</h1>
+        <p class="agi-chat-header-subtitle" id="subtitle">How can we help you?</p>
+      </div>
+      <div class="agi-chat-status">
+        <span class="agi-chat-status-dot"></span>
+        <span>Online</span>
+      </div>
+    </header>
+
+    <!-- Messages -->
+    <div class="agi-chat-messages" id="messages">
+      <!-- Messages will be inserted here -->
+    </div>
+
+    <!-- Typing Indicator -->
+    <div class="agi-chat-typing" id="typing" style="display: none;">
+      <div class="agi-chat-typing-dot"></div>
+      <div class="agi-chat-typing-dot"></div>
+      <div class="agi-chat-typing-dot"></div>
+    </div>
+
+    <!-- Quick Replies -->
+    <div class="agi-chat-quick-replies" id="quick-replies" style="display: none;">
+      <!-- Quick replies will be inserted here -->
+    </div>
+
+    <!-- File Preview -->
+    <div class="agi-chat-file-preview" id="file-preview" style="display: none;">
+      <span class="agi-chat-file-preview-name" id="file-name"></span>
+      <button class="agi-chat-file-preview-remove" onclick="removeFile()">×</button>
+    </div>
+
+    <!-- Input -->
+    <div class="agi-chat-input-container">
+      <div class="agi-chat-input-wrapper">
+        <textarea 
+          class="agi-chat-input" 
+          id="message-input" 
+          placeholder="Type a message..."
+          rows="1"
+        ></textarea>
+        <div class="agi-chat-input-actions">
+          <button class="agi-chat-btn" id="attach-btn" title="Attach file">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+            </svg>
+          </button>
+          <button class="agi-chat-btn agi-chat-btn-primary" id="send-btn" disabled title="Send message">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration from parent window
+    let config = {};
+    let ws = null;
+    let sessionId = '';
+    let selectedFile = null;
+
+    // DOM Elements
+    const container = document.getElementById('chat-container');
+    const messagesEl = document.getElementById('messages');
+    const inputEl = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
+    const attachBtn = document.getElementById('attach-btn');
+    const typingEl = document.getElementById('typing');
+    const filePreview = document.getElementById('file-preview');
+    const fileName = document.getElementById('file-name');
+    const quickRepliesEl = document.getElementById('quick-replies');
+
+    // Initialize
+    function init() {
+      // Get config from URL params
+      const params = new URLSearchParams(window.location.search);
+      config = {
+        apiUrl: params.get('apiUrl') || 'http://localhost:8000',
+        wsUrl: params.get('wsUrl') || 'ws://localhost:8000/ws',
+        apiKey: params.get('apiKey') || '',
+        theme: params.get('theme') || 'light',
+        primaryColor: params.get('primaryColor') || '#007bff',
+        title: params.get('title') || 'AGI Assistant',
+        subtitle: params.get('subtitle') || 'How can we help you?',
+        placeholder: params.get('placeholder') || 'Type a message...',
+        greeting: params.get('greeting') || 'Hello! How can I help you today?',
+        avatarUrl: params.get('avatarUrl') || '',
+        allowAttachments: params.get('allowAttachments') !== 'false',
+        sessionId: params.get('sessionId') || generateSessionId()
+      };
+
+      sessionId = config.sessionId;
+
+      // Apply theme
+      document.documentElement.setAttribute('data-theme', config.theme);
+      document.documentElement.style.setProperty('--agi-primary', config.primaryColor);
+
+      // Update UI
+      document.getElementById('title').textContent = config.title;
+      document.getElementById('subtitle').textContent = config.subtitle;
+      inputEl.placeholder = config.placeholder;
+
+      if (config.avatarUrl) {
+        document.getElementById('avatar').innerHTML = `<img src="${config.avatarUrl}" alt="">`;
+      }
+
+      if (!config.allowAttachments) {
+        attachBtn.style.display = 'none';
+      }
+
+      // Show greeting
+      if (config.greeting) {
+        addMessage('bot', config.greeting);
+      }
+
+      // Setup event listeners
+      setupEventListeners();
+
+      // Connect WebSocket
+      connectWebSocket();
+
+      // Notify parent
+      notifyParent('ready');
+    }
+
+    function generateSessionId() {
+      return 'sess_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    function setupEventListeners() {
+      // Send button
+      sendBtn.addEventListener('click', sendMessage);
+
+      // Input
+      inputEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+
+      inputEl.addEventListener('input', () => {
+        sendBtn.disabled = !inputEl.value.trim() && !selectedFile;
+        autoResizeTextarea();
+      });
+
+      // Attach button
+      attachBtn.addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*,application/pdf,.doc,.docx';
+        input.onchange = (e) => handleFileSelect(e.target.files[0]);
+        input.click();
+      });
+
+      // Listen for messages from parent
+      window.addEventListener('message', (e) => {
+        handleParentMessage(e.data);
+      });
+    }
+
+    function autoResizeTextarea() {
+      inputEl.style.height = 'auto';
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px';
+    }
+
+    function connectWebSocket() {
+      try {
+        ws = new WebSocket(`${config.wsUrl}?session=${sessionId}`);
+
+        ws.onopen = () => {
+          console.log('WebSocket connected');
+          notifyParent('connected');
+        };
+
+        ws.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          handleWebSocketMessage(data);
+        };
+
+        ws.onclose = () => {
+          console.log('WebSocket disconnected');
+          notifyParent('disconnected');
+          setTimeout(connectWebSocket, 5000);
+        };
+
+        ws.onerror = (error) => {
+          console.error('WebSocket error:', error);
+          notifyParent('error', error);
+        };
+      } catch (error) {
+        console.error('Failed to connect WebSocket:', error);
+      }
+    }
+
+    function handleWebSocketMessage(data) {
+      switch (data.type) {
+        case 'message':
+          hideTyping();
+          addMessage('bot', data.content);
+          notifyParent('messageReceived', data);
+          break;
+        case 'typing':
+          showTyping();
+          break;
+        case 'quickReplies':
+          showQuickReplies(data.replies);
+          break;
+        case 'error':
+          hideTyping();
+          addMessage('bot', 'Sorry, an error occurred. Please try again.');
+          break;
+      }
+    }
+
+    function sendMessage() {
+      const text = inputEl.value.trim();
+      if (!text && !selectedFile) return;
+
+      if (text) {
+        addMessage('user', text);
+        inputEl.value = '';
+        autoResizeTextarea();
+      }
+
+      if (selectedFile) {
+        uploadFile(selectedFile, text);
+        removeFile();
+      } else {
+        // Send via WebSocket
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({
+            type: 'message',
+            content: text,
+            sessionId: sessionId
+          }));
+          showTyping();
+        } else {
+          sendViaHttp(text);
+        }
+      }
+
+      sendBtn.disabled = true;
+      notifyParent('messageSent', { text });
+    }
+
+    async function sendViaHttp(text) {
+      showTyping();
+
+      try {
+        const response = await fetch(`${config.apiUrl}/api/v1/chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${config.apiKey}`
+          },
+          body: JSON.stringify({
+            message: text,
+            sessionId: sessionId
+          })
+        });
+
+        const data = await response.json();
+        hideTyping();
+        addMessage('bot', data.response);
+      } catch (error) {
+        hideTyping();
+        addMessage('bot', 'Sorry, I could not process your message. Please try again.');
+      }
+    }
+
+    function addMessage(sender, text, attachments = []) {
+      const messageEl = document.createElement('div');
+      messageEl.className = `agi-chat-message ${sender}`;
+
+      let content = formatMessage(text);
+
+      messageEl.innerHTML = `
+        <div class="agi-chat-message-content">${content}</div>
+        <div class="agi-chat-message-time">${formatTime(new Date())}</div>
+      `;
+
+      messagesEl.appendChild(messageEl);
+      scrollToBottom();
+    }
+
+    function formatMessage(text) {
+      // Escape HTML
+      text = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+      // Convert URLs to links
+      text = text.replace(
+        /(https?:\/\/[^\s]+)/g,
+        '<a href="$1" target="_blank" rel="noopener">$1</a>'
+      );
+
+      // Convert markdown
+      text = text
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/`(.+?)`/g, '<code>$1</code>');
+
+      return text;
+    }
+
+    function formatTime(date) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function showTyping() {
+      typingEl.style.display = 'flex';
+      scrollToBottom();
+    }
+
+    function hideTyping() {
+      typingEl.style.display = 'none';
+    }
+
+    function showQuickReplies(replies) {
+      quickRepliesEl.innerHTML = replies.map(reply => `
+        <button class="agi-chat-quick-reply" onclick="sendQuickReply('${reply}')">${reply}</button>
+      `).join('');
+      quickRepliesEl.style.display = 'flex';
+    }
+
+    function sendQuickReply(text) {
+      inputEl.value = text;
+      sendMessage();
+      quickRepliesEl.style.display = 'none';
+    }
+
+    function handleFileSelect(file) {
+      if (!file) return;
+
+      selectedFile = file;
+      fileName.textContent = file.name;
+      filePreview.style.display = 'flex';
+      sendBtn.disabled = false;
+    }
+
+    function removeFile() {
+      selectedFile = null;
+      filePreview.style.display = 'none';
+      sendBtn.disabled = !inputEl.value.trim();
+    }
+
+    async function uploadFile(file, messageText) {
+      showTyping();
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('sessionId', sessionId);
+      if (messageText) {
+        formData.append('message', messageText);
+      }
+
+      try {
+        const response = await fetch(`${config.apiUrl}/api/v1/upload`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${config.apiKey}`
+          },
+          body: formData
+        });
+
+        const data = await response.json();
+        addMessage('user', messageText || `📎 ${file.name}`);
+      } catch (error) {
+        addMessage('bot', 'Failed to upload file. Please try again.');
+      }
+    }
+
+    function scrollToBottom() {
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function handleParentMessage(data) {
+      switch (data.type) {
+        case 'sendMessage':
+          inputEl.value = data.text;
+          sendMessage();
+          break;
+        case 'setConfig':
+          Object.assign(config, data.config);
+          break;
+        case 'clearMessages':
+          messagesEl.innerHTML = '';
+          break;
+      }
+    }
+
+    function notifyParent(type, data = {}) {
+      if (window.parent !== window) {
+        window.parent.postMessage({ type, data, sessionId }, '*');
+      }
+    }
+
+    // Initialize on load
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>

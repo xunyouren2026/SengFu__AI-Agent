@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人资料 - AGI 统一框架</title>
+    <link rel="icon" type="image/svg+xml" href="../assets/images/favicon.svg">
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/reset.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <style>
+        .profile-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        .profile-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 48px;
+            color: white;
+        }
+        .profile-name {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .profile-role {
+            color: #666;
+            font-size: 14px;
+        }
+        .profile-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .profile-section h2 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 6px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .stat-card {
+            text-align: center;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #667eea;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 空状态提示 -->
+    <div id="empty-state" style="display:none; background:#fff3cd; border:1px solid #ffc107; 
+         border-radius:8px; padding:15px; margin:20px; text-align:center; color:#856404;">
+        ⚠️ 暂无数据，请确保后端服务已启动
+    </div>
+    
+    <div class="profile-container">
+        <div class="profile-header">
+            <div class="profile-avatar">👤</div>
+            <div class="profile-name">管理员</div>
+            <div class="profile-role">系统管理员</div>
+        </div>
+
+        <div class="profile-section">
+            <h2>基本信息</h2>
+            <div class="form-group">
+                <label>用户名</label>
+                <input type="text" value="admin" readonly>
+            </div>
+            <div class="form-group">
+                <label>邮箱</label>
+                <input type="email" placeholder="admin@example.com">
+            </div>
+            <div class="form-group">
+                <label>电话</label>
+                <input type="tel" placeholder="+86 138****8888">
+            </div>
+            <button class="btn btn-primary">保存修改</button>
+        </div>
+
+        <div class="profile-section">
+            <h2>使用统计</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">对话次数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">消息数量</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">0</div>
+                    <div class="stat-label">使用天数</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-section">
+            <h2>安全设置</h2>
+            <div class="form-group">
+                <label>当前密码</label>
+                <input type="password" placeholder="输入当前密码">
+            </div>
+            <div class="form-group">
+                <label>新密码</label>
+                <input type="password" placeholder="输入新密码">
+            </div>
+            <div class="form-group">
+                <label>确认新密码</label>
+                <input type="password" placeholder="再次输入新密码">
+            </div>
+            <button class="btn btn-primary">修改密码</button>
+        </div>
+    </div>
+
+    <script src="../js/utils.js"></script>
+    <script src="../js/state.js"></script>
+    <script src="../js/api-client.js"></script>
+    <script src="../js/common-utils.js"></script>
+    <script>
+        // 简单的表单处理
+        document.querySelectorAll('.btn-primary').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                alert('功能开发中...');
+            });
+        });
+    </script>
+    <script>
+        // UFO AGI Framework - 页面真实化初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof PageRealization !== 'undefined') {
+                PageRealization.initPage('profile');
+            } else {
+                console.warn('PageRealization not loaded');
+            }
+        });
+    </script>
+
+    <script src="../static/js/api-client.js"></script>
+    <script src="../static/js/page-realization.js"></script>
+    <script src="../static/js/page-realization-loader.js"></script>
+</body>
+</html>

@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>胜复学 (Pendulum) - 实时同步演示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #818cf8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --radius: 8px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: var(--gray-900);
+            margin-bottom: 8px;
+        }
+
+        .header h1 span {
+            color: var(--primary);
+        }
+
+        .header p {
+            color: var(--gray-500);
+            font-size: 14px;
+        }
+
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+
+        /* Card */
+        .card {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: var(--gray-50);
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .card-header .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-success {
+            background: #d1fae5;
+            color: var(--success);
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: var(--warning);
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: var(--danger);
+        }
+
+        .badge-info {
+            background: #dbeafe;
+            color: var(--primary);
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: 6px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius);
+            font-size: 14px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--gray-300);
+            color: var(--gray-700);
+        }
+
+        .btn-outline:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* State Display */
+        .state-display {
+            background: var(--gray-900);
+            border-radius: var(--radius);
+            padding: 16px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+            color: #10b981;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .state-display .key {
+            color: #60a5fa;
+        }
+
+        .state-display .string {
+            color: #fbbf24;
+        }
+
+        .state-display .number {
+            color: #f472b6;
+        }
+
+        .state-display .boolean {
+            color: #a78bfa;
+        }
+
+        .state-display .null {
+            color: #6b7280;
+        }
+
+        /* Status Panel */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .status-item {
+            background: var(--gray-50);
+            padding: 12px;
+            border-radius: var(--radius);
+        }
+
+        .status-item .label {
+            font-size: 11px;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-item .value {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-top: 4px;
+        }
+
+        .status-item .value.success { color: var(--success); }
+        .status-item .value.warning { color: var(--warning); }
+        .status-item .value.danger { color: var(--danger); }
+
+        /* Log Panel */
+        .log-panel {
+            background: var(--gray-900);
+            border-radius: var(--radius);
+            padding: 12px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            padding: 6px 0;
+            border-bottom: 1px solid var(--gray-700);
+            display: flex;
+            gap: 12px;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .log-time {
+            color: var(--gray-500);
+            flex-shrink: 0;
+        }
+
+        .log-type {
+            flex-shrink: 0;
+            width: 60px;
+        }
+
+        .log-type.info { color: #60a5fa; }
+        .log-type.success { color: var(--success); }
+        .log-type.warning { color: var(--warning); }
+        .log-type.error { color: var(--danger); }
+
+        .log-message {
+            color: var(--gray-200);
+            word-break: break-word;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid var(--gray-200);
+            margin-bottom: 16px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray-500);
+            cursor: pointer;
+            position: relative;
+            transition: color 0.2s;
+        }
+
+        .tab:hover {
+            color: var(--gray-700);
+        }
+
+        .tab.active {
+            color: var(--primary);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Code Editor */
+        .code-editor {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius);
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+            resize: vertical;
+        }
+
+        .code-editor:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        /* Connection Status */
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .connection-status.online {
+            background: #d1fae5;
+            color: var(--success);
+        }
+
+        .connection-status.offline {
+            background: #fee2e2;
+            color: var(--danger);
+        }
+
+        .connection-status.connecting {
+            background: #fef3c7;
+            color: var(--warning);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .status-dot.pulse {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Tab Sync Demo */
+        .tab-sync-info {
+            background: var(--gray-50);
+            padding: 16px;
+            border-radius: var(--radius);
+            margin-bottom: 16px;
+        }
+
+        .tab-sync-info p {
+            color: var(--gray-600);
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .tab-sync-info code {
+            background: var(--gray-200);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        /* CRDT Demo */
+        .crdt-visual {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .crdt-visual > div {
+            flex: 1;
+            background: var(--gray-50);
+            padding: 12px;
+            border-radius: var(--radius);
+        }
+
+        .crdt-visual h4 {
+            font-size: 12px;
+            color: var(--gray-500);
+            margin-bottom: 8px;
+        }
+
+        .crdt-visual .value {
+            font-family: monospace;
+            font-size: 14px;
+            color: var(--gray-800);
+        }
+
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .toolbar-left, .toolbar-right {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        /* Full Width */
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                flex-direction: column;
+            }
+
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>胜复学 <span>(Pendulum)</span> AGI 实时同步系统</h1>
+            <p>完整的本地优先、离线支持、CRDT 驱动的实时状态同步演示</p>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <div id="connectionStatus" class="connection-status offline">
+                    <span class="status-dot"></span>
+                    <span>未连接</span>
+                </div>
+            </div>
+            <div class="toolbar-right">
+                <button class="btn btn-outline" onclick="exportState()">
+                    导出状态
+                </button>
+                <button class="btn btn-outline" onclick="importState()">
+                    导入状态
+                </button>
+                <button class="btn btn-danger" onclick="clearState()">
+                    清空状态
+                </button>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Status Overview -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>📊 状态概览</h2>
+                    <span id="syncStatus" class="badge badge-info">就绪</span>
+                </div>
+                <div class="card-body">
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <div class="label">操作次数</div>
+                            <div id="operationsCount" class="value">0</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="label">待同步操作</div>
+                            <div id="pendingCount" class="value warning">0</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="label">冲突次数</div>
+                            <div id="conflictsCount" class="value">0</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="label">在线 Tab 数</div>
+                            <div id="tabCount" class="value success">1</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- State Editor -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>✏️ 状态编辑</h2>
+                </div>
+                <div class="card-body">
+                    <div class="tabs">
+                        <button class="tab active" data-tab="single">单个操作</button>
+                        <button class="tab" data-tab="batch">批量操作</button>
+                        <button class="tab" data-tab="crdt">CRDT</button>
+                    </div>
+
+                    <!-- Single Operation -->
+                    <div id="single-tab" class="tab-content active">
+                        <div class="form-group">
+                            <label>路径 (Path)</label>
+                            <input type="text" id="pathInput" class="form-control" 
+                                   placeholder="例如: user.profile.name">
+                        </div>
+                        <div class="form-group">
+                            <label>值 (Value)</label>
+                            <input type="text" id="valueInput" class="form-control" 
+                                   placeholder="输入值">
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="setValue()">
+                                设置值
+                            </button>
+                            <button class="btn btn-outline" onclick="getValue()">
+                                获取值
+                            </button>
+                            <button class="btn btn-danger" onclick="deleteValue()">
+                                删除
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Batch Operation -->
+                    <div id="batch-tab" class="tab-content">
+                        <div class="form-group">
+                            <label>JSON 对象 (批量更新)</label>
+                            <textarea id="batchInput" class="code-editor" placeholder='{
+  "user.name": "张三",
+  "user.email": "zhang@example.com",
+  "settings.theme": "dark"
+}'></textarea>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="patchValues()">
+                                批量更新
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- CRDT -->
+                    <div id="crdt-tab" class="tab-content">
+                        <div class="crdt-visual">
+                            <div>
+                                <h4>LWW Register (最后写入胜出)</h4>
+                                <div id="lwwValue" class="value">-</div>
+                            </div>
+                            <div>
+                                <h4>G-Set (只增集合)</h4>
+                                <div id="gsetValue" class="value">[]</div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>CRDT 操作</label>
+                            <input type="text" id="crdtInput" class="form-control" 
+                                   placeholder="输入值后点击操作按钮">
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="lwwSet()">
+                                LWW 设置
+                            </button>
+                            <button class="btn btn-success" onclick="gsetAdd()">
+                                G-Set 添加
+                            </button>
+                            <button class="btn btn-outline" onclick="refreshCRDT()">
+                                刷新
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- State Viewer -->
+            <div class="card full-width">
+                <div class="card-header">
+                    <h2>📦 当前状态</h2>
+                    <span id="stateSize" class="badge badge-info">0 字节</span>
+                </div>
+                <div class="card-body">
+                    <div id="stateDisplay" class="state-display">
+                        <span class="null">空状态 - 使用上方编辑器添加数据</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Sync Demo -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>🔗 Tab 同步演示</h2>
+                    <span id="tabSyncStatus" class="badge badge-success">活跃</span>
+                </div>
+                <div class="card-body">
+                    <div class="tab-sync-info">
+                        <p>💡 在浏览器中打开多个标签页，它们将自动同步状态！</p>
+                        <p>尝试在一个标签页中修改状态，观察其他标签页的变化。</p>
+                    </div>
+                    <div class="status-item">
+                        <div class="label">本标签 ID</div>
+                        <div id="localTabId" class="value" style="font-size: 14px;">-</div>
+                    </div>
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label>广播消息</label>
+                        <input type="text" id="broadcastInput" class="form-control" 
+                               placeholder="输入消息发送到所有标签">
+                    </div>
+                    <button class="btn btn-primary" onclick="broadcastMessage()">
+                        广播
+                    </button>
+                </div>
+            </div>
+
+            <!-- Operation Log -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>📋 操作日志</h2>
+                    <span id="logCount" class="badge badge-info">0 条</span>
+                </div>
+                <div class="card-body">
+                    <div class="log-panel" id="logPanel">
+                        <div class="log-entry">
+                            <span class="log-time">--:--:--</span>
+                            <span class="log-type info">INFO</span>
+                            <span class="log-message">等待操作...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Offline Queue -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>📤 离线队列</h2>
+                    <span id="queueStatus" class="badge badge-success">就绪</span>
+                </div>
+                <div class="card-body">
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <div class="label">队列长度</div>
+                            <div id="queueLength" class="value">0</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="label">已处理</div>
+                            <div id="processedCount" class="value">0</div>
+                        </div>
+                    </div>
+                    <div class="btn-group" style="margin-top: 16px;">
+                        <button class="btn btn-success" onclick="forceSync()">
+                            强制同步
+                        </button>
+                        <button class="btn btn-outline" onclick="pauseSync()">
+                            暂停
+                        </button>
+                        <button class="btn btn-outline" onclick="resumeSync()">
+                            恢复
+                        </button>
+                    </div>
+                    <div class="form-group" style="margin-top: 16px;">
+                        <label>模拟离线</label>
+                        <div class="btn-group">
+                            <button class="btn btn-warning" onclick="simulateOffline()">
+                                断开连接
+                            </button>
+                            <button class="btn btn-success" onclick="restoreConnection()">
+                                恢复连接
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>⚡ 性能指标</h2>
+                </div>
+                <div class="card-body">
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <div class="label">平均延迟</div>
+                            <div id="avgLatency" class="value">-</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="label">总同步大小</div>
+                            <div id="totalSyncSize" class="value">0 B</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="label">最后同步</div>
+                            <div id="lastSyncTime" class="value">-</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="label">运行时间</div>
+                            <div id="uptime" class="value">0s</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module">
+        // ============================================================================
+        // 导入模块
+        // ============================================================================
+        
+        import {
+            PendulumRealtime,
+            VERSION,
+            SyncMode,
+            OperationType,
+            LWWRegister,
+            GSet,
+            formatBytes,
+            formatRelativeTime,
+            formatDuration,
+            debounce
+        } from './realtime-index.js';
+
+        // ============================================================================
+        // 全局变量
+        // ============================================================================
+        
+        let pendulum = null;
+        let crdtLWW = null;
+        let crdtGSet = null;
+        let startTime = Date.now();
+        let operationsCount = 0;
+        let conflictsCount = 0;
+        
+        // ============================================================================
+        // 初始化
+        // ============================================================================
+        
+        async function init() {
+            log('info', '正在初始化 Pendulum...');
+            
+            try {
+                // 创建实例
+                pendulum = PendulumRealtime.create({
+                    storage: {
+                        type: 'indexeddb',
+                        name: 'pendulum_demo'
+                    },
+                    sync: {
+                        enabled: true,
+                        mode: SyncMode.LOCAL_FIRST,
+                        debounceMs: 50,
+                        batchMs: 200
+                    },
+                    offline: {
+                        enabled: true,
+                        maxQueueSize: 1000
+                    },
+                    debug: {
+                        enabled: true,
+                        logLevel: 'debug'
+                    }
+                });
+                
+                // 初始化
+                await pendulum.init();
+                
+                log('success', 'Pendulum 初始化成功');
+                
+                // 显示版本
+                console.log(`Pendulum Realtime Sync v${VERSION}`);
+                
+                // 初始化 CRDT
+                crdtLWW = pendulum.createCRDT('lww-register');
+                crdtGSet = pendulum.createCRDT('g-set');
+                
+                // 绑定事件
+                bindEvents();
+                
+                // 更新 UI
+                updateStatus();
+                refreshState();
+                
+                // 定时更新
+                setInterval(() => {
+                    updateStatus();
+                    updateUptime();
+                }, 1000);
+                
+            } catch (error) {
+                log('error', `初始化失败: ${error.message}`);
+                console.error(error);
+            }
+        }
+
+        // ============================================================================
+        // 事件绑定
+        // ============================================================================
+        
+        function bindEvents() {
+            // 状态变化
+            pendulum.on('update', (data) => {
+                operationsCount++;
+                log('info', `状态更新: ${data.path}`);
+                refreshState();
+                updateStatus();
+            });
+            
+            // 同步变化
+            pendulum.on('syncChange', (data) => {
+                log('success', '同步完成');
+                updateStatus();
+            });
+            
+            // 冲突
+            pendulum.on('conflict', (data) => {
+                conflictsCount++;
+                log('warning', `冲突检测: ${data.path}`);
+                updateStatus();
+            });
+            
+            // 错误
+            pendulum.on('error', (error) => {
+                log('error', `错误: ${error.message}`);
+            });
+            
+            // Tab 连接状态
+            pendulum.on('tabConnect', (data) => {
+                log('info', `Tab 连接: ${data.tabId}`);
+                document.getElementById('tabCount').textContent = data.totalTabs;
+            });
+            
+            pendulum.on('tabDisconnect', (data) => {
+                log('info', `Tab 断开: ${data.tabId}`);
+                document.getElementById('tabCount').textContent = data.totalTabs;
+            });
+        }
+
+        // ============================================================================
+        // UI 操作
+        // ============================================================================
+        
+        // Tab 切换
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+            });
+        });
+
+        // 设置单个值
+        window.setValue = function() {
+            const path = document.getElementById('pathInput').value.trim();
+            const value = document.getElementById('valueInput').value;
+            
+            if (!path) {
+                log('warning', '请输入路径');
+                return;
+            }
+            
+            let parsedValue;
+            try {
+                parsedValue = JSON.parse(value);
+            } catch {
+                parsedValue = value;
+            }
+            
+            pendulum.set(path, parsedValue);
+            log('success', `设置 ${path} = ${JSON.stringify(parsedValue)}`);
+            
+            // 清空输入
+            document.getElementById('valueInput').value = '';
+        };
+
+        // 获取值
+        window.getValue = function() {
+            const path = document.getElementById('pathInput').value.trim();
+            
+            if (!path) {
+                log('warning', '请输入路径');
+                return;
+            }
+            
+            const value = pendulum.get(path);
+            log('info', `获取 ${path} = ${JSON.stringify(value)}`);
+            
+            // 显示到值输入框
+            document.getElementById('valueInput').value = JSON.stringify(value, null, 2);
+        };
+
+        // 删除值
+        window.deleteValue = function() {
+            const path = document.getElementById('pathInput').value.trim();
+            
+            if (!path) {
+                log('warning', '请输入路径');
+                return;
+            }
+            
+            pendulum.delete(path);
+            log('success', `删除 ${path}`);
+        };
+
+        // 批量更新
+        window.patchValues = function() {
+            const input = document.getElementById('batchInput').value.trim();
+            
+            if (!input) {
+                log('warning', '请输入要更新的 JSON 数据');
+                return;
+            }
+            
+            try {
+                const updates = JSON.parse(input);
+                pendulum.patch(updates);
+                log('success', `批量更新 ${Object.keys(updates).length} 个字段`);
+                document.getElementById('batchInput').value = '';
+            } catch (error) {
+                log('error', `JSON 解析错误: ${error.message}`);
+            }
+        };
+
+        // CRDT 操作
+        window.lwwSet = function() {
+            const input = document.getElementById('crdtInput').value;
+            
+            if (!input) {
+                log('warning', '请输入值');
+                return;
+            }
+            
+            try {
+                const value = JSON.parse(input);
+                crdtLWW.set(value);
+                refreshCRDT();
+                log('success', `LWW Register 设置为: ${JSON.stringify(value)}`);
+            } catch {
+                crdtLWW.set(input);
+                refreshCRDT();
+                log('success', `LWW Register 设置为: ${input}`);
+            }
+            
+            document.getElementById('crdtInput').value = '';
+        };
+
+        window.gsetAdd = function() {
+            const input = document.getElementById('crdtInput').value;
+            
+            if (!input) {
+                log('warning', '请输入值');
+                return;
+            }
+            
+            try {
+                const value = JSON.parse(input);
+                crdtGSet.add(value);
+                refreshCRDT();
+                log('success', `G-Set 添加: ${JSON.stringify(value)}`);
+            } catch {
+                crdtGSet.add(input);
+                refreshCRDT();
+                log('success', `G-Set 添加: ${input}`);
+            }
+            
+            document.getElementById('crdtInput').value = '';
+        };
+
+        window.refreshCRDT = function() {
+            const lww = crdtLWW.get();
+            const gset = crdtGSet.get();
+            
+            document.getElementById('lwwValue').textContent = 
+                lww !== undefined ? JSON.stringify(lww) : '-';
+            document.getElementById('gsetValue').textContent = 
+                JSON.stringify(gset || []);
+        };
+
+        // 广播消息
+        window.broadcastMessage = function() {
+            const message = document.getElementById('broadcastInput').value.trim();
+            
+            if (!message) {
+                log('warning', '请输入消息');
+                return;
+            }
+            
+            pendulum.set('broadcast.message', message);
+            pendulum.set('broadcast.timestamp', Date.now());
+            
+            log('success', `广播消息: ${message}`);
+            document.getElementById('broadcastInput').value = '';
+        };
+
+        // 同步操作
+        window.forceSync = async function() {
+            log('info', '开始强制同步...');
+            pendulum.forceSync();
+        };
+
+        window.pauseSync = function() {
+            pendulum.offline?.pause?.();
+            log('warning', '同步已暂停');
+            updateQueueStatus();
+        };
+
+        window.resumeSync = function() {
+            pendulum.offline?.resume?.();
+            log('success', '同步已恢复');
+            updateQueueStatus();
+        };
+
+        // 模拟离线
+        window.simulateOffline = function() {
+            pendulum.api?._offlineQueue?.setOnline?.(false);
+            log('warning', '模拟离线状态');
+            updateConnectionStatus(false);
+        };
+
+        window.restoreConnection = function() {
+            pendulum.api?._offlineQueue?.setOnline?.(true);
+            log('success', '连接已恢复');
+            updateConnectionStatus(true);
+        };
+
+        // 导出/导入
+        window.exportState = function() {
+            const state = pendulum.exportState();
+            const json = JSON.stringify(state, null, 2);
+            
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `pendulum-state-${Date.now()}.json`;
+            a.click();
+            
+            URL.revokeObjectURL(url);
+            log('success', '状态已导出');
+        };
+
+        window.importState = function() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const text = await file.text();
+                try {
+                    const state = JSON.parse(text);
+                    await pendulum.importState(state);
+                    log('success', '状态已导入');
+                    refreshState();
+                } catch (error) {
+                    log('error', `导入失败: ${error.message}`);
+                }
+            };
+            
+            input.click();
+        };
+
+        window.clearState = function() {
+            pendulum.clear();
+            crdtLWW?.clear?.();
+            crdtGSet?.clear?.();
+            log('warning', '状态已清空');
+            refreshState();
+            refreshCRDT();
+        };
+
+        // ============================================================================
+        // UI 更新
+        // ============================================================================
+        
+        function updateStatus() {
+            const stats = pendulum?.getStatistics?.() || {};
+            
+            document.getElementById('operationsCount').textContent = operationsCount;
+            document.getElementById('conflictsCount').textContent = conflictsCount;
+            
+            const pending = stats.pendingOperations || 0;
+            document.getElementById('pendingCount').textContent = pending;
+            document.getElementById('pendingCount').className = 
+                `value ${pending > 0 ? 'warning' : ''}`;
+            
+            // Tab 数量
+            const tabCount = stats.tabCount || 1;
+            document.getElementById('tabCount').textContent = tabCount;
+            
+            // 最后同步时间
+            const lastSync = stats.lastSyncTime;
+            document.getElementById('lastSyncTime').textContent = 
+                lastSync ? formatRelativeTime(lastSync) : '-';
+            
+            updateQueueStatus();
+        }
+
+        function updateQueueStatus() {
+            const offlineStats = pendulum?.getOfflineStatus?.() || {};
+            
+            document.getElementById('queueLength').textContent = 
+                offlineStats.queueLength || 0;
+            document.getElementById('processedCount').textContent = 
+                offlineStats.statistics?.totalProcessed || 0;
+            
+            // 队列状态
+            const queueStatus = document.getElementById('queueStatus');
+            if (offlineStats.paused) {
+                queueStatus.textContent = '已暂停';
+                queueStatus.className = 'badge badge-warning';
+            } else if (offlineStats.online === false) {
+                queueStatus.textContent = '离线';
+                queueStatus.className = 'badge badge-danger';
+            } else {
+                queueStatus.textContent = '就绪';
+                queueStatus.className = 'badge badge-success';
+            }
+        }
+
+        function updateConnectionStatus(online) {
+            const status = document.getElementById('connectionStatus');
+            const syncStatus = document.getElementById('syncStatus');
+            
+            if (online) {
+                status.className = 'connection-status online';
+                status.innerHTML = '<span class="status-dot pulse"></span><span>已连接</span>';
+                syncStatus.textContent = '已连接';
+                syncStatus.className = 'badge badge-success';
+            } else {
+                status.className = 'connection-status offline';
+                status.innerHTML = '<span class="status-dot"></span><span>离线</span>';
+                syncStatus.textContent = '离线';
+                syncStatus.className = 'badge badge-danger';
+            }
+        }
+
+        function updateUptime() {
+            const uptime = Date.now() - startTime;
+            document.getElementById('uptime').textContent = formatDuration(uptime);
+        }
+
+        function refreshState() {
+            const state = pendulum?.exportState?.() || {};
+            const display = document.getElementById('stateDisplay');
+            
+            if (Object.keys(state).length === 0) {
+                display.innerHTML = '<span class="null">空状态 - 使用上方编辑器添加数据</span>';
+                document.getElementById('stateSize').textContent = '0 字节';
+                return;
+            }
+            
+            const json = JSON.stringify(state, null, 2);
+            document.getElementById('stateSize').textContent = formatBytes(new Blob([json]).size);
+            
+            // 语法高亮
+            display.innerHTML = syntaxHighlight(json);
+        }
+
+        function syntaxHighlight(json) {
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            
+            return json.replace(
+                /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+                function (match) {
+                    let cls = 'number';
+                    if (/^"/.test(match)) {
+                        if (/:$/.test(match)) {
+                            cls = 'key';
+                            match = match.slice(0, -1) + '</span>:';
+                            return `<span class="${cls}">${match}`;
+                        } else {
+                            cls = 'string';
+                        }
+                    } else if (/true|false/.test(match)) {
+                        cls = 'boolean';
+                    } else if (/null/.test(match)) {
+                        cls = 'null';
+                    }
+                    return `<span class="${cls}">${match}</span>`;
+                }
+            );
+        }
+
+        function log(type, message) {
+            const panel = document.getElementById('logPanel');
+            const time = new Date().toLocaleTimeString();
+            
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `
+                <span class="log-time">${time}</span>
+                <span class="log-type ${type}">${type.toUpperCase()}</span>
+                <span class="log-message">${message}</span>
+            `;
+            
+            panel.insertBefore(entry, panel.firstChild);
+            
+            // 限制日志数量
+            while (panel.children.length > 50) {
+                panel.removeChild(panel.lastChild);
+            }
+            
+            // 更新计数
+            const count = panel.children.length;
+            document.getElementById('logCount').textContent = `${count} 条`;
+        }
+
+        // ============================================================================
+        // 启动
+        // ============================================================================
+        
+        init();
+    </script>
+</body>
+</html>

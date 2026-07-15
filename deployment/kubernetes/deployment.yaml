@@ -1,0 +1,460 @@
+# =============================================================================
+# AGI Unified Framework - Kubernetes Deployment
+# =============================================================================
+# 定义应用的Pod模板、副本数、滚动更新策略和资源限制
+# 包含主API服务、Celery Worker和Celery Beat的部署配置
+# =============================================================================
+
+---
+# 主API服务Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agi-framework-api
+  namespace: agi-framework-prod
+  labels:
+    app.kubernetes.io/name: agi-framework-api
+    app.kubernetes.io/component: api
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/part-of: agi-unified-framework
+    app.kubernetes.io/managed-by: kubectl
+spec:
+  # 副本数配置
+  replicas: 3
+  
+  # 滚动更新策略
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%          # 更新时最多可超出的Pod数量
+      maxUnavailable: 25%    # 更新时最多不可用的Pod数量
+  
+  # Pod选择器
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: agi-framework-api
+      app.kubernetes.io/component: api
+  
+  # Pod模板定义
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: agi-framework-api
+        app.kubernetes.io/component: api
+        app.kubernetes.io/version: "1.0.0"
+      annotations:
+        # Prometheus监控注解
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8000"
+        # 配置哈希，用于滚动更新触发
+        config-hash: "${CONFIG_HASH}"
+    spec:
+      # 服务账户
+      serviceAccountName: agi-framework-sa
+      
+      # 安全上下文
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      
+      # 镜像拉取密钥
+      imagePullSecrets:
+        - name: regcred
+      
+      # 初始化容器
+      initContainers:
+        # 数据库迁移初始化
+        - name: db-migrations
+          image: registry.company.com/agi-framework:1.0.0
+          imagePullPolicy: IfNotPresent
+          command: ["python", "-m", "alembic", "upgrade", "head"]
+          envFrom:
+            - configMapRef:
+                name: agi-framework-config
+            - secretRef:
+                name: agi-framework-secrets
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+      
+      # 主容器
+      containers:
+        - name: api
+          image: registry.company.com/agi-framework:1.0.0
+          imagePullPolicy: IfNotPresent
+          
+          # 端口配置
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+          
+          # 环境变量配置
+          envFrom:
+            - configMapRef:
+                name: agi-framework-config
+            - secretRef:
+                name: agi-framework-secrets
+          
+          # 额外环境变量
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          
+          # 资源限制
+          resources:
+            limits:
+              cpu: "2000m"
+              memory: "4Gi"
+              ephemeral-storage: "10Gi"
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+              ephemeral-storage: "1Gi"
+          
+          # 健康检查 - 存活探针
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+              httpHeaders:
+                - name: Accept
+                  value: application/json
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
+          
+          # 健康检查 - 就绪探针
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+              httpHeaders:
+                - name: Accept
+                  value: application/json
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+          
+          # 健康检查 - 启动探针
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 30
+          
+          # 安全上下文
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          
+          # 卷挂载
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: logs
+              mountPath: /app/logs
+            - name: cache
+              mountPath: /app/.cache
+      
+      # 卷定义
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: logs
+          emptyDir:
+            sizeLimit: 1Gi
+        - name: cache
+          emptyDir:
+            sizeLimit: 5Gi
+      
+      # 拓扑分布约束 - 确保Pod分布在不同节点
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: agi-framework-api
+      
+      # 亲和性配置
+      affinity:
+        # Pod反亲和性 - 避免同一节点运行多个副本
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/name
+                      operator: In
+                      values:
+                        - agi-framework-api
+                topologyKey: kubernetes.io/hostname
+        # 节点亲和性 - 优先调度到特定标签的节点
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 10
+              preference:
+                matchExpressions:
+                  - key: node-type
+                    operator: In
+                    values:
+                      - compute
+      
+      # 容忍配置
+      tolerations:
+        - key: "dedicated"
+          operator: "Equal"
+          value: "agi-framework"
+          effect: "NoSchedule"
+      
+      # 终止优雅期
+      terminationGracePeriodSeconds: 60
+
+---
+# Celery Worker Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agi-framework-worker
+  namespace: agi-framework-prod
+  labels:
+    app.kubernetes.io/name: agi-framework-worker
+    app.kubernetes.io/component: worker
+    app.kubernetes.io/part-of: agi-unified-framework
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: agi-framework-worker
+      app.kubernetes.io/component: worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: agi-framework-worker
+        app.kubernetes.io/component: worker
+    spec:
+      serviceAccountName: agi-framework-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      
+      imagePullSecrets:
+        - name: regcred
+      
+      containers:
+        - name: worker
+          image: registry.company.com/agi-framework:1.0.0
+          imagePullPolicy: IfNotPresent
+          command:
+            - celery
+            - -A
+            - api.celery_app
+            - worker
+            - --loglevel=info
+            - --concurrency=4
+            - -Q
+            - default,high_priority,low_priority
+            - -n
+            - worker@%h
+          envFrom:
+            - configMapRef:
+                name: agi-framework-config
+            - secretRef:
+                name: agi-framework-secrets
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: WORKER_NAME
+              value: "$(POD_NAME)"
+          resources:
+            limits:
+              cpu: "2000m"
+              memory: "4Gi"
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+          livenessProbe:
+            exec:
+              command:
+                - celery
+                - -A
+                - api.celery_app
+                - inspect
+                - ping
+            initialDelaySeconds: 60
+            periodSeconds: 60
+            timeoutSeconds: 10
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: logs
+              mountPath: /app/logs
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: logs
+          emptyDir:
+            sizeLimit: 2Gi
+      terminationGracePeriodSeconds: 120
+
+---
+# Celery Beat Deployment（定时任务调度器）
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agi-framework-beat
+  namespace: agi-framework-prod
+  labels:
+    app.kubernetes.io/name: agi-framework-beat
+    app.kubernetes.io/component: scheduler
+    app.kubernetes.io/part-of: agi-unified-framework
+spec:
+  replicas: 1  # Beat应该只有一个实例运行
+  strategy:
+    type: Recreate  # 重建策略，确保只有一个实例
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: agi-framework-beat
+      app.kubernetes.io/component: scheduler
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: agi-framework-beat
+        app.kubernetes.io/component: scheduler
+    spec:
+      serviceAccountName: agi-framework-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      
+      imagePullSecrets:
+        - name: regcred
+      
+      containers:
+        - name: beat
+          image: registry.company.com/agi-framework:1.0.0
+          imagePullPolicy: IfNotPresent
+          command:
+            - celery
+            - -A
+            - api.celery_app
+            - beat
+            - --loglevel=info
+            - --scheduler
+            - django_celery_beat.schedulers:DatabaseScheduler
+            - --max-interval
+            - "300"
+          envFrom:
+            - configMapRef:
+                name: agi-framework-config
+            - secretRef:
+                name: agi-framework-secrets
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+          livenessProbe:
+            exec:
+              command:
+                - python
+                - -c
+                - "import requests; requests.get('http://localhost:8000/health')"
+            initialDelaySeconds: 30
+            periodSeconds: 60
+            timeoutSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: beat-data
+              mountPath: /app/celerybeat
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: beat-data
+          persistentVolumeClaim:
+            claimName: celery-beat-pvc
+
+---
+# 服务账户
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: agi-framework-sa
+  namespace: agi-framework-prod
+  labels:
+    app.kubernetes.io/name: agi-framework
+    app.kubernetes.io/component: serviceaccount
+    app.kubernetes.io/part-of: agi-unified-framework
+automountServiceAccountToken: true

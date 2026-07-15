@@ -1,0 +1,125 @@
+{{/* =============================================================================
+AGI Unified Framework - Horizontal Pod Autoscaler Templates
+============================================================================= */}}
+
+{{/* API HPA */}}
+{{- if and .Values.api.enabled .Values.api.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "agi-framework.api.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "agi-framework.api.labels" . | nindent 4 }}
+  annotations:
+    {{- with .Values.api.autoscaling.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "agi-framework.api.name" . }}
+  minReplicas: {{ .Values.api.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.api.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.api.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.api.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.api.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.api.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.api.customMetrics }}
+    {{- toYaml .Values.api.customMetrics | nindent 4 }}
+    {{- end }}
+    {{- if .Values.api.autoscaling.targetCustomMetrics }}
+    {{- toYaml .Values.api.autoscaling.targetCustomMetrics | nindent 4 }}
+    {{- end }}
+  {{- if .Values.api.autoscaling.behavior }}
+  behavior:
+    {{- toYaml .Values.api.autoscaling.behavior | nindent 4 }}
+  {{- end }}
+{{- end }}
+
+---
+{{/* Worker HPA */}}
+{{- if and .Values.worker.enabled .Values.worker.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "agi-framework.worker.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "agi-framework.worker.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "agi-framework.worker.name" . }}
+  minReplicas: {{ .Values.worker.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.worker.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.worker.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.worker.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.worker.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.worker.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+  {{- if .Values.worker.autoscaling.behavior }}
+  behavior:
+    scaleUp:
+      {{- toYaml .Values.worker.autoscaling.behavior.scaleUp | nindent 6 }}
+    scaleDown:
+      {{- toYaml .Values.worker.autoscaling.behavior.scaleDown | nindent 6 }}
+  {{- end }}
+{{- end }}
+
+---
+{{/* Celery Queue Length HPA (optional - requires custom metrics) */}}
+{{- if and .Values.worker.enabled .Values.worker.autoscaling.enabled .Values.worker.autoscaling.celeryQueueMetrics }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "agi-framework.worker.name" . }}-queue
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "agi-framework.worker.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "agi-framework.worker.name" . }}
+  minReplicas: {{ .Values.worker.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.worker.autoscaling.maxReplicas }}
+  metrics:
+    - type: External
+      external:
+        metric:
+          name: celery_queue_length
+          selector:
+            matchLabels:
+              queue: default
+        target:
+          type: AverageValue
+          averageValue: "10"
+{{- end }}

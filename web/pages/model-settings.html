@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模型设置 - AGI 统一框架</title>
+    <meta name="description" content="配置LLM模型提供商、API密钥、参数设置和优先级">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/reset.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/animations.css">
+    
+    <style>
+        /* Model Settings Specific Styles */
+        .model-settings-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - var(--header-height, 56px));
+            overflow: hidden;
+            background: var(--bg-secondary);
+        }
+        
+        /* Header */
+        .settings-header {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-default);
+            padding: 24px 32px;
+        }
+        
+        .settings-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .settings-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        /* Main Content */
+        .settings-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        /* Provider List Sidebar */
+        .provider-sidebar {
+            width: 320px;
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border-default);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .provider-search {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-default);
+        }
+        
+        .provider-search input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+            font-size: 14px;
+            background: var(--bg-secondary);
+            transition: all 0.2s;
+        }
+        
+        .provider-search input:focus {
+            outline: none;
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .provider-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        
+        .provider-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 4px;
+        }
+        
+        .provider-item:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .provider-item.active {
+            background: var(--primary-50);
+            border-left: 3px solid var(--primary-500);
+        }
+        
+        .provider-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            background: var(--bg-secondary);
+            flex-shrink: 0;
+        }
+        
+        .provider-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .provider-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+        
+        .provider-status {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .provider-status.enabled {
+            color: var(--success-500);
+        }
+        
+        .provider-status.disabled {
+            color: var(--text-caption);
+        }
+        
+        .provider-priority {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--primary-500);
+            background: var(--primary-50);
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+        }
+        
+        .provider-sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid var(--border-default);
+        }
+        
+        /* Settings Panel */
+        .settings-panel {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px;
+        }
+        
+        .settings-section {
+            background: var(--bg-primary);
+            border-radius: var(--radius-2xl);
+            padding: 28px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-default);
+        }
+        
+        .settings-section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .settings-section-title .icon {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-lg);
+            background: var(--primary-100);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Form Elements */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .form-label .required {
+            color: var(--danger-500);
+        }
+        
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+            font-size: 14px;
+            background: var(--bg-secondary);
+            transition: all 0.2s;
+        }
+        
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            background: var(--bg-primary);
+        }
+        
+        .form-input:disabled {
+            background: var(--bg-tertiary);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        /* API Key Input */
+        .api-key-input {
+            position: relative;
+        }
+        
+        .api-key-input input {
+            padding-right: 120px;
+            font-family: var(--font-family-mono);
+        }
+        
+        .api-key-actions {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            gap: 4px;
+        }
+        
+        .api-key-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            background: var(--bg-primary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .api-key-btn:hover {
+            background: var(--bg-hover);
+        }
+        
+        /* Toggle Switch */
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            margin-bottom: 12px;
+        }
+        
+        .toggle-info h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        
+        .toggle-info p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .switch {
+            position: relative;
+            width: 52px;
+            height: 28px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .switch-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--gray-300);
+            border-radius: 28px;
+            transition: 0.3s;
+        }
+        
+        .switch-slider:before {
+            content: "";
+            position: absolute;
+            height: 22px;
+            width: 22px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+        
+        .switch input:checked + .switch-slider {
+            background: var(--primary-500);
+        }
+        
+        .switch input:checked + .switch-slider:before {
+            transform: translateX(24px);
+        }
+        
+        /* Slider */
+        .slider-group {
+            margin-bottom: 20px;
+        }
+        
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .slider-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .slider-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary-500);
+            background: var(--primary-50);
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+        }
+        
+        .slider-input {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--bg-tertiary);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .slider-input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-500);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .slider-input::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-500);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .slider-help {
+            font-size: 12px;
+            color: var(--text-caption);
+            margin-top: 6px;
+        }
+        
+        /* Model Selector */
+        .model-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        
+        .model-option {
+            padding: 16px;
+            border: 2px solid var(--border-default);
+            border-radius: var(--radius-xl);
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--bg-secondary);
+        }
+        
+        .model-option:hover {
+            border-color: var(--primary-300);
+        }
+        
+        .model-option.selected {
+            border-color: var(--primary-500);
+            background: var(--primary-50);
+        }
+        
+        .model-option-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        
+        .model-option-icon {
+            font-size: 20px;
+        }
+        
+        .model-option-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        
+        .model-option-meta {
+            font-size: 12px;
+            color: var(--text-caption);
+        }
+        
+        /* Rate Limit Settings */
+        .rate-limit-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+        
+        .rate-limit-item {
+            padding: 16px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            text-align: center;
+        }
+        
+        .rate-limit-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        
+        .rate-limit-label {
+            font-size: 12px;
+            color: var(--text-caption);
+        }
+        
+        /* Priority List */
+        .priority-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .priority-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            cursor: move;
+            transition: all 0.2s;
+        }
+        
+        .priority-item:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .priority-item.dragging {
+            opacity: 0.5;
+        }
+        
+        .priority-handle {
+            color: var(--text-caption);
+            cursor: grab;
+        }
+        
+        .priority-rank {
+            width: 28px;
+            height: 28px;
+            border-radius: var(--radius-full);
+            background: var(--primary-500);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .priority-info {
+            flex: 1;
+        }
+        
+        .priority-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        
+        .priority-model {
+            font-size: 12px;
+            color: var(--text-caption);
+        }
+        
+        /* Test Connection Button */
+        .test-connection {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        
+        .test-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+        }
+        
+        .test-status.success {
+            color: var(--success-500);
+        }
+        
+        .test-status.error {
+            color: var(--danger-500);
+        }
+        
+        /* Action Buttons */
+        .settings-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 24px 32px;
+            background: var(--bg-primary);
+            border-top: 1px solid var(--border-default);
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border-radius: var(--radius-lg);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-default);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .btn-primary {
+            background: var(--primary-500);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-600);
+        }
+        
+        .btn-success {
+            background: var(--success-500);
+            color: white;
+        }
+        
+        /* Provider Info Card */
+        .provider-card {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 24px;
+            background: linear-gradient(135deg, var(--primary-50) 0%, var(--secondary-50) 100%);
+            border-radius: var(--radius-xl);
+            margin-bottom: 24px;
+        }
+        
+        .provider-card-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: var(--radius-xl);
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .provider-card-info h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        
+        .provider-card-info p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .provider-sidebar {
+                position: fixed;
+                left: -320px;
+                top: calc(var(--header-height) + 80px);
+                bottom: 0;
+                z-index: 100;
+                transition: left 0.3s ease;
+            }
+            
+            .provider-sidebar.open {
+                left: 0;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .rate-limit-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .settings-panel {
+                padding: 20px;
+            }
+            
+            .settings-section {
+                padding: 20px;
+            }
+            
+            .model-selector {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 空状态提示 -->
+    <div id="empty-state" style="display:none; background:#fff3cd; border:1px solid #ffc107; 
+         border-radius:8px; padding:15px; margin:20px; text-align:center; color:#856404;">
+        ⚠️ 暂无数据，请确保后端服务已启动
+    </div>
+    
+    <div class="app-container">
+        <!-- Top Navigation -->
+        <header class="top-navbar" id="topNavbar">
+            <div class="navbar-left">
+                <button class="btn btn-icon sidebar-toggle" id="sidebarToggle">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="currentColor"/>
+                    </svg>
+                </button>
+                <a href="../index.html" class="navbar-brand">
+                    <span class="brand-text">AGI 统一框架</span>
+                </a>
+            </div>
+            <div class="navbar-right">
+                <button class="btn btn-icon theme-toggle" id="themeToggle">
+                    <span id="themeIcon">🌙</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Model Settings Container -->
+        <div class="model-settings-container">
+            <!-- Header -->
+            <div class="settings-header">
+                <h1 class="settings-title">模型设置</h1>
+                <p class="settings-subtitle">配置LLM提供商、API密钥和模型参数</p>
+            </div>
+
+            <!-- Content -->
+            <div class="settings-content">
+                <!-- Provider Sidebar -->
+                <aside class="provider-sidebar" id="providerSidebar">
+                    <div class="provider-search">
+                        <input type="text" id="providerSearch" placeholder="搜索提供商...">
+                    </div>
+                    
+                    <div class="provider-list" id="providerList">
+                        <!-- Providers will be loaded dynamically -->
+                    </div>
+                    
+                    <div class="provider-sidebar-footer">
+                        <button class="btn btn-primary" style="width: 100%;" id="addProviderBtn">
+                            <span>+</span>
+                            <span>添加自定义提供商</span>
+                        </button>
+                    </div>
+                </aside>
+
+                <!-- Settings Panel -->
+                <main class="settings-panel" id="settingsPanel">
+                    <!-- Provider Card -->
+                    <div class="provider-card" id="providerCard">
+                        <div class="provider-card-icon" id="cardIcon">🤖</div>
+                        <div class="provider-card-info">
+                            <h3 id="cardName">选择提供商</h3>
+                            <p id="cardDesc">从左侧选择一个提供商进行配置</p>
+                        </div>
+                    </div>
+
+                    <!-- Configuration Sections -->
+                    <div id="configSections" style="display: none;">
+                        <!-- API Configuration -->
+                        <div class="settings-section">
+                            <h2 class="settings-section-title">
+                                <span class="icon">🔑</span>
+                                <span>API配置</span>
+                            </h2>
+                            
+                            <div class="form-grid">
+                                <div class="form-group full-width">
+                                    <label class="form-label">API密钥 <span class="required">*</span></label>
+                                    <div class="api-key-input">
+                                        <input type="password" id="apiKey" placeholder="输入API密钥">
+                                        <div class="api-key-actions">
+                                            <button class="api-key-btn" id="toggleKeyVisibility">显示</button>
+                                            <button class="api-key-btn" id="testConnection">测试</button>
+                                        </div>
+                                    </div>
+                                    <div class="test-connection">
+                                        <button class="btn btn-secondary" id="testConnectionBtn">
+                                            <span>🔄</span>
+                                            <span>测试连接</span>
+                                        </button>
+                                        <span class="test-status" id="testStatus"></span>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">API基础URL</label>
+                                    <input type="text" id="apiBaseUrl" placeholder="https://api.example.com/v1">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">组织ID (可选)</label>
+                                    <input type="text" id="orgId" placeholder="org-xxx">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Model Selection -->
+                        <div class="settings-section">
+                            <h2 class="settings-section-title">
+                                <span class="icon">🎯</span>
+                                <span>模型选择</span>
+                            </h2>
+                            
+                            <div class="form-group">
+                                <label class="form-label">默认模型</label>
+                                <div class="model-selector" id="modelSelector">
+                                    <!-- Models will be loaded dynamically -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Parameters -->
+                        <div class="settings-section">
+                            <h2 class="settings-section-title">
+                                <span class="icon">⚙️</span>
+                                <span>生成参数</span>
+                            </h2>
+                            
+                            <div class="form-grid">
+                                <div class="slider-group">
+                                    <div class="slider-header">
+                                        <span class="slider-label">Temperature</span>
+                                        <span class="slider-value" id="temperatureValue">0.7</span>
+                                    </div>
+                                    <input type="range" class="slider-input" id="temperature" min="0" max="2" step="0.1" value="0.7">
+                                    <p class="slider-help">控制输出的随机性，较低值使输出更确定，较高值使输出更随机</p>
+                                </div>
+                                
+                                <div class="slider-group">
+                                    <div class="slider-header">
+                                        <span class="slider-label">Top P</span>
+                                        <span class="slider-value" id="topPValue">1.0</span>
+                                    </div>
+                                    <input type="range" class="slider-input" id="topP" min="0" max="1" step="0.05" value="1">
+                                    <p class="slider-help">核采样参数，控制考虑的token概率质量</p>
+                                </div>
+                                
+                                <div class="slider-group">
+                                    <div class="slider-header">
+                                        <span class="slider-label">最大Tokens</span>
+                                        <span class="slider-value" id="maxTokensValue">4096</span>
+                                    </div>
+                                    <input type="range" class="slider-input" id="maxTokens" min="256" max="128000" step="256" value="4096">
+                                    <p class="slider-help">生成响应的最大token数量</p>
+                                </div>
+                                
+                                <div class="slider-group">
+                                    <div class="slider-header">
+                                        <span class="slider-label">频率惩罚</span>
+                                        <span class="slider-value" id="frequencyPenaltyValue">0</span>
+                                    </div>
+                                    <input type="range" class="slider-input" id="frequencyPenalty" min="-2" max="2" step="0.1" value="0">
+                                    <p class="slider-help">降低重复token的概率</p>
+                                </div>
+                                
+                                <div class="slider-group">
+                                    <div class="slider-header">
+                                        <span class="slider-label">存在惩罚</span>
+                                        <span class="slider-value" id="presencePenaltyValue">0</span>
+                                    </div>
+                                    <input type="range" class="slider-input" id="presencePenalty" min="-2" max="2" step="0.1" value="0">
+                                    <p class="slider-help">鼓励模型讨论新主题</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Capabilities -->
+                        <div class="settings-section">
+                            <h2 class="settings-section-title">
+                                <span class="icon">✨</span>
+                                <span>功能开关</span>
+                            </h2>
+                            
+                            <div class="toggle-group">
+                                <div class="toggle-info">
+                                    <h4>视觉能力</h4>
+                                    <p>启用图像理解和分析功能</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="visionEnabled">
+                                    <span class="switch-slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="toggle-group">
+                                <div class="toggle-info">
+                                    <h4>OCR识别</h4>
+                                    <p>启用图像中的文字识别功能</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="ocrEnabled">
+                                    <span class="switch-slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="toggle-group">
+                                <div class="toggle-info">
+                                    <h4>函数调用</h4>
+                                    <p>允许模型调用外部工具和函数</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="functionCallingEnabled" checked>
+                                    <span class="switch-slider"></span>
+                                </label>
+                            </div>
+                            
+                            <div class="toggle-group">
+                                <div class="toggle-info">
+                                    <h4>JSON模式</h4>
+                                    <p>强制输出有效的JSON格式</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="jsonModeEnabled">
+                                    <span class="switch-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Rate Limits -->
+                        <div class="settings-section">
+                            <h2 class="settings-section-title">
+                                <span class="icon">⏱️</span>
+                                <span>速率限制</span>
+                            </h2>
+                            
+                            <div class="rate-limit-grid">
+                                <div class="rate-limit-item">
+                                    <div class="rate-limit-value" id="rpmValue">60</div>
+                                    <div class="rate-limit-label">每分钟请求数 (RPM)</div>
+                                </div>
+                                <div class="rate-limit-item">
+                                    <div class="rate-limit-value" id="tpmValue">100K</div>
+                                    <div class="rate-limit-label">每分钟Token数 (TPM)</div>
+                                </div>
+                                <div class="rate-limit-item">
+                                    <div class="rate-limit-value" id="rpdValue">1000</div>
+                                    <div class="rate-limit-label">每日请求数 (RPD)</div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group" style="margin-top: 20px;">
+                                <label class="form-label">自定义速率限制</label>
+                                <div class="form-grid">
+                                    <input type="number" class="form-input" id="customRpm" placeholder="RPM">
+                                    <input type="number" class="form-input" id="customTpm" placeholder="TPM">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Provider Priority Section -->
+                    <div class="settings-section">
+                        <h2 class="settings-section-title">
+                            <span class="icon">📊</span>
+                            <span>提供商优先级</span>
+                        </h2>
+                        <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 16px;">
+                            拖拽调整提供商优先级顺序，系统将按照此顺序进行故障转移
+                        </p>
+                        
+                        <div class="priority-list" id="priorityList">
+                            <!-- Priority items will be loaded dynamically -->
+                        </div>
+                    </div>
+                </main>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="settings-actions">
+                <button class="btn btn-secondary" id="resetBtn">重置更改</button>
+                <button class="btn btn-primary" id="saveBtn">保存设置</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/utils.js"></script>
+    <script src="../js/state.js"></script>
+    <script src="../js/api-client.js"></script>
+    <script src="../js/common-utils.js"></script>
+    <script>
+        // Model Settings Application
+        class ModelSettings {
+            constructor() {
+                this.providers = [];
+                this.currentProvider = null;
+                this.models = [];
+                
+                this.init();
+            }
+            
+            init() {
+                this.loadProviders();
+                this.bindEvents();
+                this.loadTheme();
+            }
+            
+            // Load providers
+            loadProviders() {
+                // Mock data for 14+ LLM providers
+                this.providers = [
+                    { id: 'openai', name: 'OpenAI', icon: '🟢', enabled: true, priority: 1, apiKey: 'sk-****', models: ['gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo'] },
+                    { id: 'anthropic', name: 'Anthropic', icon: '🟣', enabled: true, priority: 2, apiKey: 'sk-****', models: ['claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku'] },
+                    { id: 'baichuan', name: '百川智能', icon: '🔵', enabled: false, priority: 3, apiKey: '', models: ['Baichuan2-Turbo', 'Baichuan2-53B'] },
+                    { id: 'deepseek', name: 'DeepSeek', icon: '⚫', enabled: true, priority: 4, apiKey: 'sk-****', models: ['deepseek-chat', 'deepseek-coder'] },
+                    { id: 'zhipuai', name: '智谱AI', icon: '🔴', enabled: false, priority: 5, apiKey: '', models: ['glm-4', 'glm-4-flash', 'chatglm3'] },
+                    { id: 'moonshot', name: '月之暗面', icon: '🌙', enabled: true, priority: 6, apiKey: 'sk-****', models: ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k'] },
+                    { id: 'minimax', name: 'MiniMax', icon: '🟡', enabled: false, priority: 7, apiKey: '', models: ['abab6-chat', 'abab5.5-chat'] },
+                    { id: 'dashscope', name: '阿里云百炼', icon: '☁️', enabled: true, priority: 8, apiKey: 'sk-****', models: ['qwen-max', 'qwen-plus', 'qwen-turbo'] },
+                    { id: 'wenxin', name: '百度文心', icon: '🤖', enabled: false, priority: 9, apiKey: '', models: ['ERNIE-Bot-4', 'ERNIE-Bot'] },
+                    { id: 'spark', name: '讯飞星火', icon: '✨', enabled: false, priority: 10, apiKey: '', models: ['Spark3.5', 'Spark3.0'] },
+                    { id: 'doubao', name: '字节豆包', icon: '📦', enabled: false, priority: 11, apiKey: '', models: ['Doubao-pro', 'Doubao-lite'] },
+                    { id: 'yi', name: '零一万物', icon: '0️⃣', enabled: false, priority: 12, apiKey: '', models: ['yi-large', 'yi-medium'] },
+                    { id: 'local', name: '本地模型', icon: '🏠', enabled: true, priority: 13, apiKey: '', models: ['llama3', 'qwen2', 'glm4'] },
+                    { id: 'custom', name: '自定义API', icon: '⚙️', enabled: false, priority: 14, apiKey: '', models: ['custom-model'] }
+                ];
+                
+                this.renderProviders();
+                this.renderPriorityList();
+                
+                if (this.providers.length > 0) {
+                    this.selectProvider(this.providers[0]);
+                }
+            }
+            
+            // Render provider list
+            renderProviders() {
+                const container = document.getElementById('providerList');
+                container.innerHTML = this.providers.map(p => `
+                    <div class="provider-item ${p.id === this.currentProvider?.id ? 'active' : ''}" data-provider-id="${p.id}">
+                        <div class="provider-icon">${p.icon}</div>
+                        <div class="provider-info">
+                            <div class="provider-name">${p.name}</div>
+                            <div class="provider-status ${p.enabled ? 'enabled' : 'disabled'}">
+                                <span>${p.enabled ? '●' : '○'}</span>
+                                <span>${p.enabled ? '已启用' : '已禁用'}</span>
+                            </div>
+                        </div>
+                        <span class="provider-priority">#${p.priority}</span>
+                    </div>
+                `).join('');
+            }
+            
+            // Select provider
+            selectProvider(provider) {
+                this.currentProvider = provider;
+                this.renderProviders();
+                
+                // Update card
+                document.getElementById('cardIcon').textContent = provider.icon;
+                document.getElementById('cardName').textContent = provider.name;
+                document.getElementById('cardDesc').textContent = `配置 ${provider.name} API 连接和参数`;
+                
+                // Show config sections
+                document.getElementById('configSections').style.display = 'block';
+                
+                // Load provider settings
+                this.loadProviderSettings();
+            }
+            
+            // Load provider settings
+            loadProviderSettings() {
+                if (!this.currentProvider) return;
+                
+                // API Key
+                document.getElementById('apiKey').value = this.currentProvider.apiKey || '';
+                
+                // Models
+                this.models = this.currentProvider.models.map(m => ({
+                    id: m,
+                    name: m,
+                    context: m.includes('128k') ? 128000 : m.includes('32k') ? 32000 : 8000
+                }));
+                
+                this.renderModels();
+            }
+            
+            // Render models
+            renderModels() {
+                const container = document.getElementById('modelSelector');
+                container.innerHTML = this.models.map((m, i) => `
+                    <div class="model-option ${i === 0 ? 'selected' : ''}" data-model="${m.id}">
+                        <div class="model-option-header">
+                            <span class="model-option-icon">🤖</span>
+                            <span class="model-option-name">${m.name}</span>
+                        </div>
+                        <div class="model-option-meta">上下文: ${m.context.toLocaleString()} tokens</div>
+                    </div>
+                `).join('');
+                
+                // Update max tokens slider max
+                const maxContext = Math.max(...this.models.map(m => m.context));
+                document.getElementById('maxTokens').max = maxContext;
+                document.getElementById('maxTokens').value = Math.min(4096, maxContext);
+                document.getElementById('maxTokensValue').textContent = Math.min(4096, maxContext);
+            }
+            
+            // Render priority list
+            renderPriorityList() {
+                const container = document.getElementById('priorityList');
+                const enabledProviders = this.providers.filter(p => p.enabled).sort((a, b) => a.priority - b.priority);
+                
+                container.innerHTML = enabledProviders.map((p, index) => `
+                    <div class="priority-item" draggable="true" data-provider-id="${p.id}">
+                        <span class="priority-handle">⋮⋮</span>
+                        <span class="priority-rank">${index + 1}</span>
+                        <div class="priority-info">
+                            <div class="priority-name">${p.icon} ${p.name}</div>
+                            <div class="priority-model">${p.models[0]}</div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                // Add drag and drop
+                this.initDragAndDrop();
+            }
+            
+            // Initialize drag and drop
+            initDragAndDrop() {
+                const items = document.querySelectorAll('.priority-item');
+                let draggedItem = null;
+                
+                items.forEach(item => {
+                    item.addEventListener('dragstart', (e) => {
+                        draggedItem = item;
+                        item.classList.add('dragging');
+                    });
+                    
+                    item.addEventListener('dragend', () => {
+                        item.classList.remove('dragging');
+                        draggedItem = null;
+                        this.updatePriorities();
+                    });
+                    
+                    item.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        if (item === draggedItem) return;
+                        
+                        const rect = item.getBoundingClientRect();
+                        const midY = rect.top + rect.height / 2;
+                        
+                        if (e.clientY < midY) {
+                            item.parentNode.insertBefore(draggedItem, item);
+                        } else {
+                            item.parentNode.insertBefore(draggedItem, item.nextSibling);
+                        }
+                    });
+                });
+            }
+            
+            // Update priorities after drag
+            updatePriorities() {
+                const items = document.querySelectorAll('.priority-item');
+                items.forEach((item, index) => {
+                    const providerId = item.dataset.providerId;
+                    const provider = this.providers.find(p => p.id === providerId);
+                    if (provider) {
+                        provider.priority = index + 1;
+                    }
+                    item.querySelector('.priority-rank').textContent = index + 1;
+                });
+                
+                this.renderProviders();
+            }
+            
+            // Bind events
+            bindEvents() {
+                // Provider selection
+                document.getElementById('providerList').addEventListener('click', (e) => {
+                    const item = e.target.closest('.provider-item');
+                    if (item) {
+                        const providerId = item.dataset.providerId;
+                        const provider = this.providers.find(p => p.id === providerId);
+                        if (provider) this.selectProvider(provider);
+                    }
+                });
+                
+                // Model selection
+                document.getElementById('modelSelector').addEventListener('click', (e) => {
+                    const option = e.target.closest('.model-option');
+                    if (option) {
+                        document.querySelectorAll('.model-option').forEach(o => o.classList.remove('selected'));
+                        option.classList.add('selected');
+                    }
+                });
+                
+                // API key visibility
+                document.getElementById('toggleKeyVisibility').addEventListener('click', () => {
+                    const input = document.getElementById('apiKey');
+                    const btn = document.getElementById('toggleKeyVisibility');
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        btn.textContent = '隐藏';
+                    } else {
+                        input.type = 'password';
+                        btn.textContent = '显示';
+                    }
+                });
+                
+                // Test connection
+                document.getElementById('testConnectionBtn').addEventListener('click', () => {
+                    this.testConnection();
+                });
+                
+                // Sliders
+                const sliders = [
+                    { id: 'temperature', display: 'temperatureValue' },
+                    { id: 'topP', display: 'topPValue' },
+                    { id: 'maxTokens', display: 'maxTokensValue' },
+                    { id: 'frequencyPenalty', display: 'frequencyPenaltyValue' },
+                    { id: 'presencePenalty', display: 'presencePenaltyValue' }
+                ];
+                
+                sliders.forEach(({ id, display }) => {
+                    const slider = document.getElementById(id);
+                    const valueDisplay = document.getElementById(display);
+                    
+                    slider.addEventListener('input', () => {
+                        valueDisplay.textContent = slider.value;
+                    });
+                });
+                
+                // Provider search
+                document.getElementById('providerSearch').addEventListener('input', (e) => {
+                    const term = e.target.value.toLowerCase();
+                    const items = document.querySelectorAll('.provider-item');
+                    items.forEach(item => {
+                        const name = item.querySelector('.provider-name').textContent.toLowerCase();
+                        item.style.display = name.includes(term) ? '' : 'none';
+                    });
+                });
+                
+                // Save settings
+                document.getElementById('saveBtn').addEventListener('click', () => {
+                    this.saveSettings();
+                });
+                
+                // Reset settings
+                document.getElementById('resetBtn').addEventListener('click', () => {
+                    if (confirm('确定要重置所有更改吗？')) {
+                        this.loadProviders();
+                        this.loadProviderSettings();
+                    }
+                });
+                
+                // Theme toggle
+                document.getElementById('themeToggle').addEventListener('click', () => {
+                    this.toggleTheme();
+                });
+            }
+            
+            // Test connection
+            testConnection() {
+                const status = document.getElementById('testStatus');
+                status.innerHTML = '<span>⏳</span><span>测试中...</span>';
+                status.className = 'test-status';
+                
+                setTimeout(() => {}, 100); // 真实进度通过API获取
+            }
+            
+            // Save settings
+            saveSettings() {
+                if (this.currentProvider) {
+                    this.currentProvider.apiKey = document.getElementById('apiKey').value;
+                }
+                
+                this.showToast('设置已保存', 'success');
+            }
+            
+            // Show toast
+            showToast(message, type = 'success') {
+                const toast = document.createElement('div');
+                toast.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    padding: 16px 24px;
+                    border-radius: 8px;
+                    background: ${type === 'success' ? '#22c55e' : '#ef4444'};
+                    color: white;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    z-index: 10000;
+                    animation: slideIn 0.3s ease;
+                `;
+                toast.innerHTML = `<span>${type === 'success' ? '✓' : '✗'}</span><span>${message}</span>`;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {}, 100); // 真实进度通过API获取
+            }
+            
+            loadTheme() {
+                const theme = localStorage.getItem('theme') || 'light';
+                document.documentElement.setAttribute('data-theme', theme);
+                document.getElementById('themeIcon').textContent = theme === 'dark' ? '☀️' : '🌙';
+            }
+            
+            toggleTheme() {
+                const current = document.documentElement.getAttribute('data-theme') || 'light';
+                const next = current === 'light' ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+                document.getElementById('themeIcon').textContent = next === 'dark' ? '☀️' : '🌙';
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            window.modelSettings = new ModelSettings();
+        });
+    </script>
+
+    <script src="../static/js/api-client.js"></script>
+    <script src="../static/js/page-realization.js"></script>
+    <script src="../static/js/page-realization-loader.js"></script>
+<script>
+        
+            // 侧边栏切换
+            var sidebarToggle = document.getElementById('sidebarToggle');
+            var sidebar = document.getElementById('sidebar');
+            if (sidebarToggle && sidebar) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('collapsed');
+                });
+            }
+
+        </script>
+</body>
+</html>

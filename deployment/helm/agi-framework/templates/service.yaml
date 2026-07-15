@@ -1,0 +1,120 @@
+{{/* =============================================================================
+AGI Unified Framework - API Service Template
+============================================================================= */}}
+{{- if .Values.api.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "agi-framework.api.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "agi-framework.api.labels" . | nindent 4 }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+    prometheus.io/path: "/metrics"
+    {{- if .Values.api.service.annotations }}
+    {{- toYaml .Values.api.service.annotations | nindent 4 }}
+    {{- end }}
+spec:
+  type: {{ .Values.api.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.api.service.port }}
+      targetPort: http
+      protocol: TCP
+      {{- if eq .Values.api.service.type "NodePort" }}
+      nodePort: {{ .Values.api.service.nodePort }}
+      {{- end }}
+    - name: metrics
+      port: 9090
+      targetPort: metrics
+      protocol: TCP
+  selector:
+    {{- include "agi-framework.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+  {{- if eq .Values.api.service.type "LoadBalancer" }}
+  externalTrafficPolicy: Local
+  {{- end }}
+{{- end }}
+
+---
+{{/* =============================================================================
+AGI Unified Framework - Worker Service Template (for metrics)
+============================================================================= */}}
+{{- if .Values.worker.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "agi-framework.worker.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "agi-framework.worker.labels" . | nindent 4 }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+spec:
+  type: ClusterIP
+  clusterIP: None  # Headless service for direct pod access
+  ports:
+    - name: metrics
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    {{- include "agi-framework.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+{{- end }}
+
+---
+{{/* =============================================================================
+AGI Unified Framework - Beat Service Template
+============================================================================= */}}
+{{- if .Values.beat.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "agi-framework.beat.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "agi-framework.beat.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+      protocol: TCP
+  selector:
+    {{- include "agi-framework.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: scheduler
+{{- end }}
+
+---
+{{/* =============================================================================
+AGI Unified Framework - Headless Service Template
+============================================================================= */}}
+{{- if .Values.api.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "agi-framework.fullname" . }}-headless
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "agi-framework.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+    - name: grpc
+      port: 50051
+      targetPort: 50051
+      protocol: TCP
+  selector:
+    {{- include "agi-framework.selectorLabels" . | nindent 4 }}
+{{- end }}

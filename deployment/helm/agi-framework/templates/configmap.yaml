@@ -1,0 +1,159 @@
+{{/* =============================================================================
+AGI Unified Framework - ConfigMap Template
+============================================================================= */}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "agi-framework.configmap.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "agi-framework.labels" . | nindent 4 }}
+data:
+  # 应用基础配置
+  APP_NAME: {{ .Values.api.env.APP_NAME | default "AGI Unified Framework" | quote }}
+  APP_ENV: {{ .Values.global.environment | default "production" | quote }}
+  APP_VERSION: {{ .Chart.AppVersion | quote }}
+  
+  # 服务器配置
+  SERVER_HOST: "0.0.0.0"
+  SERVER_PORT: "8000"
+  WORKERS: "4"
+  TIMEOUT: "120"
+  
+  # 日志配置
+  LOG_LEVEL: {{ .Values.api.env.LOG_LEVEL | default "info" | quote }}
+  LOG_FORMAT: "json"
+  LOG_OUTPUT: "stdout"
+  
+  # 数据库配置
+  {{- if .Values.postgresql.enabled }}
+  DB_HOST: {{ include "agi-framework.fullname" . }}-postgresql
+  DB_PORT: "5432"
+  DB_NAME: {{ .Values.postgresql.auth.database | quote }}
+  DB_POOL_SIZE: "20"
+  DB_MAX_OVERFLOW: "10"
+  DB_POOL_TIMEOUT: "30"
+  {{- end }}
+  
+  # Redis配置
+  {{- if .Values.redis.enabled }}
+  REDIS_HOST: {{ include "agi-framework.fullname" . }}-redis-master
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+  REDIS_SSL: "false"
+  {{- end }}
+  
+  # Celery配置
+  CELERY_WORKER_CONCURRENCY: "4"
+  CELERY_WORKER_PREFETCH_MULTIPLIER: "1"
+  CELERY_TASK_ACKS_LATE: "true"
+  CELERY_TASK_REJECT_ON_WORKER_LOST: "true"
+  
+  # 缓存配置
+  CACHE_TYPE: "redis"
+  CACHE_DEFAULT_TIMEOUT: "300"
+  
+  # 限流配置
+  RATE_LIMIT_ENABLED: "true"
+  RATE_LIMIT_DEFAULT: "100/minute"
+  
+  # 文件上传配置
+  MAX_UPLOAD_SIZE: "104857600"
+  ALLOWED_EXTENSIONS: "txt,md,pdf,doc,docx,png,jpg,jpeg,gif,mp3,mp4,wav"
+  
+  # 模型服务配置
+  MODEL_TIMEOUT: "60"
+  MODEL_MAX_RETRIES: "3"
+  MODEL_RETRY_DELAY: "1"
+  
+  # 监控配置
+  METRICS_ENABLED: "true"
+  METRICS_PORT: "9090"
+  HEALTH_CHECK_PATH: "/health"
+  
+  # CORS配置
+  CORS_ORIGINS: "*"
+  CORS_METHODS: "GET,POST,PUT,DELETE,OPTIONS,PATCH"
+  CORS_HEADERS: "Content-Type,Authorization,X-Request-ID"
+  
+  # 链路追踪配置
+  {{- if .Values.jaeger.enabled }}
+  JAEGER_AGENT_HOST: {{ include "agi-framework.fullname" . }}-jaeger-agent
+  JAEGER_AGENT_PORT: "6831"
+  {{- end }}
+  
+  # 对象存储配置
+  {{- if .Values.minio.enabled }}
+  S3_ENDPOINT: {{ include "agi-framework.fullname" . }}-minio:9000
+  S3_BUCKET_NAME: "agi-assets"
+  {{- end }}
+
+---
+{{/* =============================================================================
+AGI Unified Framework - Nginx ConfigMap Template
+============================================================================= */}}
+{{- if .Values.nginx.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "agi-framework.fullname" . }}-nginx
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "agi-framework.labels" . | nindent 4 }}
+data:
+  nginx.conf: |
+    user nginx;
+    worker_processes auto;
+    error_log /var/log/nginx/error.log warn;
+    pid /var/run/nginx.pid;
+    
+    events {
+        worker_connections 4096;
+        use epoll;
+        multi_accept on;
+    }
+    
+    http {
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+        
+        log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                        '$status $body_bytes_sent "$http_referer" '
+                        '"$http_user_agent" "$http_x_forwarded_for"';
+        
+        access_log /var/log/nginx/access.log main;
+        
+        sendfile on;
+        tcp_nopush on;
+        tcp_nodelay on;
+        keepalive_timeout 65;
+        
+        gzip on;
+        gzip_vary on;
+        gzip_proxied any;
+        gzip_comp_level 6;
+        
+        upstream app {
+            server {{ include "agi-framework.api.name" . }}:80;
+        }
+        
+        server {
+            listen 80;
+            server_name _;
+            
+            location / {
+                proxy_pass http://app;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+            
+            location /health {
+                access_log off;
+                return 200 "healthy\n";
+                add_header Content-Type text/plain;
+            }
+        }
+    }
+{{- end }}

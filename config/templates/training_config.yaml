@@ -1,0 +1,604 @@
+# =============================================================================
+# AGI Unified Framework - 训练配置模板
+# =============================================================================
+# 描述: 定义模型训练全流程配置，包括数据路径、优化器、学习率调度、
+#       正则化、检查点管理、日志记录、EWC弹性权重巩固等
+# 版本: 2.0.0
+# 用法: 根据训练任务需求修改对应配置段，支持 dev/test/prod 多环境
+# =============================================================================
+
+version: "2.0.0"
+
+# -----------------------------------------------------------------------------
+# 训练基本参数
+# -----------------------------------------------------------------------------
+training:
+  # 训练轮数 (默认: 3)
+  num_epochs: 3
+
+  # 每设备批次大小 (默认: 32)
+  batch_size: 32
+
+  # 评估批次大小，通常大于训练批次以加速评估 (默认: 64)
+  eval_batch_size: 64
+
+  # 最大序列长度 (默认: 512)
+  max_seq_length: 512
+
+  # 数据加载工作线程数 (默认: 4)
+  num_workers: 4
+
+  # 是否锁定内存页，加速GPU数据传输 (默认: true)
+  pin_memory: true
+
+  # 每个工作线程预取的批次数 (默认: 2)
+  prefetch_factor: 2
+
+  # 是否保持工作线程存活，避免重复创建开销 (默认: true)
+  persistent_workers: true
+
+  # 随机种子 (默认: 42)
+  seed: 42
+
+  # 精度配置（不可同时启用fp16和bf16）
+  fp16: false              # FP16混合精度 (默认: false)
+  bf16: true               # BF16混合精度，A100/H100推荐 (默认: true)
+
+  # 是否启用梯度检查点以节省显存 (默认: false)
+  gradient_checkpointing: false
+
+  # DataLoader配置
+  dataloader_drop_last: false   # 是否丢弃最后不完整的批次 (默认: false)
+  dataloader_shuffle: true      # 是否打乱训练数据 (默认: true)
+
+  # 是否启用梯度累积
+  gradient_accumulation_steps: 1  # 梯度累积步数 (默认: 1)
+
+  # 最大梯度范数裁剪 (默认: 1.0)
+  max_grad_norm: 1.0
+
+  # 输出目录
+  output_dir: "./output"         # 模型输出目录 (默认: "./output")
+  logging_dir: "./logs"          # 日志输出目录 (默认: "./logs")
+
+  # 是否从检查点恢复训练 (默认: null)
+  resume_from_checkpoint: null
+
+# -----------------------------------------------------------------------------
+# 数据配置
+# -----------------------------------------------------------------------------
+# 定义训练/验证/测试数据的路径和预处理参数
+data:
+  # 数据集名称或标识 (默认: null)
+  dataset_name: null
+
+  # 数据格式: "json", "jsonl", "csv", "parquet", "tfrecord", "huggingface"
+  format: "jsonl"
+
+  # 数据路径配置
+  train_path: "./data/train"           # 训练数据路径 (默认: "./data/train")
+  validation_path: "./data/val"       # 验证数据路径 (默认: "./data/val")
+  test_path: "./data/test"             # 测试数据路径 (默认: "./data/test")
+
+  # 数据集划分比例（当只有一个数据源时自动划分）
+  split_ratio:
+    train: 0.8       # 训练集比例 (默认: 0.8)
+    validation: 0.1  # 验证集比例 (默认: 0.1)
+    test: 0.1        # 测试集比例 (默认: 0.1)
+
+  # 数据预处理配置
+  preprocessing:
+    # 最大样本数，null表示不限制 (默认: null)
+    max_samples: null
+
+    # 是否对文本进行tokenize (默认: true)
+    tokenize: true
+
+    # Tokenizer路径或名称 (默认: null，使用模型自带)
+    tokenizer_path: null
+
+    # 是否截断超长序列 (默认: true)
+    truncation: true
+
+    # 是否填充短序列 (默认: true)
+    padding: true
+
+    # 填充策略: "longest"(填充到批次最长), "max_length"(填充到最大长度)
+    padding_strategy: "longest"
+
+  # 数据增强配置
+  augmentation:
+    # 是否启用数据增强 (默认: false)
+    enabled: false
+
+    # 增强方法列表
+    methods: []
+
+    # 增强概率 (默认: 0.5)
+    probability: 0.5
+
+  # 数据缓存配置
+  cache:
+    # 是否缓存处理后的数据 (默认: true)
+    enabled: true
+
+    # 缓存目录 (默认: "./data/cache")
+    cache_dir: "./data/cache"
+
+    # 缓存格式: "memory"(内存), "disk"(磁盘), "arrow"(Arrow格式)
+    cache_format: "arrow"
+
+  # 分布式数据采样器
+  distributed:
+    # 是否使用分布式采样器 (默认: false)
+    enabled: false
+
+    # 采样器类型: "distributed"(标准分布式), "weighted"(加权采样),
+    #   "grouped"(分组采样，减少padding)
+    sampler_type: "distributed"
+
+# -----------------------------------------------------------------------------
+# 优化器配置
+# -----------------------------------------------------------------------------
+optimizer:
+  # 优化器类型: "adam", "adamw", "sgd", "adagrad", "rmsprop", "lamb", "lion"
+  #   (默认: "adamw")
+  type: "adamw"
+
+  # 学习率 (默认: 1e-4)
+  learning_rate: 1e-4
+
+  # 权重衰减系数 (默认: 0.01)
+  weight_decay: 0.01
+
+  # Adam系列参数
+  beta1: 0.9              # 一阶矩估计衰减率 (默认: 0.9)
+  beta2: 0.999            # 二阶矩估计衰减率 (默认: 0.999)
+  eps: 1e-8               # 数值稳定项 (默认: 1e-8)
+
+  # SGD参数
+  momentum: 0.9           # 动量 (默认: 0.9)
+  nesterov: false         # 是否使用Nesterov动量 (默认: false)
+
+  # 优化器高级选项
+  use_8bit_adam: false    # 是否使用8-bit Adam节省显存 (默认: false)
+  use_fused_optimizer: true  # 是否使用融合优化器加速 (默认: true)
+
+  # 参数分组权重衰减排除列表（如LayerNorm、Bias不衰减）
+  weight_decay_exclusions:
+    - "bias"
+    - "LayerNorm.weight"
+    - "layernorm.weight"
+    - "rmsnorm.weight"
+
+# -----------------------------------------------------------------------------
+# 学习率调度配置
+# -----------------------------------------------------------------------------
+lr_scheduler:
+  # 调度器类型: "constant", "linear", "cosine", "cosine_with_restarts",
+  #   "polynomial", "step", "reduce_on_plateau", "warmup_cosine"
+  #   (默认: "cosine")
+  type: "cosine"
+
+  # 预热步数 (默认: 1000)
+  num_warmup_steps: 1000
+
+  # 总训练步数 (默认: 100000)
+  num_training_steps: 100000
+
+  # 余弦退火的周期数 (默认: 1.0)
+  num_cycles: 1.0
+
+  # 最小学习率比例，相对于初始学习率 (默认: 0.1)
+  min_lr_ratio: 0.1
+
+  # 多项式衰减的幂次 (默认: 1.0)
+  power: 1.0
+
+  # StepLR的步长 (默认: 1000)
+  step_size: 1000
+
+  # StepLR的衰减系数 (默认: 0.1)
+  gamma: 0.1
+
+  # ReduceOnPlateau的耐心值 (默认: 10)
+  patience: 10
+
+  # 预热比例，设置后将覆盖num_warmup_steps (默认: null)
+  warmup_ratio: null
+
+# -----------------------------------------------------------------------------
+# 正则化配置
+# -----------------------------------------------------------------------------
+regularization:
+  # Dropout (在模型配置中设置，此处为全局覆盖)
+  dropout_rate: 0.1       # 全局Dropout比率 (默认: 0.1)
+
+  # 标签平滑
+  label_smoothing: 0.0    # 标签平滑系数 (默认: 0.0)
+
+  # 随机深度 (Stochastic Depth)
+  stochastic_depth:
+    enabled: false         # 是否启用 (默认: false)
+    drop_rate: 0.1         # 层丢弃概率 (默认: 0.1)
+    drop_pattern: "linear" # 丢弃模式: "linear"(线性递增), "uniform"(均匀)
+
+  # 梯度噪声
+  gradient_noise:
+    enabled: false         # 是否启用 (默认: false)
+    noise_level: 0.01      # 噪声水平 (默认: 0.01)
+
+  # SAM (Sharpness-Aware Minimization)
+  sam:
+    enabled: false         # 是否启用 (默认: false)
+    rho: 0.05              # 邻域半径 (默认: 0.05)
+    adaptive: false        # 是否使用自适应SAM (默认: false)
+
+# -----------------------------------------------------------------------------
+# EWC (Elastic Weight Consolidation) 配置
+# -----------------------------------------------------------------------------
+# 用于持续学习/增量学习场景，防止灾难性遗忘
+ewc:
+  # 是否启用EWC (默认: false)
+  enabled: false
+
+  # EWC正则化强度 (默认: 1000.0)
+  lambda: 1000.0
+
+  # Fisher信息矩阵计算方式: "exact"(精确), "diagonal"(对角近似)
+  #   (默认: "diagonal")
+  fisher_type: "diagonal"
+
+  # Fisher信息矩阵存储路径 (默认: "./ewc/fisher")
+  fisher_dir: "./ewc/fisher"
+
+  # 是否在训练开始时计算Fisher矩阵 (默认: true)
+  compute_fisher_at_start: true
+
+  # 计算Fisher矩阵时使用的样本数 (默认: 1000)
+  fisher_samples: 1000
+
+  # 在线EWC模式，逐步更新Fisher矩阵 (默认: false)
+  online_mode: false
+
+  # 在线EWC的衰减系数 (默认: 0.9)
+  gamma: 0.9
+
+  # 需要排除EWC正则化的参数名模式列表 (默认: [])
+  exclude_params: []
+
+# -----------------------------------------------------------------------------
+# 检查点配置
+# -----------------------------------------------------------------------------
+checkpoint:
+  # 保存策略: "steps"(按步数), "epochs"(按轮数), "best"(仅保存最优)
+  #   (默认: "steps")
+  save_strategy: "steps"
+
+  # 按步数保存时的间隔步数 (默认: 500)
+  save_steps: 500
+
+  # 按轮数保存时的间隔轮数 (默认: 1)
+  save_epochs: 1
+
+  # 最多保留的检查点数量 (默认: 3)
+  save_total_limit: 3
+
+  # 是否在训练结束时保存最终模型 (默认: true)
+  save_final: true
+
+  # 检查点保存格式: "pytorch"(PyTorch原生), "safetensors"(安全格式)
+  #   (默认: "safetensors")
+  save_format: "safetensors"
+
+  # 是否保存优化器状态（用于恢复训练）(默认: true)
+  save_optimizer_state: true
+
+  # 是否保存训练状态（步数、轮数等）(默认: true)
+  save_training_state: true
+
+  # 是否在训练结束时加载最优模型 (默认: true)
+  load_best_model_at_end: true
+
+  # 最优模型的评判指标 (默认: "loss")
+  metric_for_best_model: "loss"
+
+  # 指标值越大是否越好 (默认: false，即loss越小越好)
+  greater_is_better: false
+
+  # 检查点压缩
+  compression:
+    enabled: false         # 是否启用检查点压缩 (默认: false)
+    algorithm: "gzip"      # 压缩算法: "gzip", "lz4", "zstd" (默认: "gzip")
+    level: 6               # 压缩级别 1-9 (默认: 6)
+
+# -----------------------------------------------------------------------------
+# 评估配置
+# -----------------------------------------------------------------------------
+evaluation:
+  # 评估策略: "steps"(按步数), "epochs"(按轮数)
+  #   (默认: "steps")
+  eval_strategy: "steps"
+
+  # 按步数评估时的间隔步数 (默认: 500)
+  eval_steps: 500
+
+  # 评估指标列表
+  metrics:
+    - "loss"
+    - "accuracy"
+    - "f1"
+    - "perplexity"
+
+  # 生成任务的评估配置
+  generation:
+    # 是否执行生成评估 (默认: false)
+    enabled: false
+
+    # 生成的最大token数 (默认: 128)
+    max_new_tokens: 128
+
+    # 生成数量 (默认: 0，不限制)
+    num_beams: 1
+
+    # 温度参数 (默认: 1.0)
+    temperature: 1.0
+
+    # Top-p采样 (默认: 1.0)
+    top_p: 1.0
+
+    # Top-k采样 (默认: 50)
+    top_k: 50
+
+    # 重复惩罚 (默认: 1.0)
+    repetition_penalty: 1.0
+
+# -----------------------------------------------------------------------------
+# 日志配置
+# -----------------------------------------------------------------------------
+logging:
+  # 日志记录间隔步数 (默认: 10)
+  logging_steps: 10
+
+  # 日志级别: "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
+  #   (默认: "INFO")
+  level: "INFO"
+
+  # 日志上报目标: "tensorboard", "wandb", "mlflow", "csv", "none"
+  #   (默认: ["tensorboard"])
+  report_to:
+    - "tensorboard"
+
+  # 实验运行名称 (默认: null，自动生成)
+  run_name: null
+
+  # Wandb配置
+  wandb:
+    # Wandb项目名称 (默认: "agi-unified-framework")
+    project: "agi-unified-framework"
+    # Wandb实体/团队名 (默认: null)
+    entity: null
+    # 是否记录模型 (默认: false)
+    log_model: false
+    # 是否记录检查点 (默认: false)
+    log_checkpoints: false
+
+  # MLflow配置
+  mlflow:
+    # MLflow跟踪服务器URI (默认: "http://localhost:5000")
+    tracking_uri: "http://localhost:5000"
+    # 实验名称 (默认: "default")
+    experiment_name: "default"
+    # 是否自动记录参数 (默认: true)
+    autolog: true
+
+  # TensorBoard配置
+  tensorboard:
+    # TensorBoard日志目录 (默认: "./logs/tensorboard")
+    log_dir: "./logs/tensorboard"
+    # 刷新频率，秒 (默认: 30)
+    flush_secs: 30
+    # 最大直方图样本数 (默认: 500)
+    histogram_samples: 500
+
+# -----------------------------------------------------------------------------
+# 持续学习配置
+# -----------------------------------------------------------------------------
+# 用于增量学习、在线学习场景
+continual_learning:
+  # 是否启用持续学习模式 (默认: false)
+  enabled: false
+
+  # 持续学习策略: "ewc"(弹性权重巩固), "l2"(L2正则化),
+  #   "replay"(经验回放), "progressive"(渐进式网络),
+  #   "packnet"(PackNet), "mas"(记忆感知突触)
+  strategy: "ewc"
+
+  # 经验回放缓冲区大小 (默认: 10000)
+  replay_buffer_size: 10000
+
+  # 每个新任务回放的样本数 (默认: 100)
+  replay_samples_per_task: 100
+
+  # 任务标识列表 (默认: [])
+  task_ids: []
+
+# =============================================================================
+# 多环境配置覆盖
+# =============================================================================
+
+environments:
+  # 开发环境 - 快速迭代，小数据量
+  dev:
+    training:
+      num_epochs: 1
+      batch_size: 8
+      eval_batch_size: 16
+      num_workers: 2
+      fp16: true
+      bf16: false
+      gradient_checkpointing: false
+      gradient_accumulation_steps: 1
+    data:
+      train_path: "./data/dev/train"
+      validation_path: "./data/dev/val"
+      test_path: "./data/dev/test"
+      preprocessing:
+        max_samples: 1000
+      cache:
+        cache_format: "memory"
+    optimizer:
+      learning_rate: 3e-4
+      weight_decay: 0.01
+      use_fused_optimizer: false
+    lr_scheduler:
+      type: "linear"
+      num_warmup_steps: 100
+      num_training_steps: 1000
+    checkpoint:
+      save_strategy: "steps"
+      save_steps: 200
+      save_total_limit: 2
+      save_format: "pytorch"
+    evaluation:
+      eval_strategy: "steps"
+      eval_steps: 200
+    logging:
+      logging_steps: 5
+      level: "DEBUG"
+      report_to:
+        - "tensorboard"
+
+  # 测试环境 - 完整验证，中等数据量
+  test:
+    training:
+      num_epochs: 3
+      batch_size: 32
+      eval_batch_size: 64
+      num_workers: 4
+      fp16: false
+      bf16: true
+      gradient_checkpointing: true
+      gradient_accumulation_steps: 4
+    data:
+      train_path: "./data/test/train"
+      validation_path: "./data/test/val"
+      test_path: "./data/test/test"
+      preprocessing:
+        max_samples: 10000
+      cache:
+        cache_format: "arrow"
+    optimizer:
+      learning_rate: 1e-4
+      weight_decay: 0.01
+      use_fused_optimizer: true
+    lr_scheduler:
+      type: "cosine"
+      num_warmup_steps: 500
+      num_training_steps: 50000
+    regularization:
+      dropout_rate: 0.1
+      label_smoothing: 0.1
+    ewc:
+      enabled: true
+      lambda: 1000.0
+    checkpoint:
+      save_strategy: "steps"
+      save_steps: 500
+      save_total_limit: 3
+      save_format: "safetensors"
+    evaluation:
+      eval_strategy: "steps"
+      eval_steps: 500
+      generation:
+        enabled: true
+        max_new_tokens: 128
+    logging:
+      logging_steps: 10
+      level: "INFO"
+      report_to:
+        - "tensorboard"
+        - "wandb"
+
+  # 生产环境 - 全量训练，完整功能
+  prod:
+    training:
+      num_epochs: 10
+      batch_size: 64
+      eval_batch_size: 128
+      num_workers: 8
+      fp16: false
+      bf16: true
+      gradient_checkpointing: true
+      gradient_accumulation_steps: 8
+      persistent_workers: true
+    data:
+      train_path: "./data/prod/train"
+      validation_path: "./data/prod/val"
+      test_path: "./data/prod/test"
+      preprocessing:
+        max_samples: null
+      cache:
+        cache_format: "arrow"
+      distributed:
+        enabled: true
+        sampler_type: "distributed"
+    optimizer:
+      learning_rate: 1e-4
+      weight_decay: 0.01
+      use_8bit_adam: false
+      use_fused_optimizer: true
+    lr_scheduler:
+      type: "cosine"
+      num_warmup_steps: 2000
+      num_training_steps: 500000
+      min_lr_ratio: 0.05
+    regularization:
+      dropout_rate: 0.1
+      label_smoothing: 0.1
+      stochastic_depth:
+        enabled: true
+        drop_rate: 0.1
+        drop_pattern: "linear"
+      sam:
+        enabled: false
+    ewc:
+      enabled: true
+      lambda: 5000.0
+      fisher_type: "diagonal"
+      fisher_samples: 5000
+      online_mode: true
+      gamma: 0.9
+    checkpoint:
+      save_strategy: "steps"
+      save_steps: 1000
+      save_total_limit: 5
+      save_format: "safetensors"
+      save_optimizer_state: true
+      compression:
+        enabled: true
+        algorithm: "zstd"
+        level: 3
+    evaluation:
+      eval_strategy: "steps"
+      eval_steps: 1000
+      generation:
+        enabled: true
+        max_new_tokens: 256
+        num_beams: 4
+    logging:
+      logging_steps: 10
+      level: "INFO"
+      report_to:
+        - "tensorboard"
+        - "wandb"
+        - "mlflow"
+      wandb:
+        log_model: true
+        log_checkpoints: true
+      mlflow:
+        autolog: true
+    continual_learning:
+      enabled: true
+      strategy: "ewc"
+      replay_buffer_size: 100000

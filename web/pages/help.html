@@ -1,0 +1,3205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>帮助文档 - AGI 统一框架</title>
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/reset.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/animations.css">
+    <style>
+        .help-container { display: grid; grid-template-columns: 280px 1fr; gap: 20px; height: calc(100vh - 140px); }
+        
+        .help-nav { background: var(--card-bg); border-radius: 12px; padding: 20px; overflow-y: auto; }
+        .search-box { position: relative; margin-bottom: 20px; }
+        .search-box input { width: 100%; padding: 12px 16px 12px 40px; border: 1px solid var(--border-color); border-radius: 10px; font-size: 14px; background: var(--input-bg); color: var(--text-primary); }
+        .search-box::before { content: '🔍'; position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; }
+        .search-results { position: absolute; top: 100%; left: 0; right: 0; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; max-height: 300px; overflow-y: auto; z-index: 100; display: none; }
+        .search-results.active { display: block; }
+        .search-result-item { padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--border-color); }
+        .search-result-item:last-child { border-bottom: none; }
+        .search-result-item:hover { background: var(--hover-bg); }
+        .search-result-title { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+        .search-result-path { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        
+        .nav-section { margin-bottom: 24px; }
+        .nav-section-title { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 12px; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; font-size: 13px; color: var(--text-secondary); cursor: pointer; transition: all 0.2s; margin-bottom: 2px; }
+        .nav-item:hover { background: var(--hover-bg); color: var(--text-primary); }
+        .nav-item.active { background: var(--primary-light); color: var(--primary-color); font-weight: 500; }
+        .nav-item.has-children::after { content: '▶'; margin-left: auto; font-size: 10px; transition: transform 0.2s; }
+        .nav-item.expanded::after { transform: rotate(90deg); }
+        .nav-children { display: none; padding-left: 20px; }
+        .nav-children.expanded { display: block; }
+        
+        .help-content { background: var(--card-bg); border-radius: 12px; padding: 32px; overflow-y: auto; }
+        .help-header { margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border-color); }
+        .help-title { font-size: 32px; font-weight: 700; color: var(--text-primary); }
+        .help-subtitle { font-size: 16px; color: var(--text-secondary); margin-top: 8px; }
+        .help-breadcrumb { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 13px; }
+        .breadcrumb-item { color: var(--text-secondary); }
+        .breadcrumb-item a { color: var(--primary-color); text-decoration: none; }
+        .breadcrumb-separator { color: var(--text-muted); }
+        
+        .quick-links { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+        .quick-link { background: var(--bg-secondary); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
+        .quick-link:hover { border-color: var(--primary-color); transform: translateY(-2px); }
+        .quick-link-icon { font-size: 32px; margin-bottom: 12px; }
+        .quick-link-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+        .quick-link-desc { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+        
+        .doc-section { margin-bottom: 40px; }
+        .doc-section-title { font-size: 20px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        
+        .doc-card { background: var(--bg-secondary); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+        .doc-card-title { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; }
+        .doc-card-content { font-size: 14px; color: var(--text-secondary); line-height: 1.8; }
+        .doc-card-content code { background: var(--primary-light); color: var(--primary-color); padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+        .doc-card-content pre { background: var(--bg-tertiary); padding: 16px; border-radius: 8px; overflow-x: auto; margin: 12px 0; }
+        .doc-card-content pre code { background: none; padding: 0; }
+        .doc-card-content ul { margin-top: 12px; padding-left: 20px; }
+        .doc-card-content li { margin-bottom: 8px; }
+        .doc-card-content h3 { font-size: 15px; font-weight: 600; color: var(--text-primary); margin: 16px 0 8px; }
+        .doc-card-content h4 { font-size: 14px; font-weight: 600; color: var(--text-primary); margin: 12px 0 6px; }
+        .doc-card-content table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+        .doc-card-content th, .doc-card-content td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .doc-card-content th { background: var(--bg-tertiary); font-weight: 600; }
+        
+        .faq-list { display: flex; flex-direction: column; gap: 12px; }
+        .faq-item { background: var(--bg-secondary); border-radius: 12px; overflow: hidden; }
+        .faq-question { padding: 16px 20px; font-size: 15px; font-weight: 600; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: all 0.2s; }
+        .faq-question:hover { background: var(--hover-bg); }
+        .faq-icon { font-size: 18px; transition: transform 0.2s; }
+        .faq-item.open .faq-icon { transform: rotate(180deg); }
+        .faq-answer { padding: 0 20px; max-height: 0; overflow: hidden; transition: all 0.3s; }
+        .faq-item.open .faq-answer { padding: 0 20px 16px; max-height: 500px; }
+        .faq-answer-content { font-size: 14px; color: var(--text-secondary); line-height: 1.8; }
+        .faq-category { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+        .faq-category-tag { padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; background: var(--bg-secondary); color: var(--text-secondary); }
+        .faq-category-tag:hover { background: var(--hover-bg); }
+        .faq-category-tag.active { background: var(--primary-color); color: white; }
+        
+        .contact-section { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 32px; }
+        .contact-card { background: var(--bg-secondary); border-radius: 12px; padding: 24px; text-align: center; }
+        .contact-icon { font-size: 32px; margin-bottom: 12px; }
+        .contact-title { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+        .contact-info { font-size: 14px; color: var(--text-secondary); }
+        
+        .version-info { background: var(--bg-secondary); border-radius: 12px; padding: 20px; margin-top: 32px; display: flex; align-items: center; justify-content: space-between; }
+        .version-text { font-size: 14px; color: var(--text-secondary); }
+        .version-number { font-size: 16px; font-weight: 600; color: var(--primary-color); }
+
+        /* 快捷键参考样式 */
+        .shortcuts-section { background: var(--card-bg); border-radius: 12px; padding: 24px; margin-top: 20px; }
+        .shortcuts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .shortcut-group { background: var(--bg-secondary); border-radius: 10px; padding: 20px; }
+        .shortcut-group-title { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .shortcut-list { display: flex; flex-direction: column; gap: 12px; }
+        .shortcut-item { display: flex; justify-content: space-between; align-items: center; }
+        .shortcut-keys { display: flex; align-items: center; gap: 4px; }
+        .shortcut-key { padding: 4px 8px; background: var(--bg-tertiary); border-radius: 4px; font-size: 12px; font-family: monospace; color: var(--text-primary); border: 1px solid var(--border-color); }
+        .shortcut-plus { font-size: 12px; color: var(--text-muted); }
+        .shortcut-desc { font-size: 13px; color: var(--text-secondary); }
+
+        /* API文档样式 */
+        .api-section { background: var(--card-bg); border-radius: 12px; padding: 24px; margin-top: 20px; }
+        .api-endpoint { background: var(--bg-secondary); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+        .api-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .api-method { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+        .api-method.get { background: #10b98120; color: #10b981; }
+        .api-method.post { background: #3b82f620; color: #3b82f6; }
+        .api-method.put { background: #f59e0b20; color: #f59e0b; }
+        .api-method.delete { background: #ef444420; color: #ef4444; }
+        .api-path { font-size: 14px; font-family: monospace; color: var(--text-primary); }
+        .api-description { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; }
+        .api-params { margin-bottom: 16px; }
+        .api-params-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+        .api-param { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border-color); }
+        .api-param:last-child { border-bottom: none; }
+        .api-param-name { width: 120px; font-size: 13px; font-family: monospace; color: var(--primary-color); }
+        .api-param-type { width: 80px; font-size: 12px; color: var(--text-muted); }
+        .api-param-desc { flex: 1; font-size: 13px; color: var(--text-secondary); }
+
+        /* 视频教程样式 */
+        .videos-section { background: var(--card-bg); border-radius: 12px; padding: 24px; margin-top: 20px; }
+        .videos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .video-card { background: var(--bg-secondary); border-radius: 10px; overflow: hidden; cursor: pointer; transition: all 0.2s; }
+        .video-card:hover { transform: translateY(-4px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .video-thumbnail { height: 140px; background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); display: flex; align-items: center; justify-content: center; position: relative; }
+        .video-play { font-size: 40px; color: white; opacity: 0.9; }
+        .video-duration { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.7); color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+        .video-info { padding: 16px; }
+        .video-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+        .video-meta { font-size: 12px; color: var(--text-secondary); }
+
+        /* 工单表单样式 */
+        .ticket-section { background: var(--card-bg); border-radius: 12px; padding: 24px; margin-top: 20px; }
+        .ticket-form { display: flex; flex-direction: column; gap: 20px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        .form-label { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+        .form-label .required { color: var(--danger-color); }
+        .form-input, .form-select, .form-textarea { padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; background: var(--input-bg); color: var(--text-primary); transition: all 0.2s; }
+        .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--primary-light); }
+        .form-textarea { min-height: 120px; resize: vertical; }
+        .form-hint { font-size: 12px; color: var(--text-muted); }
+        .form-actions { display: flex; gap: 12px; justify-content: flex-end; }
+
+        /* Markdown渲染样式 */
+        .markdown-content { line-height: 1.8; }
+        .markdown-content h1 { font-size: 28px; font-weight: 700; color: var(--text-primary); margin: 24px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
+        .markdown-content h2 { font-size: 22px; font-weight: 600; color: var(--text-primary); margin: 20px 0 12px; }
+        .markdown-content h3 { font-size: 18px; font-weight: 600; color: var(--text-primary); margin: 16px 0 10px; }
+        .markdown-content h4 { font-size: 16px; font-weight: 600; color: var(--text-primary); margin: 14px 0 8px; }
+        .markdown-content p { margin: 12px 0; color: var(--text-secondary); }
+        .markdown-content ul, .markdown-content ol { margin: 12px 0; padding-left: 24px; }
+        .markdown-content li { margin: 6px 0; color: var(--text-secondary); }
+        .markdown-content code { background: var(--primary-light); color: var(--primary-color); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+        .markdown-content pre { background: var(--bg-tertiary); padding: 16px; border-radius: 8px; overflow-x: auto; margin: 16px 0; }
+        .markdown-content pre code { background: none; padding: 0; }
+        .markdown-content blockquote { border-left: 4px solid var(--primary-color); padding-left: 16px; margin: 16px 0; color: var(--text-secondary); font-style: italic; }
+        .markdown-content a { color: var(--primary-color); text-decoration: none; }
+        .markdown-content a:hover { text-decoration: underline; }
+        .markdown-content table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+        .markdown-content th, .markdown-content td { padding: 10px 12px; text-align: left; border: 1px solid var(--border-color); }
+        .markdown-content th { background: var(--bg-secondary); font-weight: 600; }
+        .markdown-content img { max-width: 100%; border-radius: 8px; margin: 16px 0; }
+        .markdown-content hr { border: none; border-top: 1px solid var(--border-color); margin: 24px 0; }
+
+        /* 目录树样式 */
+        .toc-tree { padding: 8px 0; }
+        .toc-node { padding-left: 16px; }
+        .toc-node.root { padding-left: 0; }
+        .toc-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .toc-item:hover { background: var(--hover-bg); }
+        .toc-item.active { background: var(--primary-light); color: var(--primary-color); }
+        .toc-icon { font-size: 16px; }
+        .toc-expand { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s; }
+        .toc-expand.expanded { transform: rotate(90deg); }
+        .toc-children { display: none; }
+        .toc-children.expanded { display: block; }
+
+        /* 响应式 */
+        @media (max-width: 1200px) {
+            .quick-links { grid-template-columns: repeat(2, 1fr); }
+            .videos-grid { grid-template-columns: repeat(2, 1fr); }
+            .shortcuts-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .help-container { grid-template-columns: 1fr; }
+            .quick-links { grid-template-columns: 1fr; }
+            .contact-section { grid-template-columns: 1fr; }
+            .videos-grid { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 空状态提示 -->
+    <div id="empty-state" style="display:none; background:#fff3cd; border:1px solid #ffc107; 
+         border-radius:8px; padding:15px; margin:20px; text-align:center; color:#856404;">
+        ⚠️ 暂无数据，请确保后端服务已启动
+    </div>
+    
+    <div class="page-container">
+        <header class="page-header">
+            <div class="header-left">
+                <button class="btn btn-icon sidebar-toggle" id="sidebarToggle"><span class="icon">☰</span></button>
+                <h1 class="page-title">帮助文档 - AGI 统一框架</h1>
+            </div>
+            <div class="header-right">
+                <div class="dropdown language-dropdown">
+                    <button class="btn btn-icon language-btn"><span class="language-flag">🇨🇳</span></button>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <div class="dropdown-header">语言设置</div>
+                        <a href="#" class="dropdown-item" data-lang="zh-CN"><span class="language-flag">🇨🇳</span><span>简体中文</span></a>
+                        <a href="#" class="dropdown-item" data-lang="en"><span class="language-flag">🇺🇸</span><span>English</span></a>
+                    </div>
+                </div>
+                <button class="btn btn-icon" id="notificationsBtn"><span class="icon">🔔</span><span class="badge">1</span></button>
+                <button class="btn btn-icon" id="themeToggle"><span class="icon">🌙</span></button>
+                <div class="user-menu dropdown">
+                    <button class="btn btn-avatar"><img src="../assets/images/avatar.png" alt="用户"><span>管理员</span></button>
+                </div>
+            </div>
+        </header>
+
+                <aside class="sidebar" id="sidebar">
+            <div class="sidebar-logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" fill="white" stroke="white" stroke-width="0.5"/></svg>
+                </div>
+                <div class="logo-text">
+                    <span class="logo-title">AGI Framework</span>
+                    <span class="logo-subtitle">Unified Platform</span>
+                </div>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle" title="切换侧边栏">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+            </button>
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title" onclick="this.parentElement.classList.toggle('collapsed')">
+                        <span class="nav-section-icon">&#9656;</span>
+                        <span>主要功能</span>
+                    </div>
+                    <ul class="nav-list">
+                        <li class="nav-item"><a href="dashboard.html" class="nav-link"><span class="nav-icon">&#128202;</span><span class="nav-text">仪表盘</span></a></li>
+                        <li class="nav-item"><a href="chat.html" class="nav-link"><span class="nav-icon">&#128172;</span><span class="nav-text">智能对话</span></a></li>
+                        <li class="nav-item"><a href="model-manager.html" class="nav-link"><span class="nav-icon">&#129302;</span><span class="nav-text">模型管理</span></a></li>
+                        <li class="nav-item"><a href="orchestration.html" class="nav-link"><span class="nav-icon">&#127926;</span><span class="nav-text">模型编排</span></a></li>
+                        <li class="nav-item"><a href="workflow.html" class="nav-link"><span class="nav-icon">&#128260;</span><span class="nav-text">工作流</span></a></li>
+                    </ul>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title" onclick="this.parentElement.classList.toggle('collapsed')">
+                        <span class="nav-section-icon">&#9656;</span>
+                        <span>AI系统</span>
+                    </div>
+                    <ul class="nav-list">
+                        <li class="nav-item"><a href="multiagent.html" class="nav-link"><span class="nav-icon">&#128101;</span><span class="nav-text">多智能体</span></a></li>
+                        <li class="nav-item"><a href="cognitive.html" class="nav-link"><span class="nav-icon">&#129504;</span><span class="nav-text">认知系统</span></a></li>
+                        <li class="nav-item"><a href="training.html" class="nav-link"><span class="nav-icon">&#127891;</span><span class="nav-text">训练中心</span></a></li>
+                    </ul>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title" onclick="this.parentElement.classList.toggle('collapsed')">
+                        <span class="nav-section-icon">&#9656;</span>
+                        <span>内容生成</span>
+                    </div>
+                    <ul class="nav-list">
+                        <li class="nav-item"><a href="video-gen.html" class="nav-link"><span class="nav-icon">&#127916;</span><span class="nav-text">视频生成</span></a></li>
+                        <li class="nav-item"><a href="image-gen.html" class="nav-link"><span class="nav-icon">&#127912;</span><span class="nav-text">图像生成</span></a></li>
+                        <li class="nav-item"><a href="audio-gen.html" class="nav-link"><span class="nav-icon">&#127925;</span><span class="nav-text">音频生成</span></a></li>
+                        <li class="nav-item"><a href="3d-gen.html" class="nav-link"><span class="nav-icon">&#127922;</span><span class="nav-text">3D生成</span></a></li>
+                    </ul>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title" onclick="this.parentElement.classList.toggle('collapsed')">
+                        <span class="nav-section-icon">&#9656;</span>
+                        <span>高级功能</span>
+                    </div>
+                    <ul class="nav-list">
+                        <li class="nav-item"><a href="physics-engine.html" class="nav-link"><span class="nav-icon">&#9883;</span><span class="nav-text">物理引擎</span></a></li>
+                        <li class="nav-item"><a href="computer-use.html" class="nav-link"><span class="nav-icon">&#128187;</span><span class="nav-text">计算机使用</span></a></li>
+                        <li class="nav-item"><a href="security.html" class="nav-link"><span class="nav-icon">&#128274;</span><span class="nav-text">安全中心</span></a></li>
+                        <li class="nav-item"><a href="federated.html" class="nav-link"><span class="nav-icon">&#128279;</span><span class="nav-text">联邦学习</span></a></li>
+                        <li class="nav-item"><a href="rag.html" class="nav-link"><span class="nav-icon">&#128218;</span><span class="nav-text">知识检索</span></a></li>
+                        <li class="nav-item"><a href="channels.html" class="nav-link"><span class="nav-icon">&#128226;</span><span class="nav-text">渠道管理</span></a></li>
+                        <li class="nav-item"><a href="plugins.html" class="nav-link"><span class="nav-icon">&#128268;</span><span class="nav-text">插件市场</span></a></li>
+                        <li class="nav-item"><a href="personality.html" class="nav-link"><span class="nav-icon">&#127917;</span><span class="nav-text">人格引擎</span></a></li>
+                        <li class="nav-item"><a href="data-pipeline.html" class="nav-link"><span class="nav-icon">&#128202;</span><span class="nav-text">数据管道</span></a></li>
+                        <li class="nav-item"><a href="alignment.html" class="nav-link"><span class="nav-icon">&#9878;</span><span class="nav-text">价值对齐</span></a></li>
+                        <li class="nav-item"><a href="robot.html" class="nav-link"><span class="nav-icon">&#129464;</span><span class="nav-text">机器人控制</span></a></li>
+                    </ul>
+                </div>
+                <div class="nav-section">
+                    <div class="nav-section-title" onclick="this.parentElement.classList.toggle('collapsed')">
+                        <span class="nav-section-icon">&#9656;</span>
+                        <span>系统管理</span>
+                    </div>
+                    <ul class="nav-list">
+                        <li class="nav-item"><a href="telemetry.html" class="nav-link"><span class="nav-icon">&#128200;</span><span class="nav-text">监控遥测</span></a></li>
+                        <li class="nav-item"><a href="hardware.html" class="nav-link"><span class="nav-icon">&#9881;</span><span class="nav-text">硬件管理</span></a></li>
+                        <li class="nav-item"><a href="settings.html" class="nav-link"><span class="nav-icon">&#128295;</span><span class="nav-text">系统设置</span></a></li>
+                        <li class="nav-item"><a href="help.html" class="nav-link active"><span class="nav-icon">&#10067;</span><span class="nav-text">帮助文档</span></a></li>
+                    </ul>
+                </div>
+            </nav>
+            <div class="sidebar-user">
+                <div class="user-avatar">A</div>
+                <div class="user-info">
+                    <div class="user-name">Admin</div>
+                    <div class="user-role">管理员</div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="content-wrapper">
+                <div class="help-container">
+                    <!-- 帮助导航 -->
+                    <div class="help-nav">
+                        <div class="search-box">
+                            <input type="text" placeholder="搜索帮助文档..." id="helpSearch">
+                            <div class="search-results" id="searchResults"></div>
+                        </div>
+                        <div class="nav-section">
+                            <div class="nav-section-title">快速入门</div>
+                            <div class="nav-item active" data-doc="getting-started">🚀 开始使用</div>
+                            <div class="nav-item" data-doc="overview">📋 系统概览</div>
+                            <div class="nav-item" data-doc="quick-config">⚙️ 快速配置</div>
+                            <div class="nav-item" data-doc="first-chat">💬 第一次对话</div>
+                        </div>
+                        <div class="nav-section">
+                            <div class="nav-section-title">功能指南</div>
+                            <div class="nav-item has-children" data-doc="chat-guide">💬 智能对话</div>
+                            <div class="nav-children">
+                                <div class="nav-item" data-doc="chat-basics">对话基础</div>
+                                <div class="nav-item" data-doc="chat-advanced">高级功能</div>
+                                <div class="nav-item" data-doc="chat-context">上下文管理</div>
+                            </div>
+                            <div class="nav-item has-children" data-doc="model-guide">🤖 模型管理</div>
+                            <div class="nav-children">
+                                <div class="nav-item" data-doc="model-add">添加模型</div>
+                                <div class="nav-item" data-doc="model-config">模型配置</div>
+                                <div class="nav-item" data-doc="model-monitor">性能监控</div>
+                            </div>
+                            <div class="nav-item has-children" data-doc="workflow-guide">🔄 工作流</div>
+                            <div class="nav-children">
+                                <div class="nav-item" data-doc="workflow-create">创建工作流</div>
+                                <div class="nav-item" data-doc="workflow-nodes">节点类型</div>
+                                <div class="nav-item" data-doc="workflow-execute">执行与调试</div>
+                            </div>
+                            <div class="nav-item has-children" data-doc="agent-guide">👥 多智能体</div>
+                            <div class="nav-children">
+                                <div class="nav-item" data-doc="agent-create">创建Agent</div>
+                                <div class="nav-item" data-doc="agent-collab">协作模式</div>
+                                <div class="nav-item" data-doc="agent-tools">工具集成</div>
+                            </div>
+                            <div class="nav-item" data-doc="rag-guide">📚 知识检索</div>
+                            <div class="nav-item" data-doc="training-guide">🎓 训练中心</div>
+                        </div>
+                        <div class="nav-section">
+                            <div class="nav-section-title">高级功能</div>
+                            <div class="nav-item" data-doc="security-guide">🔒 安全设置</div>
+                            <div class="nav-item" data-doc="alignment-guide">⚖️ 价值对齐</div>
+                            <div class="nav-item" data-doc="federated-guide">🔗 联邦学习</div>
+                            <div class="nav-item" data-doc="plugin-guide">🔌 插件开发</div>
+                        </div>
+                        <div class="nav-section">
+                            <div class="nav-section-title">开发者资源</div>
+                            <div class="nav-item" data-doc="api-reference">🔧 API 文档</div>
+                            <div class="nav-item" data-doc="sdk-guide">📦 SDK 使用</div>
+                            <div class="nav-item" data-doc="webhook-guide">🔗 Webhook</div>
+                        </div>
+                        <div class="nav-section">
+                            <div class="nav-section-title">其他</div>
+                            <div class="nav-item" data-doc="faq">❓ 常见问题</div>
+                            <div class="nav-item" data-doc="shortcuts">⌨️ 快捷键</div>
+                            <div class="nav-item" data-doc="changelog">📝 更新日志</div>
+                            <div class="nav-item" data-doc="videos">🎬 视频教程</div>
+                            <div class="nav-item" data-doc="support">📞 联系支持</div>
+                        </div>
+                    </div>
+
+                    <!-- 帮助内容 -->
+                    <div class="help-content" id="helpContent">
+                        <div class="help-header">
+                            <h1 class="help-title">🚀 开始使用</h1>
+                            <p class="help-subtitle">欢迎使用 AGI 统一框架，本指南将帮助您快速上手</p>
+                            <div class="help-breadcrumb">
+                                <span class="breadcrumb-item"><a href="#">帮助中心</a></span>
+                                <span class="breadcrumb-separator">/</span>
+                                <span class="breadcrumb-item">快速入门</span>
+                                <span class="breadcrumb-separator">/</span>
+                                <span class="breadcrumb-item">开始使用</span>
+                            </div>
+                        </div>
+
+                        <!-- 快速链接 -->
+                        <div class="quick-links">
+                            <div class="quick-link" data-doc="getting-started">
+                                <div class="quick-link-icon">📖</div>
+                                <div class="quick-link-title">快速入门</div>
+                                <div class="quick-link-desc">5分钟上手指南</div>
+                            </div>
+                            <div class="quick-link" data-doc="videos">
+                                <div class="quick-link-icon">🎬</div>
+                                <div class="quick-link-title">视频教程</div>
+                                <div class="quick-link-desc">观看教学视频</div>
+                            </div>
+                            <div class="quick-link" data-doc="api-reference">
+                                <div class="quick-link-icon">🔧</div>
+                                <div class="quick-link-title">API 文档</div>
+                                <div class="quick-link-desc">开发者接口</div>
+                            </div>
+                            <div class="quick-link" data-doc="support">
+                                <div class="quick-link-icon">💬</div>
+                                <div class="quick-link-title">社区论坛</div>
+                                <div class="quick-link-desc">交流与反馈</div>
+                            </div>
+                        </div>
+
+                        <!-- 文档内容 -->
+                        <div class="doc-section">
+                            <h2 class="doc-section-title">📋 系统概览</h2>
+                            <div class="doc-card">
+                                <h3 class="doc-card-title">什么是 AGI 统一框架？</h3>
+                                <div class="doc-card-content">
+                                    <p>AGI 统一框架是一个企业级的人工智能开发和管理平台，提供从模型训练、部署到应用的全流程解决方案。主要功能包括：</p>
+                                    <ul>
+                                        <li><strong>智能对话</strong>：支持多模型对话、上下文管理、流式输出</li>
+                                        <li><strong>模型管理</strong>：统一的模型注册、版本控制、性能监控</li>
+                                        <li><strong>工作流编排</strong>：可视化流程设计，支持复杂业务逻辑</li>
+                                        <li><strong>多智能体</strong>：Agent协作、任务分配、结果聚合</li>
+                                        <li><strong>知识检索</strong>：RAG增强、向量检索、知识库管理</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="doc-card">
+                                <h3 class="doc-card-title">系统架构</h3>
+                                <div class="doc-card-content">
+                                    <p>系统采用微服务架构，主要组件包括：</p>
+                                    <ul>
+                                        <li><strong>API 网关</strong>：统一入口，认证授权，流量控制</li>
+                                        <li><strong>模型服务</strong>：模型推理、负载均衡、自动扩缩容</li>
+                                        <li><strong>数据管道</strong>：ETL处理、数据清洗、特征工程</li>
+                                        <li><strong>存储层</strong>：向量数据库、关系数据库、对象存储</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- FAQ -->
+                        <div class="doc-section">
+                            <h2 class="doc-section-title">❓ 常见问题</h2>
+                            <div class="faq-category">
+                                <span class="faq-category-tag active" data-category="all">全部</span>
+                                <span class="faq-category-tag" data-category="getting-started">入门问题</span>
+                                <span class="faq-category-tag" data-category="model">模型相关</span>
+                                <span class="faq-category-tag" data-category="chat">对话相关</span>
+                                <span class="faq-category-tag" data-category="technical">技术问题</span>
+                            </div>
+                            <div class="faq-list" id="faqList">
+                                <div class="faq-item" data-category="getting-started">
+                                    <div class="faq-question">
+                                        <span>如何添加新的AI模型？</span>
+                                        <span class="faq-icon">▼</span>
+                                    </div>
+                                    <div class="faq-answer">
+                                        <div class="faq-answer-content">
+                                            在「模型管理」页面点击「添加模型」按钮，填写模型名称、类型、API端点等信息。支持AGI-Platform、AGI-Research、AGI-Cloud等多种模型提供商，也支持自定义本地模型。添加完成后，可以在对话中选择使用该模型。
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="faq-item" data-category="getting-started">
+                                    <div class="faq-question">
+                                        <span>如何创建知识库？</span>
+                                        <span class="faq-icon">▼</span>
+                                    </div>
+                                    <div class="faq-answer">
+                                        <div class="faq-answer-content">
+                                            在「知识检索」页面点击「新建知识库」，上传文档或连接数据源。系统会自动进行文档解析、分块、向量化处理，完成后即可在对话中使用。支持PDF、Word、TXT、Markdown等多种格式。
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="faq-item" data-category="model">
+                                    <div class="faq-question">
+                                        <span>如何配置多智能体协作？</span>
+                                        <span class="faq-icon">▼</span>
+                                    </div>
+                                    <div class="faq-answer">
+                                        <div class="faq-answer-content">
+                                            在「多智能体」页面创建Agent团队，定义每个Agent的角色和能力。通过工作流编排Agent之间的协作流程，支持串行、并行、条件分支等多种模式。可以为Agent配置不同的工具和知识库。
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="faq-item" data-category="technical">
+                                    <div class="faq-question">
+                                        <span>API调用频率限制是多少？</span>
+                                        <span class="faq-icon">▼</span>
+                                    </div>
+                                    <div class="faq-answer">
+                                        <div class="faq-answer-content">
+                                            默认API调用频率为每分钟60次，可在「系统设置」中调整。企业版支持更高的调用频率和自定义配额。建议实现客户端限流和重试机制以提高稳定性。
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="faq-item" data-category="chat">
+                                    <div class="faq-question">
+                                        <span>如何管理对话上下文？</span>
+                                        <span class="faq-icon">▼</span>
+                                    </div>
+                                    <div class="faq-answer">
+                                        <div class="faq-answer-content">
+                                            系统自动管理对话上下文，支持设置上下文窗口大小和保留策略。可以在对话设置中配置：最大token数、历史消息保留数量、上下文压缩策略等。高级用户可以使用上下文编辑功能手动调整。
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="faq-item" data-category="model">
+                                    <div class="faq-question">
+                                        <span>支持哪些模型提供商？</span>
+                                        <span class="faq-icon">▼</span>
+                                    </div>
+                                    <div class="faq-answer">
+                                        <div class="faq-answer-content">
+                                            目前支持：AGI-Platform (AGI-Ultra, AGI-Base)、AGI-Research (AGI-Sage系列)、AGI-Cloud (Gemini)、Meta (Llama系列)、Mistral AI、智谱AI (GLM)、百度文心一言、阿里通义千问等。同时支持通过OpenAI兼容接口接入自定义模型。
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="faq-item" data-category="technical">
+                                    <div class="faq-question">
+                                        <span>如何实现流式输出？</span>
+                                        <span class="faq-icon">▼</span>
+                                    </div>
+                                    <div class="faq-answer">
+                                        <div class="faq-answer-content">
+                                            在API请求中设置 stream: true 参数即可启用流式输出。SDK中提供了专门的流式调用方法，如 chat.stream()。Web界面默认使用流式输出以提供更好的用户体验。
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="faq-item" data-category="getting-started">
+                                    <div class="faq-question">
+                                        <span>系统对硬件有什么要求？</span>
+                                        <span class="faq-icon">▼</span>
+                                    </div>
+                                    <div class="faq-answer">
+                                        <div class="faq-answer-content">
+                                            基础配置：CPU 4核+、内存8GB+、存储50GB+。如需本地部署模型，建议：GPU (NVIDIA A100或同等)、内存32GB+、存储500GB+。云部署推荐使用自动扩缩容配置。
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="faq-item" data-category="technical">
+                                    <div class="faq-question">
+                                        <span>如何进行模型微调？</span>
+                                        <span class="faq-icon">▼</span>
+                                    </div>
+                                    <div class="faq-answer">
+                                        <div class="faq-answer-content">
+                                            在「训练中心」可以创建微调任务。支持LoRA、QLoRA、全量微调等多种方式。需要准备训练数据集（JSONL格式），配置训练参数后提交任务。系统会自动管理训练过程并提供训练日志和指标。
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="faq-item" data-category="chat">
+                                    <div class="faq-question">
+                                        <span>对话历史如何保存？</span>
+                                        <span class="faq-icon">▼</span>
+                                    </div>
+                                    <div class="faq-answer">
+                                        <div class="faq-answer-content">
+                                            对话历史默认保存在数据库中，支持设置保存期限和自动清理策略。用户可以导出对话记录、创建对话模板、设置对话分享权限。企业版支持对话审计和合规导出。
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 快捷键参考 -->
+                        <div class="shortcuts-section">
+                            <h2 class="doc-section-title">⌨️ 快捷键参考</h2>
+                            <div class="shortcuts-grid">
+                                <div class="shortcut-group">
+                                    <div class="shortcut-group-title">💬 对话相关</div>
+                                    <div class="shortcut-list">
+                                        <div class="shortcut-item">
+                                            <span class="shortcut-desc">发送消息</span>
+                                            <div class="shortcut-keys">
+                                                <span class="shortcut-key">Enter</span>
+                                            </div>
+                                        </div>
+                                        <div class="shortcut-item">
+                                            <span class="shortcut-desc">换行</span>
+                                            <div class="shortcut-keys">
+                                                <span class="shortcut-key">Shift</span>
+                                                <span class="shortcut-plus">+</span>
+                                                <span class="shortcut-key">Enter</span>
+                                            </div>
+                                        </div>
+                                        <div class="shortcut-item">
+                                            <span class="shortcut-desc">新建对话</span>
+                                            <div class="shortcut-keys">
+                                                <span class="shortcut-key">Ctrl</span>
+                                                <span class="shortcut-plus">+</span>
+                                                <span class="shortcut-key">N</span>
+                                            </div>
+                                        </div>
+                                        <div class="shortcut-item">
+                                            <span class="shortcut-desc">清空对话</span>
+                                            <div class="shortcut-keys">
+                                                <span class="shortcut-key">Ctrl</span>
+                                                <span class="shortcut-plus">+</span>
+                                                <span class="shortcut-key">Delete</span>
+                                            </div>
+                                        </div>
+                                        <div class="shortcut-item">
+                                            <span class="shortcut-desc">复制最后回复</span>
+                                            <div class="shortcut-keys">
+                                                <span class="shortcut-key">Ctrl</span>
+                                                <span class="shortcut-plus">+</span>
+                                                <span class="shortcut-key">Shift</span>
+                                                <span class="shortcut-plus">+</span>
+                                                <span class="shortcut-key">C</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="shortcut-group">
+                                    <div class="shortcut-group-title">🔧 通用操作</div>
+                                    <div class="shortcut-list">
+                                        <div class="shortcut-item">
+                                            <span class="shortcut-desc">搜索</span>
+                                            <div class="shortcut-keys">
+                                                <span class="shortcut-key">Ctrl</span>
+                                                <span class="shortcut-plus">+</span>
+                                                <span class="shortcut-key">K</span>
+                                            </div>
+                                        </div>
+                                        <div class="shortcut-item">
+                                            <span class="shortcut-desc">保存</span>
+                                            <div class="shortcut-keys">
+                                                <span class="shortcut-key">Ctrl</span>
+                                                <span class="shortcut-plus">+</span>
+                                                <span class="shortcut-key">S</span>
+                                            </div>
+                                        </div>
+                                        <div class="shortcut-item">
+                                            <span class="shortcut-desc">设置</span>
+                                            <div class="shortcut-keys">
+                                                <span class="shortcut-key">Ctrl</span>
+                                                <span class="shortcut-plus">+</span>
+                                                <span class="shortcut-key">,</span>
+                                            </div>
+                                        </div>
+                                        <div class="shortcut-item">
+                                            <span class="shortcut-desc">帮助</span>
+                                            <div class="shortcut-keys">
+                                                <span class="shortcut-key">F1</span>
+                                            </div>
+                                        </div>
+                                        <div class="shortcut-item">
+                                            <span class="shortcut-desc">关闭/取消</span>
+                                            <div class="shortcut-keys">
+                                                <span class="shortcut-key">Esc</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="shortcut-group">
+                                    <div class="shortcut-group-title">📄 编辑操作</div>
+                                    <div class="shortcut-list">
+                                        <div class="shortcut-item">
+                                            <span class="shortcut-desc">全选</span>
+                                            <div class="shortcut-keys">
+                                                <span class="shortcut-key">Ctrl</span>
+                                                <span class="shortcut-plus">+</span>
+                                                <span class="shortcut-key">A</span>
+                                            </div>
+                                        </div>
+                                        <div class="shortcut-item">
+                                            <span class="shortcut-desc">撤销</span>
+                                            <div class="shortcut-keys">
+                                                <span class="shortcut-key">Ctrl</span>
+                                                <span class="shortcut-plus">+</span>
+                                                <span class="shortcut-key">Z</span>
+                                            </div>
+                                        </div>
+                                        <div class="shortcut-item">
+                                            <span class="shortcut-desc">重做</span>
+                                            <div class="shortcut-keys">
+                                                <span class="shortcut-key">Ctrl</span>
+                                                <span class="shortcut-plus">+</span>
+                                                <span class="shortcut-key">Y</span>
+                                            </div>
+                                        </div>
+                                        <div class="shortcut-item">
+                                            <span class="shortcut-desc">格式化代码</span>
+                                            <div class="shortcut-keys">
+                                                <span class="shortcut-key">Ctrl</span>
+                                                <span class="shortcut-plus">+</span>
+                                                <span class="shortcut-key">Shift</span>
+                                                <span class="shortcut-plus">+</span>
+                                                <span class="shortcut-key">F</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="shortcut-group">
+                                    <div class="shortcut-group-title">🗂️ 导航操作</div>
+                                    <div class="shortcut-list">
+                                        <div class="shortcut-item">
+                                            <span class="shortcut-desc">切换侧边栏</span>
+                                            <div class="shortcut-keys">
+                                                <span class="shortcut-key">Ctrl</span>
+                                                <span class="shortcut-plus">+</span>
+                                                <span class="shortcut-key">B</span>
+                                            </div>
+                                        </div>
+                                        <div class="shortcut-item">
+                                            <span class="shortcut-desc">上一页</span>
+                                            <div class="shortcut-keys">
+                                                <span class="shortcut-key">Alt</span>
+                                                <span class="shortcut-plus">+</span>
+                                                <span class="shortcut-key">←</span>
+                                            </div>
+                                        </div>
+                                        <div class="shortcut-item">
+                                            <span class="shortcut-desc">下一页</span>
+                                            <div class="shortcut-keys">
+                                                <span class="shortcut-key">Alt</span>
+                                                <span class="shortcut-plus">+</span>
+                                                <span class="shortcut-key">→</span>
+                                            </div>
+                                        </div>
+                                        <div class="shortcut-item">
+                                            <span class="shortcut-desc">刷新</span>
+                                            <div class="shortcut-keys">
+                                                <span class="shortcut-key">F5</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- API文档 -->
+                        <div class="api-section">
+                            <h2 class="doc-section-title">🔧 API 文档入口</h2>
+                            <div class="doc-card-content">
+                                <p>以下是核心API端点的快速参考，完整API文档请访问 <a href="/api-docs">/api-docs</a></p>
+                            </div>
+                            <div class="api-endpoint">
+                                <div class="api-header">
+                                    <span class="api-method post">POST</span>
+                                    <span class="api-path">/v1/chat/completions</span>
+                                </div>
+                                <div class="api-description">创建对话补全，支持流式输出</div>
+                                <div class="api-params">
+                                    <div class="api-params-title">请求参数</div>
+                                    <div class="api-param">
+                                        <span class="api-param-name">model</span>
+                                        <span class="api-param-type">string</span>
+                                        <span class="api-param-desc">要使用的模型ID</span>
+                                    </div>
+                                    <div class="api-param">
+                                        <span class="api-param-name">messages</span>
+                                        <span class="api-param-type">array</span>
+                                        <span class="api-param-desc">对话消息列表</span>
+                                    </div>
+                                    <div class="api-param">
+                                        <span class="api-param-name">stream</span>
+                                        <span class="api-param-type">boolean</span>
+                                        <span class="api-param-desc">是否启用流式输出</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="api-endpoint">
+                                <div class="api-header">
+                                    <span class="api-method get">GET</span>
+                                    <span class="api-path">/v1/models</span>
+                                </div>
+                                <div class="api-description">获取可用模型列表</div>
+                            </div>
+                            <div class="api-endpoint">
+                                <div class="api-header">
+                                    <span class="api-method post">POST</span>
+                                    <span class="api-path">/v1/knowledgebases</span>
+                                </div>
+                                <div class="api-description">创建知识库</div>
+                            </div>
+                            <div class="api-endpoint">
+                                <div class="api-header">
+                                    <span class="api-method post">POST</span>
+                                    <span class="api-path">/v1/workflows/execute</span>
+                                </div>
+                                <div class="api-description">执行工作流</div>
+                            </div>
+                        </div>
+
+                        <!-- 视频教程 -->
+                        <div class="videos-section">
+                            <h2 class="doc-section-title">🎬 视频教程</h2>
+                            <div class="videos-grid">
+                                <div class="video-card" data-video="intro">
+                                    <div class="video-thumbnail">
+                                        <span class="video-play">▶</span>
+                                        <span class="video-duration">12:35</span>
+                                    </div>
+                                    <div class="video-info">
+                                        <div class="video-title">AGI框架入门介绍</div>
+                                        <div class="video-meta">2.3万次观看 · 3天前</div>
+                                    </div>
+                                </div>
+                                <div class="video-card" data-video="chat">
+                                    <div class="video-thumbnail">
+                                        <span class="video-play">▶</span>
+                                        <span class="video-duration">18:42</span>
+                                    </div>
+                                    <div class="video-info">
+                                        <div class="video-title">智能对话功能详解</div>
+                                        <div class="video-meta">1.8万次观看 · 1周前</div>
+                                    </div>
+                                </div>
+                                <div class="video-card" data-video="workflow">
+                                    <div class="video-thumbnail">
+                                        <span class="video-play">▶</span>
+                                        <span class="video-duration">25:10</span>
+                                    </div>
+                                    <div class="video-info">
+                                        <div class="video-title">工作流编排实战</div>
+                                        <div class="video-meta">1.2万次观看 · 2周前</div>
+                                    </div>
+                                </div>
+                                <div class="video-card" data-video="agent">
+                                    <div class="video-thumbnail">
+                                        <span class="video-play">▶</span>
+                                        <span class="video-duration">32:15</span>
+                                    </div>
+                                    <div class="video-info">
+                                        <div class="video-title">多智能体协作开发</div>
+                                        <div class="video-meta">8,500次观看 · 2周前</div>
+                                    </div>
+                                </div>
+                                <div class="video-card" data-video="rag">
+                                    <div class="video-thumbnail">
+                                        <span class="video-play">▶</span>
+                                        <span class="video-duration">20:30</span>
+                                    </div>
+                                    <div class="video-info">
+                                        <div class="video-title">知识检索RAG实践</div>
+                                        <div class="video-meta">6,200次观看 · 3周前</div>
+                                    </div>
+                                </div>
+                                <div class="video-card" data-video="api">
+                                    <div class="video-thumbnail">
+                                        <span class="video-play">▶</span>
+                                        <span class="video-duration">45:00</span>
+                                    </div>
+                                    <div class="video-info">
+                                        <div class="video-title">API集成完整教程</div>
+                                        <div class="video-meta">5,800次观看 · 1月前</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 联系方式 -->
+                        <div class="contact-section">
+                            <div class="contact-card">
+                                <div class="contact-icon">📧</div>
+                                <div class="contact-title">邮件支持</div>
+                                <div class="contact-info">support@agi-framework.com</div>
+                            </div>
+                            <div class="contact-card">
+                                <div class="contact-icon">💬</div>
+                                <div class="contact-title">在线客服</div>
+                                <div class="contact-info">工作日 9:00-18:00</div>
+                            </div>
+                            <div class="contact-card">
+                                <div class="contact-icon">📚</div>
+                                <div class="contact-title">开发者文档</div>
+                                <div class="contact-info">docs.agi-framework.com</div>
+                            </div>
+                        </div>
+
+                        <!-- 工单提交表单 -->
+                        <div class="ticket-section">
+                            <h2 class="doc-section-title">🎫 提交工单</h2>
+                            <form class="ticket-form" id="ticketForm">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">主题 <span class="required">*</span></label>
+                                        <input type="text" class="form-input" id="ticketSubject" placeholder="简要描述您的问题" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">问题类型 <span class="required">*</span></label>
+                                        <select class="form-select" id="ticketType" required>
+                                            <option value="">请选择</option>
+                                            <option value="technical">技术问题</option>
+                                            <option value="account">账户问题</option>
+                                            <option value="billing">计费问题</option>
+                                            <option value="feature">功能建议</option>
+                                            <option value="bug">Bug报告</option>
+                                            <option value="other">其他</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">优先级</label>
+                                        <select class="form-select" id="ticketPriority">
+                                            <option value="low">低</option>
+                                            <option value="medium" selected>中</option>
+                                            <option value="high">高</option>
+                                            <option value="urgent">紧急</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">相关模块</label>
+                                        <select class="form-select" id="ticketModule">
+                                            <option value="">请选择</option>
+                                            <option value="chat">智能对话</option>
+                                            <option value="model">模型管理</option>
+                                            <option value="workflow">工作流</option>
+                                            <option value="agent">多智能体</option>
+                                            <option value="rag">知识检索</option>
+                                            <option value="api">API</option>
+                                            <option value="other">其他</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">问题描述 <span class="required">*</span></label>
+                                    <textarea class="form-textarea" id="ticketDescription" placeholder="请详细描述您遇到的问题，包括复现步骤、期望结果和实际结果..." required></textarea>
+                                    <span class="form-hint">支持Markdown格式</span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">附件</label>
+                                    <input type="file" class="form-input" id="ticketAttachment" multiple>
+                                    <span class="form-hint">支持图片、日志文件等，最大10MB</span>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="button" class="btn btn-outline" id="ticketCancelBtn">取消</button>
+                                    <button type="submit" class="btn btn-primary">提交工单</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="version-info">
+                            <span class="version-text">当前版本</span>
+                            <span class="version-number">v2.0.0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/common-utils.js"></script>
+    <script src="../js/i18n.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 侧边栏切换
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            
+            sidebarToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('collapsed');
+            });
+
+            // 帮助导航
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    // 处理有子菜单的项
+                    if (item.classList.contains('has-children')) {
+                        item.classList.toggle('expanded');
+                        const children = item.nextElementSibling;
+                        if (children && children.classList.contains('nav-children')) {
+                            children.classList.toggle('expanded');
+                        }
+                    } else {
+                        // 更新活动状态
+                        navItems.forEach(i => i.classList.remove('active'));
+                        item.classList.add('active');
+                        // 加载对应文档
+                        const docId = item.dataset.doc;
+                        if (docId) {
+                            loadDocument(docId);
+                        }
+                    }
+                });
+            });
+
+            // FAQ 展开/收起
+            const faqItems = document.querySelectorAll('.faq-item');
+            faqItems.forEach(item => {
+                const question = item.querySelector('.faq-question');
+                question.addEventListener('click', () => {
+                    item.classList.toggle('open');
+                });
+            });
+
+            // FAQ分类过滤
+            const faqCategoryTags = document.querySelectorAll('.faq-category-tag');
+            faqCategoryTags.forEach(tag => {
+                tag.addEventListener('click', () => {
+                    faqCategoryTags.forEach(t => t.classList.remove('active'));
+                    tag.classList.add('active');
+                    
+                    const category = tag.dataset.category;
+                    faqItems.forEach(item => {
+                        if (category === 'all' || item.dataset.category === category) {
+                            item.style.display = '';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                });
+            });
+
+            // 快速链接
+            const quickLinks = document.querySelectorAll('.quick-link');
+            quickLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    const docId = link.dataset.doc;
+                    if (docId) {
+                        loadDocument(docId);
+                    }
+                });
+            });
+
+            // 视频卡片点击
+            const videoCards = document.querySelectorAll('.video-card');
+            videoCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    const videoId = card.dataset.video;
+                    playVideo(videoId);
+                });
+            });
+
+            // 搜索功能
+            const searchInput = document.getElementById('helpSearch');
+            const searchResults = document.getElementById('searchResults');
+            
+            searchInput.addEventListener('input', debounce((e) => {
+                const query = e.target.value.trim().toLowerCase();
+                if (query.length < 2) {
+                    searchResults.classList.remove('active');
+                    return;
+                }
+                
+                const results = searchDocuments(query);
+                renderSearchResults(results, searchResults);
+                searchResults.classList.add('active');
+            }, 300));
+
+            // 点击外部关闭搜索结果
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.search-box')) {
+                    searchResults.classList.remove('active');
+                }
+            });
+
+            // 工单表单提交
+            const ticketForm = document.getElementById('ticketForm');
+            ticketForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                submitTicket();
+            });
+
+            // 主题切换
+            const themeToggle = document.getElementById('themeToggle');
+            themeToggle.addEventListener('click', () => {
+                document.body.classList.toggle('dark-theme');
+                const icon = themeToggle.querySelector('.icon');
+                icon.textContent = document.body.classList.contains('dark-theme') ? '☀️' : '🌙';
+            });
+        });
+
+        // 文档数据库
+        const documentDatabase = [
+            { id: 'getting-started', title: '开始使用', path: '快速入门', content: '欢迎使用AGI统一框架，快速入门指南...' },
+            { id: 'overview', title: '系统概览', path: '快速入门', content: 'AGI统一框架系统架构和功能概览...' },
+            { id: 'quick-config', title: '快速配置', path: '快速入门', content: '系统基础配置和初始化设置...' },
+            { id: 'first-chat', title: '第一次对话', path: '快速入门', content: '如何开始第一次AI对话...' },
+            { id: 'chat-guide', title: '智能对话指南', path: '功能指南', content: '智能对话功能的完整使用指南...' },
+            { id: 'chat-basics', title: '对话基础', path: '功能指南/智能对话', content: '对话功能的基础操作...' },
+            { id: 'chat-advanced', title: '高级对话功能', path: '功能指南/智能对话', content: '对话的高级功能和技巧...' },
+            { id: 'chat-context', title: '上下文管理', path: '功能指南/智能对话', content: '对话上下文的管理和配置...' },
+            { id: 'model-guide', title: '模型管理指南', path: '功能指南', content: '模型管理的完整使用指南...' },
+            { id: 'model-add', title: '添加模型', path: '功能指南/模型管理', content: '如何添加新的AI模型...' },
+            { id: 'model-config', title: '模型配置', path: '功能指南/模型管理', content: '模型的详细配置选项...' },
+            { id: 'model-monitor', title: '性能监控', path: '功能指南/模型管理', content: '模型性能监控和优化...' },
+            { id: 'workflow-guide', title: '工作流指南', path: '功能指南', content: '工作流编排的完整指南...' },
+            { id: 'workflow-create', title: '创建工作流', path: '功能指南/工作流', content: '如何创建和设计工作流...' },
+            { id: 'workflow-nodes', title: '节点类型', path: '功能指南/工作流', content: '工作流节点类型说明...' },
+            { id: 'workflow-execute', title: '执行与调试', path: '功能指南/工作流', content: '工作流的执行和调试...' },
+            { id: 'agent-guide', title: '多智能体指南', path: '功能指南', content: '多智能体系统的使用指南...' },
+            { id: 'agent-create', title: '创建Agent', path: '功能指南/多智能体', content: '如何创建和配置Agent...' },
+            { id: 'agent-collab', title: '协作模式', path: '功能指南/多智能体', content: 'Agent之间的协作模式...' },
+            { id: 'agent-tools', title: '工具集成', path: '功能指南/多智能体', content: '为Agent集成工具...' },
+            { id: 'rag-guide', title: '知识检索指南', path: '功能指南', content: 'RAG知识检索的使用指南...' },
+            { id: 'training-guide', title: '训练中心指南', path: '功能指南', content: '模型训练和微调指南...' },
+            { id: 'security-guide', title: '安全设置', path: '高级功能', content: '系统安全配置指南...' },
+            { id: 'alignment-guide', title: '价值对齐', path: '高级功能', content: 'AI价值对齐配置...' },
+            { id: 'federated-guide', title: '联邦学习', path: '高级功能', content: '联邦学习的配置和使用...' },
+            { id: 'plugin-guide', title: '插件开发', path: '高级功能', content: '插件开发指南...' },
+            { id: 'api-reference', title: 'API文档', path: '开发者资源', content: '完整的API参考文档...' },
+            { id: 'sdk-guide', title: 'SDK使用', path: '开发者资源', content: 'SDK的使用指南...' },
+            { id: 'webhook-guide', title: 'Webhook', path: '开发者资源', content: 'Webhook配置和使用...' },
+            { id: 'faq', title: '常见问题', path: '其他', content: '常见问题解答...' },
+            { id: 'shortcuts', title: '快捷键', path: '其他', content: '键盘快捷键参考...' },
+            { id: 'changelog', title: '更新日志', path: '其他', content: '版本更新历史...' },
+            { id: 'videos', title: '视频教程', path: '其他', content: '视频教程列表...' },
+            { id: 'support', title: '联系支持', path: '其他', content: '技术支持联系方式...' }
+        ];
+
+        // 搜索文档
+        function searchDocuments(query) {
+            return documentDatabase.filter(doc => {
+                return doc.title.toLowerCase().includes(query) ||
+                       doc.content.toLowerCase().includes(query) ||
+                       doc.path.toLowerCase().includes(query);
+            }).slice(0, 10);
+        }
+
+        // 渲染搜索结果
+        function renderSearchResults(results, container) {
+            container.innerHTML = results.map(result => `
+                <div class="search-result-item" data-doc="${result.id}">
+                    <div class="search-result-title">${result.title}</div>
+                    <div class="search-result-path">${result.path}</div>
+                </div>
+            `).join('');
+            
+            // 添加点击事件
+            container.querySelectorAll('.search-result-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    loadDocument(item.dataset.doc);
+                    container.classList.remove('active');
+                });
+            });
+        }
+
+        // 加载文档
+        function loadDocument(docId) {
+            console.log('Loading document:', docId);
+            // 这里可以实现动态加载文档内容
+            showNotification(`正在加载: ${docId}`, 'info');
+        }
+
+        // 播放视频
+        function playVideo(videoId) {
+            console.log('Playing video:', videoId);
+            showNotification(`正在播放视频: ${videoId}`, 'info');
+        }
+
+        // 提交工单
+        function submitTicket() {
+            const subject = document.getElementById('ticketSubject').value;
+            const type = document.getElementById('ticketType').value;
+            const description = document.getElementById('ticketDescription').value;
+            
+            if (!subject || !type || !description) {
+                showNotification('请填写所有必填项', 'error');
+                return;
+            }
+            
+            showNotification('工单提交成功，我们将尽快处理', 'success');
+            document.getElementById('ticketForm').reset();
+        }
+
+        // 防抖函数
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        // 通知显示函数
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 16px 24px;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: 500;
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+            
+            const colors = {
+                success: { bg: '#10b981', color: 'white' },
+                error: { bg: '#ef4444', color: 'white' },
+                warning: { bg: '#f59e0b', color: 'white' },
+                info: { bg: '#3b82f6', color: 'white' }
+            };
+            
+            notification.style.background = colors[type].bg;
+            notification.style.color = colors[type].color;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+                        setTimeout(() => {
+                const el = document.querySelector('.notification') || notification;
+                if (el) {
+                    el.style.animation = 'slideOut 0.3s ease';
+                    setTimeout(() => el.remove(), 300);
+                }
+            }, 3000);
+        }
+
+        // 添加动画样式
+        const animStyle = document.createElement('style');
+        animStyle.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(animStyle);
+
+        // Markdown渲染器
+        const MarkdownRenderer = {
+            // 渲染Markdown内容
+            render: function(markdown) {
+                let html = markdown;
+                
+                // 处理代码块
+                html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+                    return `<pre><code class="language-${lang || 'text'}">${this.escapeHtml(code)}</code></pre>`;
+                });
+                
+                // 处理行内代码
+                html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+                
+                // 处理标题
+                html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+                html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+                html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+                html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+                
+                // 处理粗体和斜体
+                html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+                html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+                html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+                
+                // 处理链接
+                html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+                
+                // 处理图片
+                html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
+                
+                // 处理引用
+                html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+                
+                // 处理无序列表
+                html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+                html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+                
+                // 处理有序列表
+                html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+                
+                // 处理水平线
+                html = html.replace(/^---$/gm, '<hr>');
+                
+                // 处理段落
+                html = html.split('\n\n').map(para => {
+                    if (!para.startsWith('<')) {
+                        return `<p>${para}</p>`;
+                    }
+                    return para;
+                }).join('\n');
+                
+                return html;
+            },
+            
+            // HTML转义
+            escapeHtml: function(text) {
+                const map = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                };
+                return text.replace(/[&<>"']/g, m => map[m]);
+            }
+        };
+
+        // 更多FAQ数据
+        const additionalFAQs = [
+            { category: 'getting-started', question: '如何重置管理员密码？', answer: '在登录页面点击"忘记密码"，输入管理员邮箱，系统会发送重置链接。也可以通过命令行工具执行: python manage.py reset_admin_password' },
+            { category: 'getting-started', question: '系统支持哪些浏览器？', answer: '支持Chrome 90+、Firefox 88+、Safari 14+、Edge 90+。建议使用最新版本的Chrome或Firefox以获得最佳体验。' },
+            { category: 'getting-started', question: '如何切换系统语言？', answer: '点击右上角的用户头像，选择"设置" -> "语言和地区"，即可切换界面语言。支持中文、英文等多种语言。' },
+            { category: 'model', question: '如何查看模型使用统计？', answer: '在"模型管理"页面，点击具体模型卡片，选择"统计"标签页，可以查看调用量、响应时间、错误率等详细统计数据。' },
+            { category: 'model', question: '模型响应慢怎么办？', answer: '检查网络连接、模型服务器状态。可以在模型配置中调整超时时间、启用缓存、配置负载均衡。对于本地模型，检查GPU资源使用情况。' },
+            { category: 'model', question: '如何设置模型优先级？', answer: '在模型配置中可以设置优先级权重。当多个模型可用时，系统会根据优先级和负载情况自动选择最优模型。' },
+            { category: 'model', question: '支持模型A/B测试吗？', answer: '支持。在工作流中配置模型路由节点，设置分流比例，系统会自动进行A/B测试并收集对比数据。' },
+            { category: 'model', question: '如何导入自定义模型？', answer: '支持通过OpenAI兼容接口导入。在"添加模型"时选择"自定义"，填写API端点和认证信息，系统会自动检测接口兼容性。' },
+            { category: 'chat', question: '如何导出对话记录？', answer: '在对话页面点击右上角菜单，选择"导出"，支持JSON、Markdown、TXT等格式。企业版还支持批量导出和定时备份。' },
+            { category: 'chat', question: '对话中可以插入图片吗？', answer: '支持。点击输入框旁的图片按钮，或直接拖拽图片到输入框。支持JPG、PNG、GIF等格式，多模态模型可以理解图片内容。' },
+            { category: 'chat', question: '如何使用对话模板？', answer: '在"设置" -> "对话模板"中创建模板，包含预设的系统提示和示例对话。在新建对话时可以选择应用模板。' },
+            { category: 'chat', question: '支持语音输入吗？', answer: '支持。点击输入框旁的麦克风按钮，即可进行语音输入。系统会自动将语音转换为文字，支持多种语言识别。' },
+            { category: 'chat', question: '如何设置对话温度参数？', answer: '在对话设置面板中，可以调整温度(Temperature)参数，范围0-2。值越低输出越确定，值越高输出越随机。' },
+            { category: 'chat', question: '可以暂停和恢复对话吗？', answer: '可以。对话会自动保存，随时可以从历史记录中恢复。也支持手动暂停正在进行的对话生成。' },
+            { category: 'technical', question: '如何配置Webhook？', answer: '在"设置" -> "集成" -> "Webhook"中添加Webhook URL，选择触发事件类型。系统会在事件发生时向指定URL发送POST请求。' },
+            { category: 'technical', question: '支持哪些认证方式？', answer: '支持API Key、OAuth 2.0、JWT、Basic Auth等多种认证方式。可以在API设置中配置，也支持自定义认证插件。' },
+            { category: 'technical', question: '如何查看系统日志？', answer: '管理员可以在"监控遥测" -> "系统日志"中查看详细日志。支持按级别、时间、模块过滤，也支持日志导出和分析。' },
+            { category: 'technical', question: '数据库支持哪些类型？', answer: '支持PostgreSQL、MySQL、SQLite、MongoDB等。向量数据库支持Pinecone、Weaviate、Milvus、Qdrant等。' },
+            { category: 'technical', question: '如何备份数据？', answer: '在"系统设置" -> "备份与恢复"中可以配置自动备份策略。支持完整备份和增量备份，可备份到本地或云存储。' },
+            { category: 'technical', question: '如何监控系统性能？', answer: '在"监控遥测"页面可以实时查看CPU、内存、GPU使用率，API响应时间，错误率等指标。支持设置告警阈值。' },
+            { category: 'technical', question: '支持Docker部署吗？', answer: '支持。提供官方Docker镜像，可以通过docker-compose快速部署。详细部署指南请参考文档中的"部署"章节。' },
+            { category: 'technical', question: '如何配置HTTPS？', answer: '在系统配置文件中设置SSL证书路径，或使用反向代理(如Nginx)配置HTTPS。建议使用Let\'s Encrypt获取免费证书。' },
+            { category: 'technical', question: 'API返回错误码含义？', answer: '400:请求参数错误, 401:未授权, 403:权限不足, 404:资源不存在, 429:请求过于频繁, 500:服务器内部错误。详细错误码表请查看API文档。' },
+            { category: 'technical', question: '如何处理跨域问题？', answer: '在API设置中配置CORS，允许指定域名访问。也可以通过反向代理统一处理跨域请求。' },
+            { category: 'getting-started', question: '如何邀请团队成员？', answer: '管理员在"用户管理"页面可以邀请新成员，设置角色和权限。被邀请者会收到邮件，按指引完成注册。' },
+            { category: 'getting-started', question: '支持SSO单点登录吗？', answer: '企业版支持SSO，可集成LDAP、SAML、OAuth等认证系统。在"系统设置" -> "认证"中配置。' },
+            { category: 'getting-started', question: '如何申请提升配额？', answer: '在"账户设置" -> "配额管理"中提交申请，说明使用场景和需求。管理员审核后会调整配额。' },
+            { category: 'model', question: '如何实现模型负载均衡？', answer: '在模型编排中配置多个相同模型的实例，系统会自动进行负载均衡。支持轮询、加权、最少连接等策略。' },
+            { category: 'model', question: '模型版本如何管理？', answer: '每次模型更新会自动创建新版本，可以在版本历史中查看、对比、回滚。支持设置版本标签和备注。' },
+            { category: 'model', question: '如何测试模型效果？', answer: '在"模型管理" -> "评估测试"中可以创建测试任务，上传测试数据集，对比不同模型的表现。' },
+            { category: 'chat', question: '如何设置Token限制？', answer: '在对话设置中可以设置最大输入Token数和最大输出Token数，超出限制会自动截断或分段处理。' },
+            { category: 'chat', question: '支持多轮对话吗？', answer: '支持。系统自动维护对话上下文，支持设置上下文窗口大小和保留策略。高级用户可以手动编辑上下文。' },
+            { category: 'chat', question: '如何使用函数调用？', answer: '在对话中可以使用预定义的函数，模型会根据需要调用函数并返回结果。在"工具管理"中配置可用函数。' },
+            { category: 'chat', question: '对话内容会被记录吗？', answer: '默认会记录对话内容用于改进服务。可以在设置中关闭记录，或使用无痕模式进行临时对话。' },
+            { category: 'technical', question: '如何实现数据隔离？', answer: '企业版支持多租户数据隔离，每个租户有独立的数据空间。在"租户管理"中配置隔离策略。' },
+            { category: 'technical', question: '支持离线部署吗？', answer: '支持。可以部署在完全离线的内网环境，需要提前下载模型文件和依赖包。详细离线部署指南请参考文档。' },
+            { category: 'technical', question: '如何排查API错误？', answer: '查看返回的错误信息和错误码，检查请求参数格式。可以在"监控遥测"中查看详细日志，或使用API调试工具。' },
+            { category: 'getting-started', question: '系统更新如何进行？', answer: '系统会自动检查更新，管理员确认后进行升级。建议升级前备份数据。也可以通过命令行手动升级。' },
+            { category: 'getting-started', question: '如何获取技术支持？', answer: '可以通过在线客服、邮件(support@agi-framework.com)、社区论坛获取支持。企业版用户享有专属技术支持通道。' },
+            { category: 'model', question: '如何优化模型推理速度？', answer: '可以启用模型缓存、使用量化模型、配置批处理、使用GPU加速。在模型高级设置中进行配置。' },
+            { category: 'model', question: '支持模型知识迁移吗？', answer: '支持。在"训练中心"可以创建知识迁移任务，将大模型知识迁移到小模型，在保持效果的同时提升速度。' },
+            { category: 'chat', question: '如何处理敏感内容？', answer: '系统内置内容安全过滤器，会自动检测和处理敏感内容。管理员可以在"安全设置"中配置过滤策略。' },
+            { category: 'chat', question: '支持多语言对话吗？', answer: '支持。系统可以自动检测输入语言并用相应语言回复。也可以在设置中指定固定语言。' },
+            { category: 'technical', question: '如何实现高可用部署？', answer: '支持多节点集群部署，配置负载均衡和故障转移。详细部署方案请参考"部署指南"文档。' },
+            { category: 'technical', question: '系统安全如何保障？', answer: '采用多层安全机制：数据加密传输和存储、访问控制、安全审计、入侵检测等。定期进行安全评估和渗透测试。' },
+            { category: 'getting-started', question: '如何自定义界面主题？', answer: '在"设置" -> "外观"中可以选择预设主题或自定义颜色方案。企业版支持完全自定义品牌标识。' },
+            { category: 'model', question: '如何监控模型漂移？', answer: '在"模型监控"中启用漂移检测，系统会持续监控模型输出分布变化，发现异常时自动告警。' },
+            { category: 'chat', question: '如何实现对话分支？', answer: '在对话过程中可以创建分支，探索不同的对话路径。点击消息旁的分支按钮即可从该点创建新分支。' },
+            { category: 'technical', question: '如何集成第三方系统？', answer: '通过API、Webhook、SDK等方式集成。提供Java、Python、JavaScript等语言的SDK，支持自定义集成插件。' }
+        ];
+
+        // 初始化更多FAQ
+        function initializeAdditionalFAQs() {
+            const faqList = document.getElementById('faqList');
+            if (!faqList) return;
+            
+            additionalFAQs.forEach(faq => {
+                const faqItem = document.createElement('div');
+                faqItem.className = 'faq-item';
+                faqItem.dataset.category = faq.category;
+                faqItem.innerHTML = `
+                    <div class="faq-question">
+                        <span>${faq.question}</span>
+                        <span class="faq-icon">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <div class="faq-answer-content">${faq.answer}</div>
+                    </div>
+                `;
+                faqList.appendChild(faqItem);
+            });
+            
+            // 重新绑定FAQ事件
+            const faqItems = document.querySelectorAll('.faq-item');
+            faqItems.forEach(item => {
+                const question = item.querySelector('.faq-question');
+                if (!question.hasAttribute('data-bound')) {
+                    question.setAttribute('data-bound', 'true');
+                    question.addEventListener('click', () => {
+                        item.classList.toggle('open');
+                    });
+                }
+            });
+        }
+
+        // 文档内容管理器
+        const DocumentManager = {
+            documents: {},
+            loadedDocs: new Set(),
+            
+            // 注册文档
+            registerDocument: function(id, content) {
+                this.documents[id] = {
+                    id: id,
+                    content: content,
+                    lastAccessed: null,
+                    accessCount: 0
+                };
+            },
+            
+            // 获取文档
+            getDocument: function(id) {
+                const doc = this.documents[id];
+                if (doc) {
+                    doc.lastAccessed = new Date();
+                    doc.accessCount++;
+                    return doc;
+                }
+                return null;
+            },
+            
+            // 搜索文档内容
+            searchContent: function(query) {
+                const results = [];
+                for (const [id, doc] of Object.entries(this.documents)) {
+                    if (doc.content.toLowerCase().includes(query.toLowerCase())) {
+                        results.push({
+                            id: id,
+                            matches: this.countMatches(doc.content, query),
+                            preview: this.getPreview(doc.content, query)
+                        });
+                    }
+                }
+                return results.sort((a, b) => b.matches - a.matches);
+            },
+            
+            // 计算匹配次数
+            countMatches: function(content, query) {
+                const regex = new RegExp(query, 'gi');
+                return (content.match(regex) || []).length;
+            },
+            
+            // 获取预览
+            getPreview: function(content, query) {
+                const index = content.toLowerCase().indexOf(query.toLowerCase());
+                if (index === -1) return '';
+                const start = Math.max(0, index - 50);
+                const end = Math.min(content.length, index + query.length + 50);
+                return '...' + content.substring(start, end) + '...';
+            }
+        };
+
+        // 搜索引擎
+        const SearchEngine = {
+            index: new Map(),
+            
+            // 建立索引
+            buildIndex: function(documents) {
+                documents.forEach(doc => {
+                    const tokens = this.tokenize(doc.title + ' ' + doc.content + ' ' + doc.path);
+                    tokens.forEach(token => {
+                        if (!this.index.has(token)) {
+                            this.index.set(token, []);
+                        }
+                        this.index.get(token).push(doc.id);
+                    });
+                });
+            },
+            
+            // 分词
+            tokenize: function(text) {
+                return text.toLowerCase()
+                    .replace(/[^\w\s\u4e00-\u9fa5]/g, ' ')
+                    .split(/\s+/)
+                    .filter(token => token.length > 1);
+            },
+            
+            // 搜索
+            search: function(query) {
+                const tokens = this.tokenize(query);
+                const scores = new Map();
+                
+                tokens.forEach(token => {
+                    const docs = this.index.get(token) || [];
+                    docs.forEach(docId => {
+                        scores.set(docId, (scores.get(docId) || 0) + 1);
+                    });
+                });
+                
+                return Array.from(scores.entries())
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([id, score]) => ({ id, score }));
+            },
+            
+            // 模糊匹配
+            fuzzyMatch: function(query, threshold) {
+                threshold = threshold || 0.6;
+                const results = [];
+                
+                this.index.forEach((docs, token) => {
+                    if (this.similarity(query, token) >= threshold) {
+                        results.push(...docs);
+                    }
+                });
+                
+                return [...new Set(results)];
+            },
+            
+            // 相似度计算
+            similarity: function(a, b) {
+                const longer = a.length > b.length ? a : b;
+                const shorter = a.length > b.length ? b : a;
+                
+                if (longer.length === 0) return 1.0;
+                
+                const costs = [];
+                for (let i = 0; i <= longer.length; i++) {
+                    let lastValue = i;
+                    for (let j = 0; j <= shorter.length; j++) {
+                        if (i === 0) {
+                            costs[j] = j;
+                        } else if (j > 0) {
+                            let newValue = costs[j - 1];
+                            if (longer.charAt(i - 1) !== shorter.charAt(j - 1)) {
+                                newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                            }
+                            costs[j - 1] = lastValue;
+                            lastValue = newValue;
+                        }
+                    }
+                    if (i > 0) costs[shorter.length] = lastValue;
+                }
+                
+                return (longer.length - costs[shorter.length]) / longer.length;
+            }
+        };
+
+        // 初始化搜索引擎
+        SearchEngine.buildIndex(documentDatabase);
+
+        // 用户反馈收集器
+        const FeedbackCollector = {
+            feedbacks: [],
+            
+            // 收集反馈
+            collect: function(type, data) {
+                const feedback = {
+                    id: 'FB-' + Date.now(),
+                    type: type,
+                    data: data,
+                    timestamp: new Date().toISOString(),
+                    userAgent: navigator.userAgent,
+                    url: window.location.href
+                };
+                
+                this.feedbacks.push(feedback);
+                this.saveFeedbacks();
+                return feedback;
+            },
+            
+            // 文档反馈
+            documentFeedback: function(docId, rating, comment) {
+                return this.collect('document', {
+                    docId: docId,
+                    rating: rating,
+                    comment: comment
+                });
+            },
+            
+            // 搜索反馈
+            searchFeedback: function(query, results, satisfied) {
+                return this.collect('search', {
+                    query: query,
+                    resultCount: results.length,
+                    satisfied: satisfied
+                });
+            },
+            
+            // 保存反馈
+            saveFeedbacks: function() {
+                try {
+                    localStorage.setItem('helpFeedbacks', JSON.stringify(this.feedbacks));
+                } catch (e) {
+                    console.warn('无法保存反馈:', e);
+                }
+            },
+            
+            // 加载反馈
+            loadFeedbacks: function() {
+                try {
+                    const saved = localStorage.getItem('helpFeedbacks');
+                    if (saved) {
+                        this.feedbacks = JSON.parse(saved);
+                    }
+                } catch (e) {
+                    console.warn('无法加载反馈:', e);
+                }
+            },
+            
+            // 获取统计
+            getStatistics: function() {
+                const stats = {
+                    total: this.feedbacks.length,
+                    byType: {},
+                    averageRating: 0
+                };
+                
+                let ratingSum = 0;
+                let ratingCount = 0;
+                
+                this.feedbacks.forEach(f => {
+                    stats.byType[f.type] = (stats.byType[f.type] || 0) + 1;
+                    if (f.data.rating) {
+                        ratingSum += f.data.rating;
+                        ratingCount++;
+                    }
+                });
+                
+                if (ratingCount > 0) {
+                    stats.averageRating = ratingSum / ratingCount;
+                }
+                
+                return stats;
+            }
+        };
+
+        // 加载反馈
+        FeedbackCollector.loadFeedbacks();
+
+        // 阅读进度追踪器
+        const ReadingProgress = {
+            progress: new Map(),
+            
+            // 记录进度
+            record: function(docId, progress) {
+                this.progress.set(docId, {
+                    docId: docId,
+                    progress: progress,
+                    lastRead: new Date().toISOString()
+                });
+                this.saveProgress();
+            },
+            
+            // 获取进度
+            getProgress: function(docId) {
+                return this.progress.get(docId);
+            },
+            
+            // 获取最近阅读
+            getRecentReading: function(count) {
+                return Array.from(this.progress.values())
+                    .sort((a, b) => new Date(b.lastRead) - new Date(a.lastRead))
+                    .slice(0, count || 10);
+            },
+            
+            // 保存进度
+            saveProgress: function() {
+                try {
+                    const data = Object.fromEntries(this.progress);
+                    localStorage.setItem('readingProgress', JSON.stringify(data));
+                } catch (e) {
+                    console.warn('无法保存阅读进度:', e);
+                }
+            },
+            
+            // 加载进度
+            loadProgress: function() {
+                try {
+                    const saved = localStorage.getItem('readingProgress');
+                    if (saved) {
+                        const data = JSON.parse(saved);
+                        this.progress = new Map(Object.entries(data));
+                    }
+                } catch (e) {
+                    console.warn('无法加载阅读进度:', e);
+                }
+            }
+        };
+
+        // 加载阅读进度
+        ReadingProgress.loadProgress();
+
+        // 书签管理器
+        const BookmarkManager = {
+            bookmarks: [],
+            
+            // 添加书签
+            add: function(docId, title, position) {
+                const bookmark = {
+                    id: 'BM-' + Date.now(),
+                    docId: docId,
+                    title: title,
+                    position: position,
+                    createdAt: new Date().toISOString()
+                };
+                
+                this.bookmarks.push(bookmark);
+                this.saveBookmarks();
+                return bookmark;
+            },
+            
+            // 删除书签
+            remove: function(bookmarkId) {
+                const index = this.bookmarks.findIndex(b => b.id === bookmarkId);
+                if (index !== -1) {
+                    this.bookmarks.splice(index, 1);
+                    this.saveBookmarks();
+                    return true;
+                }
+                return false;
+            },
+            
+            // 获取文档书签
+            getDocBookmarks: function(docId) {
+                return this.bookmarks.filter(b => b.docId === docId);
+            },
+            
+            // 保存书签
+            saveBookmarks: function() {
+                try {
+                    localStorage.setItem('helpBookmarks', JSON.stringify(this.bookmarks));
+                } catch (e) {
+                    console.warn('无法保存书签:', e);
+                }
+            },
+            
+            // 加载书签
+            loadBookmarks: function() {
+                try {
+                    const saved = localStorage.getItem('helpBookmarks');
+                    if (saved) {
+                        this.bookmarks = JSON.parse(saved);
+                    }
+                } catch (e) {
+                    console.warn('无法加载书签:', e);
+                }
+            }
+        };
+
+        // 加载书签
+        BookmarkManager.loadBookmarks();
+
+        // 打印功能
+        const PrintHelper = {
+            // 打印文档
+            printDocument: function(docId) {
+                const content = document.getElementById('helpContent');
+                if (!content) return;
+                
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>帮助文档 - AGI统一框架</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
+                            h1, h2, h3 { color: #333; }
+                            pre { background: #f5f5f5; padding: 10px; border-radius: 4px; }
+                            code { background: #f0f0f0; padding: 2px 4px; }
+                        </style>
+                    </head>
+                    <body>${content.innerHTML}</body>
+                    </html>
+                `);
+                printWindow.document.close();
+                printWindow.print();
+            }
+        };
+
+        // 导出功能
+        const ExportHelper = {
+            // 导出为PDF
+            exportPDF: function(docId) {
+                showNotification('PDF导出功能需要安装额外依赖', 'info');
+            },
+            
+            // 导出为Markdown
+            exportMarkdown: function(docId) {
+                const content = document.getElementById('helpContent');
+                if (!content) return;
+                
+                const markdown = this.htmlToMarkdown(content.innerHTML);
+                const blob = new Blob([markdown], { type: 'text/markdown' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${docId || 'document'}.md`;
+                a.click();
+                
+                URL.revokeObjectURL(url);
+                showNotification('文档已导出为Markdown格式', 'success');
+            },
+            
+            // HTML转Markdown
+            htmlToMarkdown: function(html) {
+                let md = html;
+                
+                // 标题
+                md = md.replace(/<h1[^>]*>(.*?)<\/h1>/gi, '# $1\n\n');
+                md = md.replace(/<h2[^>]*>(.*?)<\/h2>/gi, '## $1\n\n');
+                md = md.replace(/<h3[^>]*>(.*?)<\/h3>/gi, '### $1\n\n');
+                md = md.replace(/<h4[^>]*>(.*?)<\/h4>/gi, '#### $1\n\n');
+                
+                // 粗体和斜体
+                md = md.replace(/<strong>(.*?)<\/strong>/gi, '**$1**');
+                md = md.replace(/<em>(.*?)<\/em>/gi, '*$1*');
+                
+                // 链接
+                md = md.replace(/<a[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, '[$2]($1)');
+                
+                // 代码
+                md = md.replace(/<code[^>]*>(.*?)<\/code>/gi, '`$1`');
+                md = md.replace(/<pre[^>]*>(.*?)<\/pre>/gis, '```\n$1\n```');
+                
+                // 列表
+                md = md.replace(/<li[^>]*>(.*?)<\/li>/gi, '- $1\n');
+                
+                // 段落
+                md = md.replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n\n');
+                
+                // 清理HTML标签
+                md = md.replace(/<[^>]+>/g, '');
+                
+                // 清理多余空白
+                md = md.replace(/\n{3,}/g, '\n\n');
+                
+                return md.trim();
+            }
+        };
+
+        // 快捷键处理器
+        const ShortcutHandler = {
+            shortcuts: new Map(),
+            
+            // 注册快捷键
+            register: function(key, modifiers, callback, description) {
+                const id = modifiers.sort().join('+') + '+' + key;
+                this.shortcuts.set(id, {
+                    key: key,
+                    modifiers: modifiers,
+                    callback: callback,
+                    description: description
+                });
+            },
+            
+            // 处理按键
+            handle: function(event) {
+                const modifiers = [];
+                if (event.ctrlKey) modifiers.push('ctrl');
+                if (event.altKey) modifiers.push('alt');
+                if (event.shiftKey) modifiers.push('shift');
+                
+                const id = modifiers.join('+') + '+' + event.key.toLowerCase();
+                const shortcut = this.shortcuts.get(id);
+                
+                if (shortcut) {
+                    event.preventDefault();
+                    shortcut.callback();
+                    return true;
+                }
+                return false;
+            },
+            
+            // 获取所有快捷键
+            getAll: function() {
+                return Array.from(this.shortcuts.values());
+            }
+        };
+
+        // 注册默认快捷键
+        ShortcutHandler.register('k', ['ctrl'], () => {
+            document.getElementById('helpSearch').focus();
+        }, '搜索文档');
+
+        ShortcutHandler.register('p', ['ctrl'], () => {
+            PrintHelper.printDocument();
+        }, '打印文档');
+
+        ShortcutHandler.register('b', ['ctrl'], () => {
+            // 添加书签
+            showNotification('书签已添加', 'success');
+        }, '添加书签');
+
+        // 监听键盘事件
+        document.addEventListener('keydown', (e) => {
+            ShortcutHandler.handle(e);
+        });
+
+        // 初始化
+        initializeAdditionalFAQs();
+        
+        console.log('帮助文档系统已初始化');
+        console.log('已加载', documentDatabase.length, '篇文档');
+        console.log('已加载', additionalFAQs.length + 10, '个FAQ');
+
+        // 文档版本管理器
+        const VersionManager = {
+            versions: [],
+            currentVersion: '2.0.0',
+            
+            // 获取版本历史
+            getVersionHistory: function() {
+                return [
+                    { version: '2.0.0', date: '2024-01-31', changes: ['新增价值对齐模块', '优化多智能体协作', '增强安全功能'] },
+                    { version: '1.9.0', date: '2024-01-15', changes: ['新增视频生成功能', '优化知识检索性能', '修复已知问题'] },
+                    { version: '1.8.0', date: '2024-01-01', changes: ['新增3D生成模块', '优化工作流引擎', '增强API功能'] },
+                    { version: '1.7.0', date: '2023-12-15', changes: ['新增物理引擎', '优化模型管理', '改进用户界面'] },
+                    { version: '1.6.0', date: '2023-12-01', changes: ['新增联邦学习', '优化训练中心', '增强监控功能'] },
+                    { version: '1.5.0', date: '2023-11-15', changes: ['新增人格引擎', '优化对话系统', '改进插件架构'] },
+                    { version: '1.4.0', date: '2023-11-01', changes: ['新增数据管道', '优化音频生成', '增强安全审计'] },
+                    { version: '1.3.0', date: '2023-10-15', changes: ['新增机器人控制', '优化图像生成', '改进多语言支持'] },
+                    { version: '1.2.0', date: '2023-10-01', changes: ['新增渠道管理', '优化认证系统', '增强日志分析'] },
+                    { version: '1.1.0', date: '2023-09-15', changes: ['新增插件市场', '优化性能监控', '改进错误处理'] },
+                    { version: '1.0.0', date: '2023-09-01', changes: ['初始版本发布', '核心功能实现', '基础架构搭建'] }
+                ];
+            },
+            
+            // 比较版本
+            compareVersions: function(v1, v2) {
+                const parts1 = v1.split('.').map(Number);
+                const parts2 = v2.split('.').map(Number);
+                
+                for (let i = 0; i < 3; i++) {
+                    if (parts1[i] > parts2[i]) return 1;
+                    if (parts1[i] < parts2[i]) return -1;
+                }
+                return 0;
+            },
+            
+            // 检查更新
+            checkForUpdates: function() {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve({
+                            hasUpdate: false,
+                            latestVersion: '2.0.0',
+                            currentVersion: this.currentVersion
+                        });
+                    }, 500);
+                });
+            }
+        };
+
+        // 用户指南生成器
+        const GuideGenerator = {
+            // 生成快速入门指南
+            generateQuickStart: function() {
+                return {
+                    title: '快速入门指南',
+                    steps: [
+                        { order: 1, title: '安装部署', description: '选择适合的部署方式，完成系统安装', time: '5分钟' },
+                        { order: 2, title: '初始配置', description: '配置基本信息，创建管理员账户', time: '3分钟' },
+                        { order: 3, title: '添加模型', description: '连接AI模型，配置API密钥', time: '2分钟' },
+                        { order: 4, title: '开始对话', description: '创建第一个对话，体验AI功能', time: '1分钟' }
+                    ],
+                    totalTime: '约11分钟'
+                };
+            },
+            
+            // 生成功能清单
+            generateFeatureList: function() {
+                return [
+                    { category: '核心功能', features: ['智能对话', '模型管理', '工作流编排', '多智能体'] },
+                    { category: '内容生成', features: ['视频生成', '图像生成', '音频生成', '3D生成'] },
+                    { category: '高级功能', features: ['知识检索', '训练中心', '价值对齐', '安全中心'] },
+                    { category: '系统集成', features: ['API接口', 'Webhook', '插件系统', '渠道管理'] }
+                ];
+            },
+            
+            // 生成最佳实践
+            generateBestPractices: function() {
+                return [
+                    { title: '模型选择', tips: ['根据任务类型选择合适的模型', '考虑成本和性能平衡', '使用模型路由实现负载均衡'] },
+                    { title: '对话优化', tips: ['合理设置上下文窗口大小', '使用系统提示引导输出', '启用缓存提高响应速度'] },
+                    { title: '安全配置', tips: ['定期更新API密钥', '配置访问控制策略', '启用审计日志'] },
+                    { title: '性能调优', tips: ['监控关键指标', '配置自动扩缩容', '优化数据库查询'] }
+                ];
+            }
+        };
+
+        // 教程管理器
+        const TutorialManager = {
+            tutorials: [],
+            currentTutorial: null,
+            currentStep: 0,
+            
+            // 获取教程列表
+            getTutorials: function() {
+                return [
+                    {
+                        id: 'tut-001',
+                        title: '智能对话基础',
+                        description: '学习如何使用智能对话功能',
+                        duration: '15分钟',
+                        difficulty: '初级',
+                        steps: [
+                            { title: '创建对话', content: '点击"新建对话"按钮开始' },
+                            { title: '输入消息', content: '在输入框中输入您的问题' },
+                            { title: '查看回复', content: 'AI会实时生成回复' },
+                            { title: '继续对话', content: '可以继续提问进行多轮对话' }
+                        ]
+                    },
+                    {
+                        id: 'tut-002',
+                        title: '模型管理入门',
+                        description: '学习如何添加和配置AI模型',
+                        duration: '20分钟',
+                        difficulty: '中级',
+                        steps: [
+                            { title: '进入模型管理', content: '从侧边栏进入模型管理页面' },
+                            { title: '添加模型', content: '点击添加按钮，填写模型信息' },
+                            { title: '配置参数', content: '设置模型参数和限制' },
+                            { title: '测试模型', content: '发送测试请求验证配置' }
+                        ]
+                    },
+                    {
+                        id: 'tut-003',
+                        title: '工作流创建',
+                        description: '学习如何创建自动化工作流',
+                        duration: '30分钟',
+                        difficulty: '中级',
+                        steps: [
+                            { title: '新建工作流', content: '从工作流页面创建新流程' },
+                            { title: '添加节点', content: '拖拽节点到画布上' },
+                            { title: '连接节点', content: '用连线连接各节点' },
+                            { title: '配置参数', content: '设置每个节点的参数' },
+                            { title: '测试运行', content: '执行测试验证流程' }
+                        ]
+                    },
+                    {
+                        id: 'tut-004',
+                        title: '多智能体协作',
+                        description: '学习如何配置多智能体系统',
+                        duration: '45分钟',
+                        difficulty: '高级',
+                        steps: [
+                            { title: '创建Agent', content: '定义Agent的角色和能力' },
+                            { title: '配置工具', content: '为Agent分配可用工具' },
+                            { title: '设置协作', content: '定义Agent之间的协作关系' },
+                            { title: '测试协作', content: '运行测试验证协作效果' }
+                        ]
+                    }
+                ];
+            },
+            
+            // 开始教程
+            startTutorial: function(tutorialId) {
+                const tutorials = this.getTutorials();
+                this.currentTutorial = tutorials.find(t => t.id === tutorialId);
+                this.currentStep = 0;
+                
+                if (this.currentTutorial) {
+                    showNotification(`开始教程: ${this.currentTutorial.title}`, 'info');
+                    return this.getCurrentStep();
+                }
+                return null;
+            },
+            
+            // 获取当前步骤
+            getCurrentStep: function() {
+                if (!this.currentTutorial) return null;
+                return {
+                    step: this.currentStep + 1,
+                    total: this.currentTutorial.steps.length,
+                    data: this.currentTutorial.steps[this.currentStep]
+                };
+            },
+            
+            // 下一步
+            nextStep: function() {
+                if (!this.currentTutorial) return null;
+                if (this.currentStep < this.currentTutorial.steps.length - 1) {
+                    this.currentStep++;
+                    return this.getCurrentStep();
+                }
+                return null;
+            },
+            
+            // 上一步
+            prevStep: function() {
+                if (!this.currentTutorial) return null;
+                if (this.currentStep > 0) {
+                    this.currentStep--;
+                    return this.getCurrentStep();
+                }
+                return null;
+            },
+            
+            // 完成教程
+            completeTutorial: function() {
+                if (this.currentTutorial) {
+                    showNotification(`教程完成: ${this.currentTutorial.title}`, 'success');
+                    this.currentTutorial = null;
+                    this.currentStep = 0;
+                }
+            }
+        };
+
+        // 示例代码库
+        const CodeExamples = {
+            examples: {
+                'chat-basic': {
+                    title: '基础对话',
+                    language: 'javascript',
+                    code: `// 使用SDK进行基础对话
+const client = new AGIClient({ apiKey: 'your-api-key' });
+
+const response = await client.chat.completions.create({
+    model: 'gpt-4',
+    messages: [
+        { role: 'user', content: '你好，请介绍一下自己' }
+    ]
+});
+
+console.log(response.choices[0].message.content);`
+                },
+                'chat-stream': {
+                    title: '流式对话',
+                    language: 'javascript',
+                    code: `// 使用流式输出
+const stream = await client.chat.completions.create({
+    model: 'gpt-4',
+    messages: [{ role: 'user', content: '写一首诗' }],
+    stream: true
+});
+
+for await (const chunk of stream) {
+    process.stdout.write(chunk.choices[0]?.delta?.content || '');
+}`
+                },
+                'chat-context': {
+                    title: '多轮对话',
+                    language: 'javascript',
+                    code: `// 多轮对话示例
+const messages = [
+    { role: 'system', content: '你是一个有帮助的助手' },
+    { role: 'user', content: '什么是机器学习？' }
+];
+
+const response1 = await client.chat.completions.create({
+    model: 'gpt-4',
+    messages: messages
+});
+
+messages.push(response1.choices[0].message);
+messages.push({ role: 'user', content: '能举个例子吗？' });
+
+const response2 = await client.chat.completions.create({
+    model: 'gpt-4',
+    messages: messages
+});`
+                },
+                'workflow-create': {
+                    title: '创建工作流',
+                    language: 'python',
+                    code: `# 使用Python SDK创建工作流
+from agi_framework import Workflow, Node
+
+# 创建工作流
+workflow = Workflow(name="数据处理流程")
+
+# 添加节点
+input_node = Node(type="input", config={"source": "api"})
+process_node = Node(type="transform", config={"operation": "filter"})
+output_node = Node(type="output", config={"destination": "database"})
+
+workflow.add_nodes([input_node, process_node, output_node])
+workflow.connect(input_node, process_node)
+workflow.connect(process_node, output_node)
+
+# 执行工作流
+result = workflow.execute(input_data)`
+                },
+                'agent-create': {
+                    title: '创建智能体',
+                    language: 'python',
+                    code: `# 创建自定义智能体
+from agi_framework import Agent, Tool
+
+# 定义工具
+search_tool = Tool(
+    name="web_search",
+    description="搜索网络信息",
+    function=search_web
+)
+
+# 创建Agent
+agent = Agent(
+    name="研究助手",
+    model="gpt-4",
+    tools=[search_tool],
+    system_prompt="你是一个研究助手，帮助用户收集信息"
+)
+
+# 运行Agent
+result = agent.run("帮我研究人工智能的最新进展")`
+                },
+                'rag-query': {
+                    title: '知识检索',
+                    language: 'python',
+                    code: `# RAG知识检索示例
+from agi_framework import KnowledgeBase, RAG
+
+# 创建知识库
+kb = KnowledgeBase(name="产品文档")
+kb.add_documents("./docs/*.pdf")
+
+# 创建RAG实例
+rag = RAG(
+    knowledge_base=kb,
+    model="gpt-4",
+    top_k=5
+)
+
+# 查询
+answer = rag.query("如何配置API密钥？")
+print(answer.content)
+print(f"来源: {answer.sources}")`
+                }
+            },
+            
+            // 获取示例
+            getExample: function(id) {
+                return this.examples[id];
+            },
+            
+            // 获取所有示例
+            getAllExamples: function() {
+                return Object.entries(this.examples).map(([id, ex]) => ({
+                    id: id,
+                    title: ex.title,
+                    language: ex.language
+                }));
+            },
+            
+            // 复制代码
+            copyCode: function(id) {
+                const example = this.examples[id];
+                if (example && navigator.clipboard) {
+                    navigator.clipboard.writeText(example.code);
+                    showNotification('代码已复制到剪贴板', 'success');
+                }
+            }
+        };
+
+        // 帮助评分系统
+        const RatingSystem = {
+            ratings: [],
+            
+            // 提交评分
+            submitRating: function(docId, rating, feedback) {
+                const entry = {
+                    id: 'RAT-' + Date.now(),
+                    docId: docId,
+                    rating: rating,
+                    feedback: feedback,
+                    timestamp: new Date().toISOString()
+                };
+                
+                this.ratings.push(entry);
+                this.saveRatings();
+                
+                showNotification('感谢您的反馈！', 'success');
+                return entry;
+            },
+            
+            // 获取文档平均评分
+            getAverageRating: function(docId) {
+                const docRatings = this.ratings.filter(r => r.docId === docId);
+                if (docRatings.length === 0) return 0;
+                
+                const sum = docRatings.reduce((acc, r) => acc + r.rating, 0);
+                return sum / docRatings.length;
+            },
+            
+            // 保存评分
+            saveRatings: function() {
+                try {
+                    localStorage.setItem('helpRatings', JSON.stringify(this.ratings));
+                } catch (e) {
+                    console.warn('无法保存评分:', e);
+                }
+            },
+            
+            // 加载评分
+            loadRatings: function() {
+                try {
+                    const saved = localStorage.getItem('helpRatings');
+                    if (saved) {
+                        this.ratings = JSON.parse(saved);
+                    }
+                } catch (e) {
+                    console.warn('无法加载评分:', e);
+                }
+            }
+        };
+
+        // 加载评分
+        RatingSystem.loadRatings();
+
+        // 相关文档推荐
+        const RelatedDocs = {
+            // 获取相关文档
+            getRelated: function(docId) {
+                const relations = {
+                    'getting-started': ['overview', 'quick-config', 'first-chat'],
+                    'chat-guide': ['chat-basics', 'chat-advanced', 'chat-context'],
+                    'model-guide': ['model-add', 'model-config', 'model-monitor'],
+                    'workflow-guide': ['workflow-create', 'workflow-nodes', 'workflow-execute'],
+                    'agent-guide': ['agent-create', 'agent-collab', 'agent-tools'],
+                    'api-reference': ['sdk-guide', 'webhook-guide']
+                };
+                
+                return relations[docId] || [];
+            },
+            
+            // 计算相似度
+            calculateSimilarity: function(doc1, doc2) {
+                const words1 = new Set(doc1.content.toLowerCase().split(/\s+/));
+                const words2 = new Set(doc2.content.toLowerCase().split(/\s+/));
+                
+                const intersection = new Set([...words1].filter(x => words2.has(x)));
+                const union = new Set([...words1, ...words2]);
+                
+                return intersection.size / union.size;
+            }
+        };
+
+        // 文档统计
+        const DocStatistics = {
+            // 获取阅读统计
+            getReadingStats: function() {
+                return {
+                    totalDocs: documentDatabase.length,
+                    totalFAQs: additionalFAQs.length + 10,
+                    totalVideos: 6,
+                    totalShortcuts: 20,
+                    categories: ['快速入门', '功能指南', '高级功能', '开发者资源', '其他']
+                };
+            },
+            
+            // 获取热门文档
+            getPopularDocs: function() {
+                return [
+                    { id: 'getting-started', title: '开始使用', views: 12500 },
+                    { id: 'chat-guide', title: '智能对话指南', views: 8900 },
+                    { id: 'model-guide', title: '模型管理指南', views: 7600 },
+                    { id: 'api-reference', title: 'API文档', views: 6500 },
+                    { id: 'faq', title: '常见问题', views: 5800 }
+                ];
+            },
+            
+            // 获取搜索热词
+            getSearchTrends: function() {
+                return [
+                    { term: '模型配置', count: 1250 },
+                    { term: 'API调用', count: 980 },
+                    { term: '工作流', count: 870 },
+                    { term: '知识库', count: 760 },
+                    { term: '多智能体', count: 650 }
+                ];
+            }
+        };
+
+        // 国际化支持
+        const I18nHelper = {
+            currentLang: 'zh-CN',
+            translations: {
+                'zh-CN': {
+                    'search': '搜索帮助文档...',
+                    'getting-started': '快速入门',
+                    'features': '功能指南',
+                    'advanced': '高级功能',
+                    'developers': '开发者资源',
+                    'faq': '常见问题',
+                    'shortcuts': '快捷键',
+                    'videos': '视频教程',
+                    'support': '联系支持'
+                },
+                'en': {
+                    'search': 'Search help docs...',
+                    'getting-started': 'Getting Started',
+                    'features': 'Features',
+                    'advanced': 'Advanced',
+                    'developers': 'Developers',
+                    'faq': 'FAQ',
+                    'shortcuts': 'Shortcuts',
+                    'videos': 'Video Tutorials',
+                    'support': 'Contact Support'
+                }
+            },
+            
+            // 获取翻译
+            t: function(key) {
+                return this.translations[this.currentLang][key] || key;
+            },
+            
+            // 切换语言
+            setLanguage: function(lang) {
+                if (this.translations[lang]) {
+                    this.currentLang = lang;
+                    localStorage.setItem('helpLang', lang);
+                }
+            },
+            
+            // 获取当前语言
+            getLanguage: function() {
+                return this.currentLang;
+            }
+        };
+
+        // 加载语言设置
+        const savedLang = localStorage.getItem('helpLang');
+        if (savedLang) {
+            I18nHelper.setLanguage(savedLang);
+        }
+
+        // 辅助工具函数
+        const HelperUtils = {
+            // 格式化日期
+            formatDate: function(date) {
+                const d = new Date(date);
+                return d.toLocaleDateString('zh-CN', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            },
+            
+            // 格式化相对时间
+            formatRelativeTime: function(date) {
+                const now = new Date();
+                const d = new Date(date);
+                const diff = now - d;
+                
+                const minutes = Math.floor(diff / 60000);
+                const hours = Math.floor(diff / 3600000);
+                const days = Math.floor(diff / 86400000);
+                
+                if (minutes < 1) return '刚刚';
+                if (minutes < 60) return `${minutes}分钟前`;
+                if (hours < 24) return `${hours}小时前`;
+                if (days < 7) return `${days}天前`;
+                return this.formatDate(date);
+            },
+            
+            // 生成目录树
+            generateTOC: function(content) {
+                const headings = content.match(/<h[2-4][^>]*>(.*?)<\/h[2-4]>/gi) || [];
+                return headings.map(h => {
+                    const level = parseInt(h.match(/<h([2-4])/)[1]);
+                    const text = h.replace(/<[^>]+>/g, '');
+                    return { level: level - 1, text: text };
+                });
+            },
+            
+            // 高亮搜索词
+            highlightTerm: function(text, term) {
+                const regex = new RegExp(`(${term})`, 'gi');
+                return text.replace(regex, '<mark>$1</mark>');
+            }
+        };
+
+        // 初始化完成
+        console.log('帮助文档系统完全初始化完成');
+        console.log('功能模块: 文档管理、搜索引擎、Markdown渲染、FAQ系统、快捷键、视频教程、工单系统');
+
+        // 文档导航增强
+        const NavigationEnhancer = {
+            history: [],
+            maxHistory: 50,
+            
+            // 记录导航
+            recordNavigation: function(docId, title) {
+                this.history.push({
+                    docId: docId,
+                    title: title,
+                    timestamp: new Date().toISOString()
+                });
+                
+                if (this.history.length > this.maxHistory) {
+                    this.history = this.history.slice(-this.maxHistory);
+                }
+                
+                this.saveHistory();
+            },
+            
+            // 获取历史记录
+            getHistory: function() {
+                return this.history.slice().reverse();
+            },
+            
+            // 后退
+            goBack: function() {
+                if (this.history.length > 1) {
+                    this.history.pop();
+                    const prev = this.history[this.history.length - 1];
+                    loadDocument(prev.docId);
+                    return prev;
+                }
+                return null;
+            },
+            
+            // 保存历史
+            saveHistory: function() {
+                try {
+                    localStorage.setItem('navHistory', JSON.stringify(this.history));
+                } catch (e) {
+                    console.warn('无法保存导航历史:', e);
+                }
+            },
+            
+            // 加载历史
+            loadHistory: function() {
+                try {
+                    const saved = localStorage.getItem('navHistory');
+                    if (saved) {
+                        this.history = JSON.parse(saved);
+                    }
+                } catch (e) {
+                    console.warn('无法加载导航历史:', e);
+                }
+            }
+        };
+
+        // 加载导航历史
+        NavigationEnhancer.loadHistory();
+
+        // 文档标签系统
+        const TagSystem = {
+            tags: {},
+            docTags: {},
+            
+            // 初始化标签
+            initTags: function() {
+                this.tags = {
+                    'beginner': { name: '初级', color: '#10b981' },
+                    'intermediate': { name: '中级', color: '#f59e0b' },
+                    'advanced': { name: '高级', color: '#ef4444' },
+                    'api': { name: 'API', color: '#3b82f6' },
+                    'configuration': { name: '配置', color: '#8b5cf6' },
+                    'tutorial': { name: '教程', color: '#ec4899' },
+                    'troubleshooting': { name: '故障排除', color: '#f97316' },
+                    'best-practice': { name: '最佳实践', color: '#06b6d4' }
+                };
+                
+                this.docTags = {
+                    'getting-started': ['beginner', 'tutorial'],
+                    'api-reference': ['advanced', 'api'],
+                    'model-config': ['intermediate', 'configuration'],
+                    'faq': ['beginner', 'troubleshooting'],
+                    'best-practices': ['intermediate', 'best-practice']
+                };
+            },
+            
+            // 获取文档标签
+            getDocTags: function(docId) {
+                const tagIds = this.docTags[docId] || [];
+                return tagIds.map(id => ({ id: id, ...this.tags[id] }));
+            },
+            
+            // 按标签搜索
+            searchByTag: function(tagId) {
+                return Object.entries(this.docTags)
+                    .filter(([docId, tags]) => tags.includes(tagId))
+                    .map(([docId]) => docId);
+            },
+            
+            // 添加标签
+            addTag: function(docId, tagId) {
+                if (!this.docTags[docId]) {
+                    this.docTags[docId] = [];
+                }
+                if (!this.docTags[docId].includes(tagId)) {
+                    this.docTags[docId].push(tagId);
+                }
+            },
+            
+            // 移除标签
+            removeTag: function(docId, tagId) {
+                if (this.docTags[docId]) {
+                    const index = this.docTags[docId].indexOf(tagId);
+                    if (index !== -1) {
+                        this.docTags[docId].splice(index, 1);
+                    }
+                }
+            }
+        };
+
+        // 初始化标签系统
+        TagSystem.initTags();
+
+        // 文档收藏功能
+        const FavoriteSystem = {
+            favorites: [],
+            
+            // 添加收藏
+            add: function(docId) {
+                if (!this.favorites.includes(docId)) {
+                    this.favorites.push(docId);
+                    this.saveFavorites();
+                    showNotification('已添加到收藏', 'success');
+                    return true;
+                }
+                return false;
+            },
+            
+            // 移除收藏
+            remove: function(docId) {
+                const index = this.favorites.indexOf(docId);
+                if (index !== -1) {
+                    this.favorites.splice(index, 1);
+                    this.saveFavorites();
+                    showNotification('已从收藏移除', 'info');
+                    return true;
+                }
+                return false;
+            },
+            
+            // 切换收藏状态
+            toggle: function(docId) {
+                if (this.favorites.includes(docId)) {
+                    return this.remove(docId);
+                } else {
+                    return this.add(docId);
+                }
+            },
+            
+            // 检查是否收藏
+            isFavorite: function(docId) {
+                return this.favorites.includes(docId);
+            },
+            
+            // 获取所有收藏
+            getAll: function() {
+                return this.favorites.map(id => documentDatabase.find(d => d.id === id)).filter(Boolean);
+            },
+            
+            // 保存收藏
+            saveFavorites: function() {
+                try {
+                    localStorage.setItem('docFavorites', JSON.stringify(this.favorites));
+                } catch (e) {
+                    console.warn('无法保存收藏:', e);
+                }
+            },
+            
+            // 加载收藏
+            loadFavorites: function() {
+                try {
+                    const saved = localStorage.getItem('docFavorites');
+                    if (saved) {
+                        this.favorites = JSON.parse(saved);
+                    }
+                } catch (e) {
+                    console.warn('无法加载收藏:', e);
+                }
+            }
+        };
+
+        // 加载收藏
+        FavoriteSystem.loadFavorites();
+
+        // 文档分享功能
+        const ShareSystem = {
+            // 生成分享链接
+            generateShareLink: function(docId) {
+                const baseUrl = window.location.origin + window.location.pathname;
+                return `${baseUrl}?doc=${docId}`;
+            },
+            
+            // 复制分享链接
+            copyShareLink: function(docId) {
+                const link = this.generateShareLink(docId);
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(link);
+                    showNotification('分享链接已复制', 'success');
+                }
+            },
+            
+            // 分享到社交媒体
+            shareToSocial: function(platform, docId, title) {
+                const link = this.generateShareLink(docId);
+                const text = `查看文档: ${title}`;
+                
+                const urls = {
+                    twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(link)}`,
+                    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`,
+                    linkedin: `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(link)}&title=${encodeURIComponent(title)}`,
+                    weibo: `https://service.weibo.com/share/share.php?url=${encodeURIComponent(link)}&title=${encodeURIComponent(text)}`
+                };
+                
+                const url = urls[platform];
+                if (url) {
+                    window.open(url, '_blank', 'width=600,height=400');
+                }
+            },
+            
+            // 发送邮件分享
+            shareByEmail: function(docId, title, email) {
+                const link = this.generateShareLink(docId);
+                const subject = `文档分享: ${title}`;
+                const body = `您好，\n\n我想与您分享这篇文档:\n${title}\n\n链接: ${link}`;
+                
+                window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            }
+        };
+
+        // 文档打印增强
+        const PrintEnhancer = {
+            // 打印设置
+            settings: {
+                includeToc: true,
+                includeHeader: true,
+                includeFooter: true,
+                fontSize: 'normal',
+                paperSize: 'A4'
+            },
+            
+            // 生成打印内容
+            generatePrintContent: function(docId) {
+                const content = document.getElementById('helpContent');
+                if (!content) return '';
+                
+                let html = '<!DOCTYPE html><html><head>';
+                html += '<meta charset="UTF-8">';
+                html += '<title>帮助文档 - AGI统一框架</title>';
+                html += '<style>';
+                html += this.getPrintStyles();
+                html += '</style></head><body>';
+                
+                if (this.settings.includeHeader) {
+                    html += this.generateHeader();
+                }
+                
+                if (this.settings.includeToc) {
+                    html += this.generateToc(content.innerHTML);
+                }
+                
+                html += '<div class="content">' + content.innerHTML + '</div>';
+                
+                if (this.settings.includeFooter) {
+                    html += this.generateFooter();
+                }
+                
+                html += '</body></html>';
+                return html;
+            },
+            
+            // 获取打印样式
+            getPrintStyles: function() {
+                const fontSizes = { small: '12px', normal: '14px', large: '16px' };
+                return `
+                    @page { size: ${this.settings.paperSize}; margin: 2cm; }
+                    body { font-family: Arial, sans-serif; font-size: ${fontSizes[this.settings.fontSize]}; line-height: 1.6; }
+                    h1, h2, h3 { color: #333; page-break-after: avoid; }
+                    pre { background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; }
+                    code { background: #f0f0f0; padding: 2px 4px; }
+                    table { border-collapse: collapse; width: 100%; }
+                    th, td { border: 1px solid #ddd; padding: 8px; }
+                    .toc { margin-bottom: 20px; padding: 10px; background: #f9f9f9; }
+                    .header { text-align: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #ddd; }
+                    .footer { text-align: center; margin-top: 20px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
+                    @media print { .no-print { display: none; } }
+                `;
+            },
+            
+            // 生成页眉
+            generateHeader: function() {
+                return `<div class="header">
+                    <h1>AGI 统一框架 - 帮助文档</h1>
+                    <p>打印时间: ${new Date().toLocaleString('zh-CN')}</p>
+                </div>`;
+            },
+            
+            // 生成目录
+            generateToc: function(content) {
+                const headings = content.match(/<h[2-3][^>]*>(.*?)<\/h[2-3]>/gi) || [];
+                if (headings.length === 0) return '';
+                
+                let toc = '<div class="toc"><h3>目录</h3><ul>';
+                headings.forEach(h => {
+                    const level = parseInt(h.match(/<h([2-3])/)[1]);
+                    const text = h.replace(/<[^>]+>/g, '');
+                    const indent = (level - 2) * 20;
+                    toc += `<li style="margin-left: ${indent}px">${text}</li>`;
+                });
+                toc += '</ul></div>';
+                return toc;
+            },
+            
+            // 生成页脚
+            generateFooter: function() {
+                return `<div class="footer">
+                    <p>AGI 统一框架 v2.0.0 | © 2024 AGI Framework</p>
+                </div>`;
+            },
+            
+            // 执行打印
+            print: function(docId) {
+                const html = this.generatePrintContent(docId);
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(html);
+                printWindow.document.close();
+                printWindow.print();
+            }
+        };
+
+        // 文档比较功能
+        const DocComparator = {
+            // 比较两个文档
+            compare: function(doc1Id, doc2Id) {
+                const doc1 = documentDatabase.find(d => d.id === doc1Id);
+                const doc2 = documentDatabase.find(d => d.id === doc2Id);
+                
+                if (!doc1 || !doc2) {
+                    return null;
+                }
+                
+                return {
+                    doc1: doc1,
+                    doc2: doc2,
+                    differences: this.findDifferences(doc1.content, doc2.content),
+                    similarity: this.calculateSimilarity(doc1.content, doc2.content)
+                };
+            },
+            
+            // 查找差异
+            findDifferences: function(content1, content2) {
+                const lines1 = content1.split('\n');
+                const lines2 = content2.split('\n');
+                const differences = [];
+                
+                const maxLines = Math.max(lines1.length, lines2.length);
+                for (let i = 0; i < maxLines; i++) {
+                    if (lines1[i] !== lines2[i]) {
+                        differences.push({
+                            line: i + 1,
+                            old: lines1[i] || '',
+                            new: lines2[i] || ''
+                        });
+                    }
+                }
+                
+                return differences;
+            },
+            
+            // 计算相似度
+            calculateSimilarity: function(content1, content2) {
+                const words1 = new Set(content1.toLowerCase().split(/\s+/));
+                const words2 = new Set(content2.toLowerCase().split(/\s+/));
+                
+                const intersection = new Set([...words1].filter(x => words2.has(x)));
+                const union = new Set([...words1, ...words2]);
+                
+                return Math.round((intersection.size / union.size) * 100);
+            }
+        };
+
+        // 文档注释系统
+        const AnnotationSystem = {
+            annotations: {},
+            
+            // 添加注释
+            addAnnotation: function(docId, position, text) {
+                if (!this.annotations[docId]) {
+                    this.annotations[docId] = [];
+                }
+                
+                const annotation = {
+                    id: 'ANN-' + Date.now(),
+                    position: position,
+                    text: text,
+                    timestamp: new Date().toISOString()
+                };
+                
+                this.annotations[docId].push(annotation);
+                this.saveAnnotations();
+                return annotation;
+            },
+            
+            // 获取文档注释
+            getAnnotations: function(docId) {
+                return this.annotations[docId] || [];
+            },
+            
+            // 删除注释
+            deleteAnnotation: function(docId, annotationId) {
+                if (this.annotations[docId]) {
+                    const index = this.annotations[docId].findIndex(a => a.id === annotationId);
+                    if (index !== -1) {
+                        this.annotations[docId].splice(index, 1);
+                        this.saveAnnotations();
+                        return true;
+                    }
+                }
+                return false;
+            },
+            
+            // 保存注释
+            saveAnnotations: function() {
+                try {
+                    localStorage.setItem('docAnnotations', JSON.stringify(this.annotations));
+                } catch (e) {
+                    console.warn('无法保存注释:', e);
+                }
+            },
+            
+            // 加载注释
+            loadAnnotations: function() {
+                try {
+                    const saved = localStorage.getItem('docAnnotations');
+                    if (saved) {
+                        this.annotations = JSON.parse(saved);
+                    }
+                } catch (e) {
+                    console.warn('无法加载注释:', e);
+                }
+            }
+        };
+
+        // 加载注释
+        AnnotationSystem.loadAnnotations();
+
+        // 文档高亮系统
+        const HighlightSystem = {
+            highlights: {},
+            
+            // 添加高亮
+            addHighlight: function(docId, start, end, color) {
+                if (!this.highlights[docId]) {
+                    this.highlights[docId] = [];
+                }
+                
+                const highlight = {
+                    id: 'HIL-' + Date.now(),
+                    start: start,
+                    end: end,
+                    color: color || '#ffeb3b',
+                    timestamp: new Date().toISOString()
+                };
+                
+                this.highlights[docId].push(highlight);
+                this.saveHighlights();
+                return highlight;
+            },
+            
+            // 获取文档高亮
+            getHighlights: function(docId) {
+                return this.highlights[docId] || [];
+            },
+            
+            // 删除高亮
+            deleteHighlight: function(docId, highlightId) {
+                if (this.highlights[docId]) {
+                    const index = this.highlights[docId].findIndex(h => h.id === highlightId);
+                    if (index !== -1) {
+                        this.highlights[docId].splice(index, 1);
+                        this.saveHighlights();
+                        return true;
+                    }
+                }
+                return false;
+            },
+            
+            // 应用高亮到文本
+            applyHighlights: function(text, highlights) {
+                highlights.sort((a, b) => b.start - a.start);
+                
+                let result = text;
+                highlights.forEach(h => {
+                    const before = result.substring(0, h.start);
+                    const highlighted = result.substring(h.start, h.end);
+                    const after = result.substring(h.end);
+                    result = before + `<mark style="background-color: ${h.color}">${highlighted}</mark>` + after;
+                });
+                
+                return result;
+            },
+            
+            // 保存高亮
+            saveHighlights: function() {
+                try {
+                    localStorage.setItem('docHighlights', JSON.stringify(this.highlights));
+                } catch (e) {
+                    console.warn('无法保存高亮:', e);
+                }
+            },
+            
+            // 加载高亮
+            loadHighlights: function() {
+                try {
+                    const saved = localStorage.getItem('docHighlights');
+                    if (saved) {
+                        this.highlights = JSON.parse(saved);
+                    }
+                } catch (e) {
+                    console.warn('无法加载高亮:', e);
+                }
+            }
+        };
+
+        // 加载高亮
+        HighlightSystem.loadHighlights();
+
+        // 文档统计追踪
+        const StatsTracker = {
+            stats: {},
+            
+            // 记录访问
+            recordVisit: function(docId) {
+                if (!this.stats[docId]) {
+                    this.stats[docId] = {
+                        visits: 0,
+                        firstVisit: new Date().toISOString(),
+                        lastVisit: null,
+                        totalTime: 0
+                    };
+                }
+                
+                this.stats[docId].visits++;
+                this.stats[docId].lastVisit = new Date().toISOString();
+                this.saveStats();
+            },
+            
+            // 记录阅读时间
+            recordReadTime: function(docId, seconds) {
+                if (this.stats[docId]) {
+                    this.stats[docId].totalTime += seconds;
+                    this.saveStats();
+                }
+            },
+            
+            // 获取统计
+            getStats: function(docId) {
+                return this.stats[docId] || null;
+            },
+            
+            // 获取最常访问
+            getMostVisited: function(count) {
+                return Object.entries(this.stats)
+                    .sort((a, b) => b[1].visits - a[1].visits)
+                    .slice(0, count || 10)
+                    .map(([id, stats]) => ({ docId: id, ...stats }));
+            },
+            
+            // 获取最近访问
+            getRecentlyVisited: function(count) {
+                return Object.entries(this.stats)
+                    .filter(([id, stats]) => stats.lastVisit)
+                    .sort((a, b) => new Date(b[1].lastVisit) - new Date(a[1].lastVisit))
+                    .slice(0, count || 10)
+                    .map(([id, stats]) => ({ docId: id, ...stats }));
+            },
+            
+            // 保存统计
+            saveStats: function() {
+                try {
+                    localStorage.setItem('docStats', JSON.stringify(this.stats));
+                } catch (e) {
+                    console.warn('无法保存统计:', e);
+                }
+            },
+            
+            // 加载统计
+            loadStats: function() {
+                try {
+                    const saved = localStorage.getItem('docStats');
+                    if (saved) {
+                        this.stats = JSON.parse(saved);
+                    }
+                } catch (e) {
+                    console.warn('无法加载统计:', e);
+                }
+            }
+        };
+
+        // 加载统计
+        StatsTracker.loadStats();
+
+        // 键盘导航
+        const KeyboardNavigation = {
+            // 初始化键盘导航
+            init: function() {
+                document.addEventListener('keydown', (e) => {
+                    // 忽略输入框中的按键
+                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                        return;
+                    }
+                    
+                    switch (e.key) {
+                        case 'ArrowLeft':
+                            if (e.altKey) {
+                                NavigationEnhancer.goBack();
+                            }
+                            break;
+                        case 'ArrowRight':
+                            if (e.altKey) {
+                                // 前进功能
+                            }
+                            break;
+                        case 'Home':
+                            e.preventDefault();
+                            loadDocument('getting-started');
+                            break;
+                        case '/':
+                            e.preventDefault();
+                            document.getElementById('helpSearch').focus();
+                            break;
+                    }
+                });
+            }
+        };
+
+        // 初始化键盘导航
+        KeyboardNavigation.init();
+
+        // 完成所有初始化
+        console.log('=== 帮助文档系统完全加载 ===');
+        console.log('文档数量:', documentDatabase.length);
+        console.log('FAQ数量:', additionalFAQs.length + 10);
+        console.log('代码示例:', Object.keys(CodeExamples.examples).length);
+        console.log('教程数量:', TutorialManager.getTutorials().length);
+        console.log('标签数量:', Object.keys(TagSystem.tags).length);
+    </script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/state.js"></script>
+    <script src="../js/api-client.js"></script>
+    <script>
+// API客户端初始化
+// apiClient 已通过 api-client.js 创建为全局变量
+// let state; // 已由state.js全局定义
+async function initApiClient() {
+    try {
+        // apiClient 已通过 api-client.js 创建为全局变量（原初始化代码已注释）
+        apiClient.on('unauthorized', () => {
+            window.location.href = 'login.html';
+        });
+        state = StateManager.getInstance();
+    } catch (e) {
+        console.warn('[initApiClient] 初始化警告:', e.message);
+    }
+}
+
+// 真实API调用
+async function loadHelpDocs(params = {}) {
+    try {
+        const response = await apiClient.getHelpDocs(params);
+        renderHelpDocs(response.data || response);
+        return response;
+    } catch (error) {
+        console.error('加载帮助文档失败:', error);
+        return null;
+    }
+}
+
+async function getHelpDoc(id) {
+    try {
+        return await apiClient.getHelpDoc(id);
+    } catch (error) {
+        console.error('获取文档详情失败:', error);
+        return null;
+    }
+}
+
+async function searchHelp(query) {
+    try {
+        const response = await apiClient.get('/help/search', { q: query });
+        renderSearchResults(response.results || response);
+        return response;
+    } catch (error) {
+        console.error('搜索失败:', error);
+        return null;
+    }
+}
+
+async function loadHelpCategories() {
+    try {
+        const response = await apiClient.getHelpCategories();
+        renderCategories(response);
+        return response;
+    } catch (error) {
+        console.error('加载分类失败:', error);
+        return null;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await initApiClient();
+    await loadHelpCategories();
+    await loadHelpDocs();
+});
+    </script>
+    <script>
+        // UFO AGI Framework - 页面真实化初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof PageRealization !== 'undefined') {
+                PageRealization.initPage('help');
+            } else {
+                console.warn('PageRealization not loaded');
+            }
+        });
+    </script>
+
+    <script src="../static/js/page-realization.js"></script>
+    <script src="../static/js/page-realization-loader.js"></script>
+</body>
+</html>

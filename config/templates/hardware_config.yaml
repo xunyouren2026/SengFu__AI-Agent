@@ -1,0 +1,335 @@
+# =============================================================================
+# AGI Unified Framework - 硬件配置模板
+# =============================================================================
+# 描述: 定义GPU/CPU/内存/存储/网络的硬件资源配置
+# 版本: 2.0.0
+# 用法: 根据实际硬件环境修改对应配置段，支持 dev/test/prod 多环境
+# =============================================================================
+
+version: "2.0.0"
+
+# -----------------------------------------------------------------------------
+# GPU 配置
+# -----------------------------------------------------------------------------
+# 定义GPU相关的硬件参数，支持多GPU并行训练和混合精度计算
+gpu:
+  # GPU类型，可选值: NVIDIA_A100, NVIDIA_A100_80GB, NVIDIA_A100_40GB,
+  #   NVIDIA_H100, NVIDIA_H100_80GB, NVIDIA_H200, NVIDIA_L40S, NVIDIA_L4,
+  #   NVIDIA_RTX_4090, NVIDIA_RTX_3090, NVIDIA_RTX_A6000, NVIDIA_T4,
+  #   NVIDIA_V100, AMD_MI300X, AMD_MI250X, INTEL_MAX_1550,
+  #   Apple_M1_Max, Apple_M2_Max, Apple_M3_Max
+  gpu_type: "NVIDIA_A100_80GB"
+
+  # GPU数量，多GPU训练时设置为对应卡数 (默认: 1)
+  gpu_count: 1
+
+  # 单卡显存大小，单位GB (默认: 80)
+  vram_gb: 80
+
+  # CUDA核心数，留空则自动检测 (默认: null)
+  cuda_cores: null
+
+  # Tensor核心数，留空则自动检测 (默认: null)
+  tensor_cores: null
+
+  # CUDA计算能力版本号，如 "8.0", "8.6", "8.9", "9.0" (默认: null)
+  compute_capability: null
+
+  # PCIe带宽，单位Gbps (默认: null)
+  pcie_bandwidth_gbps: null
+
+  # 是否启用NVLink互连，多GPU训练时建议开启 (默认: false)
+  nvlink_enabled: false
+
+  # NVLink带宽，单位Gbps (默认: null)
+  nvlink_bandwidth_gbps: null
+
+  # 是否启用混合精度训练 (默认: true)
+  mixed_precision: true
+
+  # 支持的精度类型
+  fp16_supported: true    # FP16半精度支持 (默认: true)
+  bf16_supported: true    # BF16 bfloat16支持，H100/A100支持 (默认: true)
+  fp8_supported: false    # FP8精度支持，H100支持 (默认: false)
+  int8_supported: true    # INT8量化支持 (默认: true)
+  int4_supported: false   # INT4量化支持 (默认: false)
+
+  # 显存分配策略
+  memory_fraction: 0.9    # 最大显存使用比例，防止OOM (默认: 0.9)
+  memory_growth: false     # 是否启用显存按需增长 (默认: false)
+
+  # 多GPU并行策略: "dp"(数据并行), "ddp"(分布式数据并行), "fsdp"(全分片数据并行),
+  #   "deepspeed"(DeepSpeed), "megatron"(Megatron-LM)
+  parallel_strategy: "ddp"
+
+# -----------------------------------------------------------------------------
+# CPU 配置
+# -----------------------------------------------------------------------------
+# 定义CPU相关的硬件参数
+cpu:
+  # CPU类型，可选值: Intel_Xeon, Intel_Xeon_Platinum, Intel_Core_i9,
+  #   AMD_EPYC, AMD_EPYC_Milan, AMD_EPYC_Genoa, AMD_Ryzen_9,
+  #   ARM_Graviton3, ARM_Graviton4, Apple_M1_Max, Apple_M2_Max, Apple_M3_Max
+  cpu_type: "Intel_Xeon"
+
+  # CPU物理核心数 (默认: 32)
+  cpu_cores: 32
+
+  # CPU逻辑线程数（含超线程）(默认: 64)
+  cpu_threads: 64
+
+  # CPU基础频率，单位GHz (默认: 2.5)
+  cpu_frequency_ghz: 2.5
+
+  # CPU睿频频率，单位GHz，留空则不限制 (默认: null)
+  cpu_boost_frequency_ghz: null
+
+  # 缓存配置
+  l1_cache_kb: null       # L1缓存大小，留空则自动检测
+  l2_cache_kb: null       # L2缓存大小，留空则自动检测
+  l3_cache_mb: null       # L3缓存大小，留空则自动检测
+
+  # 内存通道数 (默认: 8)
+  memory_channels: 8
+
+  # SIMD指令集支持
+  avx_support: true       # AVX指令集 (默认: true)
+  avx2_support: true      # AVX2指令集 (默认: true)
+  avx512_support: false   # AVX-512指令集 (默认: false)
+
+  # NUMA配置
+  numa_nodes: 1           # NUMA节点数 (默认: 1)
+  numa_balanced: true     # 是否启用NUMA均衡 (默认: true)
+
+  # 数据加载工作线程数 (默认: 4)
+  num_workers: 4
+
+  # 是否固定CPU亲和性以提升性能 (默认: false)
+  cpu_affinity: false
+
+# -----------------------------------------------------------------------------
+# 内存配置
+# -----------------------------------------------------------------------------
+# 定义系统内存相关的硬件参数
+memory:
+  # 系统总内存大小，单位GB (默认: 512)
+  total_memory_gb: 512
+
+  # 内存类型，可选值: DDR3, DDR4, DDR5, DDR6, HBM2, HBM2e, HBM3, LPDDR4, LPDDR5
+  memory_type: "DDR4"
+
+  # 内存频率，单位MHz (默认: 3200)
+  memory_speed_mhz: 3200
+
+  # 内存通道数 (默认: 8)
+  memory_channels: 8
+
+  # 是否启用ECC纠错内存 (默认: true)
+  ecc_enabled: true
+
+  # 内存带宽，单位Gbps，留空则自动估算 (默认: null)
+  memory_bandwidth_gbps: null
+
+  # 是否启用NUMA内存均衡 (默认: true)
+  numa_balanced: true
+
+  # 内存分配器: "default"(系统默认), "jemalloc", "tcmalloc"
+  allocator: "default"
+
+  # 共享内存大小，单位GB，用于多进程数据加载 (默认: 8)
+  shared_memory_gb: 8
+
+# -----------------------------------------------------------------------------
+# 存储配置
+# -----------------------------------------------------------------------------
+# 定义数据存储系统的硬件参数
+storage:
+  # 存储类型，可选值: NVMe_SSD, SATA_SSD, HDD, Network_Storage, Object_Storage
+  storage_type: "NVMe_SSD"
+
+  # 存储总容量，单位GB (默认: 2000)
+  capacity_gb: 2000
+
+  # 顺序读取速度，单位MB/s (默认: 3500)
+  read_speed_mbps: 3500
+
+  # 顺序写入速度，单位MB/s (默认: 3000)
+  write_speed_mbps: 3000
+
+  # 随机读写IOPS
+  iops_read: null         # 随机读IOPS (默认: null)
+  iops_write: null        # 随机写IOPS (默认: null)
+
+  # RAID配置，可选值: null, RAID0, RAID1, RAID5, RAID6, RAID10, RAID50, RAID60
+  raid_config: null
+
+  # 数据挂载点 (默认: "/data")
+  mount_point: "/data"
+
+  # 存储路径配置
+  data_dir: "${mount_point}/datasets"           # 数据集存储路径
+  model_dir: "${mount_point}/models"             # 模型文件存储路径
+  checkpoint_dir: "${mount_point}/checkpoints"   # 检查点存储路径
+  log_dir: "${mount_point}/logs"                 # 日志存储路径
+  cache_dir: "${mount_point}/cache"              # 缓存存储路径
+
+  # 磁盘空间预警阈值，低于此值时发出警告，单位GB (默认: 100)
+  disk_space_warning_gb: 100
+
+# -----------------------------------------------------------------------------
+# 网络配置
+# -----------------------------------------------------------------------------
+# 定义网络通信相关的硬件参数
+network:
+  # 网络类型，可选值: Ethernet_1Gb, Ethernet_10Gb, Ethernet_25Gb,
+  #   Ethernet_100Gb, InfiniBand_100Gb, InfiniBand_200Gb, InfiniBand_400Gb
+  network_type: "Ethernet_10Gb"
+
+  # 网络带宽，单位Gbps (默认: 10.0)
+  bandwidth_gbps: 10.0
+
+  # 网络延迟，单位毫秒 (默认: 1.0)
+  latency_ms: 1.0
+
+  # RDMA支持，高性能计算场景建议开启 (默认: false)
+  rdma_enabled: false
+
+  # NCCL通信后端，多GPU分布式训练必需 (默认: true)
+  nccl_enabled: true
+
+  # TCP通信支持 (默认: true)
+  tcp_enabled: true
+
+  # InfiniBand支持 (默认: false)
+  ib_enabled: false
+
+  # 网络接口名称，留空则自动选择 (默认: null)
+  network_interface: null
+
+  # 分布式训练通信后端: "nccl"(GPU), "gloo"(CPU), "mpi"
+  distributed_backend: "nccl"
+
+  # 通信超时时间，单位秒 (默认: 30)
+  timeout_seconds: 30
+
+# -----------------------------------------------------------------------------
+# 平台信息
+# -----------------------------------------------------------------------------
+# 定义运行平台和环境信息
+platform:
+  # 操作系统: "Linux", "Windows", "macOS", "FreeBSD" (默认: "Linux")
+  os: "Linux"
+
+  # 部署环境: "cloud"(云), "on-premise"(本地), "edge"(边缘), "hybrid"(混合)
+  environment: "cloud"
+
+  # 主机名，留空则自动获取 (默认: null)
+  hostname: null
+
+  # CUDA版本，留空则自动检测 (默认: null)
+  cuda_version: null
+
+  # cuDNN版本，留空则自动检测 (默认: null)
+  cudnn_version: null
+
+  # Python版本要求 (默认: ">=3.9")
+  python_version: ">=3.9"
+
+# =============================================================================
+# 多环境配置覆盖
+# =============================================================================
+
+# 开发环境 - 单卡GPU，资源受限
+environments:
+  dev:
+    gpu:
+      gpu_type: "NVIDIA_RTX_4090"
+      gpu_count: 1
+      vram_gb: 24
+      mixed_precision: true
+      memory_fraction: 0.8
+      parallel_strategy: "dp"
+    cpu:
+      cpu_type: "Intel_Core_i9"
+      cpu_cores: 24
+      cpu_threads: 32
+      num_workers: 4
+    memory:
+      total_memory_gb: 128
+      memory_type: "DDR5"
+      shared_memory_gb: 4
+    storage:
+      storage_type: "NVMe_SSD"
+      capacity_gb: 1000
+    network:
+      network_type: "Ethernet_1Gb"
+      bandwidth_gbps: 1.0
+    platform:
+      environment: "on-premise"
+
+  # 测试环境 - 中等规模，用于集成测试和性能验证
+  test:
+    gpu:
+      gpu_type: "NVIDIA_A100_40GB"
+      gpu_count: 2
+      vram_gb: 40
+      mixed_precision: true
+      memory_fraction: 0.85
+      parallel_strategy: "ddp"
+    cpu:
+      cpu_type: "Intel_Xeon"
+      cpu_cores: 32
+      cpu_threads: 64
+      num_workers: 8
+    memory:
+      total_memory_gb: 256
+      memory_type: "DDR4"
+      shared_memory_gb: 8
+    storage:
+      storage_type: "NVMe_SSD"
+      capacity_gb: 2000
+    network:
+      network_type: "Ethernet_10Gb"
+      bandwidth_gbps: 10.0
+    platform:
+      environment: "cloud"
+
+  # 生产环境 - 大规模集群，高性能训练
+  prod:
+    gpu:
+      gpu_type: "NVIDIA_H100_80GB"
+      gpu_count: 8
+      vram_gb: 80
+      mixed_precision: true
+      bf16_supported: true
+      fp8_supported: true
+      nvlink_enabled: true
+      nvlink_bandwidth_gbps: 900.0
+      memory_fraction: 0.95
+      parallel_strategy: "fsdp"
+    cpu:
+      cpu_type: "Intel_Xeon_Platinum"
+      cpu_cores: 96
+      cpu_threads: 192
+      num_workers: 16
+      numa_nodes: 2
+      cpu_affinity: true
+    memory:
+      total_memory_gb: 2048
+      memory_type: "DDR5"
+      memory_speed_mhz: 4800
+      shared_memory_gb: 32
+    storage:
+      storage_type: "NVMe_SSD"
+      capacity_gb: 30000
+      read_speed_mbps: 10000
+      write_speed_mbps: 8000
+      raid_config: "RAID10"
+    network:
+      network_type: "InfiniBand_400Gb"
+      bandwidth_gbps: 400.0
+      rdma_enabled: true
+      ib_enabled: true
+      distributed_backend: "nccl"
+    platform:
+      environment: "cloud"

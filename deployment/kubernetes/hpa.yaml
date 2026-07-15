@@ -1,0 +1,259 @@
+# =============================================================================
+# AGI Unified Framework - Kubernetes Horizontal Pod Autoscaler
+# =============================================================================
+# 根据CPU、内存使用率或其他自定义指标自动扩缩容Pod副本数
+# 支持稳定窗口、扩缩容策略和指标阈值配置
+# =============================================================================
+
+---
+# API服务HPA
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: agi-framework-api-hpa
+  namespace: agi-framework-prod
+  labels:
+    app.kubernetes.io/name: agi-framework-api
+    app.kubernetes.io/component: hpa
+    app.kubernetes.io/part-of: agi-unified-framework
+  annotations:
+    description: "HPA for AGI Framework API service"
+spec:
+  # 目标资源引用
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: agi-framework-api
+  
+  # 副本数范围
+  minReplicas: 3      # 最小副本数（确保高可用）
+  maxReplicas: 20     # 最大副本数（防止资源耗尽）
+  
+  # 指标配置
+  metrics:
+    # CPU使用率指标
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70  # CPU平均使用率达到70%时扩容
+    
+    # 内存使用率指标
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80  # 内存平均使用率达到80%时扩容
+    
+    # 自定义指标 - 每秒请求数（需要Metrics Server和Prometheus Adapter）
+    - type: Pods
+      pods:
+        metric:
+          name: http_requests_per_second
+        target:
+          type: AverageValue
+          averageValue: "1000"  # 每个Pod平均1000 RPS时扩容
+  
+  # 扩缩容行为配置
+  behavior:
+    # 扩容行为
+    scaleUp:
+      # 稳定窗口 - 指标持续满足条件后才扩容
+      stabilizationWindowSeconds: 60
+      # 扩容策略
+      policies:
+        - type: Percent
+          value: 100          # 每次最多扩容100%
+          periodSeconds: 60   # 在60秒内
+        - type: Pods
+          value: 4            # 或每次最多增加4个Pod
+          periodSeconds: 60
+      # 选择最保守的策略
+      selectPolicy: Min
+    
+    # 缩容行为
+    scaleDown:
+      # 稳定窗口 - 防止抖动，指标持续低于阈值后才缩容
+      stabilizationWindowSeconds: 300  # 5分钟稳定期
+      # 缩容策略
+      policies:
+        - type: Percent
+          value: 50           # 每次最多缩容50%
+          periodSeconds: 120  # 在120秒内
+        - type: Pods
+          value: 2            # 或每次最多减少2个Pod
+          periodSeconds: 120
+      # 选择最保守的策略
+      selectPolicy: Max
+
+---
+# Celery Worker HPA（基于队列长度）
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: agi-framework-worker-hpa
+  namespace: agi-framework-prod
+  labels:
+    app.kubernetes.io/name: agi-framework-worker
+    app.kubernetes.io/component: hpa
+    app.kubernetes.io/part-of: agi-unified-framework
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: agi-framework-worker
+  
+  minReplicas: 2
+  maxReplicas: 10
+  
+  metrics:
+    # 基于队列长度的自定义指标
+    - type: External
+      external:
+        metric:
+          name: celery_queue_length
+          selector:
+            matchLabels:
+              queue: default
+        target:
+          type: AverageValue
+          averageValue: "10"  # 队列中平均每个worker 10个任务时扩容
+    
+    # CPU使用率作为辅助指标
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 75
+  
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 600  # 10分钟稳定期
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 120
+
+---
+# 对象存储HPA（KEDA - Kubernetes Event-driven Autoscaling）
+# 需要安装KEDA: https://keda.sh/
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: agi-framework-storage-scaler
+  namespace: agi-framework-prod
+  labels:
+    app.kubernetes.io/name: agi-framework
+    app.kubernetes.io/component: keda-scaler
+    app.kubernetes.io/part-of: agi-unified-framework
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: agi-framework-storage-processor
+  
+  minReplicaCount: 0    # 可以缩容到0
+  maxReplicaCount: 50   # 最大50个副本
+  
+  # 冷却期配置
+  cooldownPeriod: 300   # 5分钟冷却期
+  pollingInterval: 30   # 30秒轮询一次
+  
+  triggers:
+    # S3对象创建事件触发
+    - type: aws-s3-queue
+      metadata:
+        bucketName: agi-framework-uploads
+        queueLength: "5"  # 队列中有5个消息时触发扩容
+      authenticationRef:
+        name: keda-aws-credentials
+    
+    # Kafka消息队列触发
+    - type: kafka
+      metadata:
+        bootstrapServers: kafka:9092
+        consumerGroup: agi-framework-group
+        topic: document-processing
+        lagThreshold: "100"  # 消费延迟超过100时扩容
+
+---
+# 预测性HPA（使用机器学习预测负载）
+# 需要安装Predictive HPA Controller
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: agi-framework-predictive-hpa
+  namespace: agi-framework-prod
+  annotations:
+    predictive-autoscaling.enabled: "true"
+    predictive-autoscaling.model: "prophet"
+    predictive-autoscaling.lookahead: "5m"
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: agi-framework-api
+  
+  minReplicas: 3
+  maxReplicas: 30
+  
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
+  
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0  # 预测性扩容不需要稳定窗口
+      policies:
+        - type: Percent
+          value: 200
+          periodSeconds: 60
+
+---
+# 垂直Pod自动扩缩容（VPA）
+# 用于自动调整Pod的资源请求和限制
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: agi-framework-api-vpa
+  namespace: agi-framework-prod
+  labels:
+    app.kubernetes.io/name: agi-framework-api
+    app.kubernetes.io/component: vpa
+    app.kubernetes.io/part-of: agi-unified-framework
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: agi-framework-api
+  
+  updatePolicy:
+    updateMode: "Auto"  # Auto, Recreate, Initial, Off
+    evictionRequirements:
+      - resources: ["cpu", "memory"]
+        changeRequirement: TargetHigherThanRequests
+  
+  resourcePolicy:
+    containerPolicies:
+      - containerName: api
+        minAllowed:
+          cpu: "100m"
+          memory: "256Mi"
+        maxAllowed:
+          cpu: "4000m"
+          memory: "8Gi"
+        controlledResources: ["cpu", "memory"]
+        controlledValues: RequestsAndLimits

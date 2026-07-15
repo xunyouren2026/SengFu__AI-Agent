@@ -1,0 +1,183 @@
+# =============================================================================
+# AGI Unified Framework - Kubernetes Service
+# =============================================================================
+# 定义服务的网络访问策略，将流量路由到匹配的Pod
+# 包含ClusterIP、NodePort和Headless服务类型
+# =============================================================================
+
+---
+# 主API服务 - ClusterIP
+apiVersion: v1
+kind: Service
+metadata:
+  name: agi-framework-api
+  namespace: agi-framework-prod
+  labels:
+    app.kubernetes.io/name: agi-framework-api
+    app.kubernetes.io/component: service
+    app.kubernetes.io/part-of: agi-unified-framework
+  annotations:
+    # Prometheus服务发现注解
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  # 会话亲和性配置
+  sessionAffinity: None
+  # 发布未就绪地址（用于优雅关闭）
+  publishNotReadyAddresses: false
+  # 端口定义
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+      # 应用协议（用于服务网格）
+      appProtocol: http
+    - name: https
+      port: 443
+      targetPort: http
+      protocol: TCP
+      appProtocol: https
+    - name: metrics
+      port: 9090
+      targetPort: metrics
+      protocol: TCP
+      appProtocol: http
+  # Pod选择器
+  selector:
+    app.kubernetes.io/name: agi-framework-api
+    app.kubernetes.io/component: api
+  # 集群IP分配策略
+  clusterIP: None  # Headless服务，用于直接Pod访问
+
+---
+# 主API服务 - LoadBalancer（用于外部访问）
+apiVersion: v1
+kind: Service
+metadata:
+  name: agi-framework-api-lb
+  namespace: agi-framework-prod
+  labels:
+    app.kubernetes.io/name: agi-framework-api
+    app.kubernetes.io/component: loadbalancer
+    app.kubernetes.io/part-of: agi-unified-framework
+  annotations:
+    # AWS Load Balancer Controller注解
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+    # 健康检查配置
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-protocol: "http"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-path: "/health"
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Local  # 保留客户端源IP
+  healthCheckNodePort: 30001
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      nodePort: 30080
+      protocol: TCP
+    - name: https
+      port: 443
+      targetPort: http
+      nodePort: 30443
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: agi-framework-api
+    app.kubernetes.io/component: api
+
+---
+# Redis服务
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: agi-framework-prod
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: cache
+    app.kubernetes.io/part-of: agi-unified-framework
+spec:
+  type: ClusterIP
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: cache
+
+---
+# PostgreSQL服务
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: agi-framework-prod
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: agi-unified-framework
+spec:
+  type: ClusterIP
+  ports:
+    - name: postgresql
+      port: 5432
+      targetPort: 5432
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: database
+
+---
+# Celery Flower监控服务
+apiVersion: v1
+kind: Service
+metadata:
+  name: celery-flower
+  namespace: agi-framework-prod
+  labels:
+    app.kubernetes.io/name: celery-flower
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/part-of: agi-unified-framework
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 5555
+      targetPort: 5555
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: celery-flower
+    app.kubernetes.io/component: monitoring
+
+---
+# Headless服务 - 用于有状态服务发现
+apiVersion: v1
+kind: Service
+metadata:
+  name: agi-framework-headless
+  namespace: agi-framework-prod
+  labels:
+    app.kubernetes.io/name: agi-framework
+    app.kubernetes.io/component: headless-service
+    app.kubernetes.io/part-of: agi-unified-framework
+spec:
+  type: ClusterIP
+  clusterIP: None  # Headless服务
+  publishNotReadyAddresses: true  # 发布未就绪地址
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+    - name: grpc
+      port: 50051
+      targetPort: 50051
+      protocol: TCP
+  selector:
+    app.kubernetes.io/part-of: agi-unified-framework

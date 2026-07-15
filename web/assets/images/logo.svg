@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#667eea"/>
+      <stop offset="100%" style="stop-color:#764ba2"/>
+    </linearGradient>
+  </defs>
+  <circle cx="25" cy="30" r="20" fill="url(#grad)"/>
+  <text x="25" y="36" font-size="16" font-weight="bold" fill="white" text-anchor="middle" font-family="Arial">AGI</text>
+  <text x="55" y="38" font-size="20" font-weight="bold" fill="#333" font-family="Arial, sans-serif">统一框架</text>
+</svg>

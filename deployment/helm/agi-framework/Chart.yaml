@@ -1,0 +1,142 @@
+# =============================================================================
+# AGI Unified Framework - Helm Chart
+# =============================================================================
+# Helm Chart用于在Kubernetes上打包、配置和部署AGI Unified Framework
+# 支持版本管理、依赖管理和配置模板化
+# =============================================================================
+
+apiVersion: v2
+name: agi-framework
+description: |
+  AGI Unified Framework - A comprehensive AI/ML platform for building, 
+  deploying, and managing artificial general intelligence applications.
+  This Helm chart deploys the complete AGI framework stack including API services,
+  workers, databases, caching, and monitoring components.
+type: application
+
+# Chart版本（遵循语义化版本规范）
+version: 1.0.0
+
+# 应用版本
+appVersion: "1.0.0"
+
+# Kubernetes版本要求
+kubeVersion: ">=1.24.0-0"
+
+# 关键字
+keywords:
+  - agi
+  - ai
+  - ml
+  - llm
+  - framework
+  - api
+  - celery
+  - python
+  - fastapi
+
+# 主页
+home: https://github.com/company/agi-unified-framework
+
+# 源码地址
+sources:
+  - https://github.com/company/agi-unified-framework
+  - https://github.com/company/agi-unified-framework/tree/main/deployment/helm
+
+# 维护者信息
+maintainers:
+  - name: Platform Team
+    email: platform-team@company.com
+    url: https://company.com/platform-team
+  - name: AI Infrastructure Team
+    email: ai-infra@company.com
+
+# 图标
+icon: https://company.com/agi-framework/icon.png
+
+# 依赖项
+dependencies:
+  # PostgreSQL数据库
+  - name: postgresql
+    version: 13.2.0
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+    tags:
+      - database
+  
+  # Redis缓存和消息队列
+  - name: redis
+    version: 18.5.0
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+    tags:
+      - cache
+      - message-queue
+  
+  # MinIO对象存储
+  - name: minio
+    version: 12.10.0
+    repository: https://charts.bitnami.com/bitnami
+    condition: minio.enabled
+    tags:
+      - storage
+  
+  # Prometheus监控
+  - name: kube-prometheus-stack
+    version: 55.0.0
+    repository: https://prometheus-community.github.io/helm-charts
+    condition: prometheus.enabled
+    tags:
+      - monitoring
+  
+  # NGINX Ingress Controller
+  - name: ingress-nginx
+    version: 4.8.3
+    repository: https://kubernetes.github.io/ingress-nginx
+    condition: ingress.nginx.enabled
+    tags:
+      - ingress
+  
+  # Cert Manager（证书管理）
+  - name: cert-manager
+    version: 1.13.0
+    repository: https://charts.jetstack.io
+    condition: certManager.enabled
+    tags:
+      - security
+  
+  # Jaeger链路追踪
+  - name: jaeger
+    version: 0.71.0
+    repository: https://jaegertracing.github.io/helm-charts
+    condition: jaeger.enabled
+    tags:
+      - tracing
+
+# 注释
+annotations:
+  # 分类
+  category: AI/ML Platform
+  
+  # 许可证
+  licenses: Apache-2.0
+  
+  # 镜像仓库
+  images: |
+    - name: agi-framework-api
+      image: registry.company.com/agi-framework:1.0.0
+    - name: agi-framework-worker
+      image: registry.company.com/agi-framework:1.0.0
+  
+  # 变更日志
+  artifacthub.io/changes: |
+    - kind: added
+      description: "Initial release of AGI Unified Framework Helm chart"
+    - kind: added
+      description: "Support for horizontal pod autoscaling"
+    - kind: added
+      description: "Integrated monitoring stack with Prometheus and Grafana"
+  
+  # 前置条件
+  artifacthub.io/prerelease: "false"
+  artifacthub.io/containsSecurityUpdates: "false"

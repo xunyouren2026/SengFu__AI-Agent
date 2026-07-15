@@ -1,0 +1,2122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件管理器 - AGI 统一框架</title>
+    <meta name="description" content="云存储文件管理器，支持OSS/COS对象存储，文件上传下载、预览和管理">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="../css/variables.css">
+    <link rel="stylesheet" href="../css/reset.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/animations.css">
+    
+    <!-- External Libraries -->
+    <script src="../js/utils.js"></script>
+    <script src="../js/state.js"></script>
+    <script src="../js/api-client.js"></script>
+    <script src="../js/common-utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <style>
+        /* File Manager Specific Styles */
+        .file-manager-container {
+            display: flex;
+            height: calc(100vh - var(--header-height, 56px));
+            overflow: hidden;
+        }
+        
+        /* Sidebar - Bucket List */
+        .bucket-sidebar {
+            width: 280px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-default);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+        
+        .bucket-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-default);
+        }
+        
+        .bucket-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+        
+        .bucket-search {
+            position: relative;
+        }
+        
+        .bucket-search input {
+            width: 100%;
+            padding: 8px 12px 8px 36px;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+            background: var(--bg-primary);
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .bucket-search input:focus {
+            outline: none;
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .bucket-search svg {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-caption);
+        }
+        
+        .bucket-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        
+        .bucket-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 4px;
+        }
+        
+        .bucket-item:hover {
+            background: var(--bg-hover);
+        }
+        
+        .bucket-item.active {
+            background: var(--primary-50);
+            border-left: 3px solid var(--primary-500);
+        }
+        
+        .bucket-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .bucket-icon.oss {
+            background: linear-gradient(135deg, #ff6a00 0%, #ff8c00 100%);
+            color: white;
+        }
+        
+        .bucket-icon.cos {
+            background: linear-gradient(135deg, #0066ff 0%, #00a8ff 100%);
+            color: white;
+        }
+        
+        .bucket-icon.s3 {
+            background: linear-gradient(135deg, #232f3e 0%, #ff9900 100%);
+            color: white;
+        }
+        
+        .bucket-icon.azure {
+            background: linear-gradient(135deg, #0078d4 0%, #00a4ef 100%);
+            color: white;
+        }
+        
+        .bucket-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .bucket-name {
+            font-weight: 500;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .bucket-meta {
+            font-size: 12px;
+            color: var(--text-caption);
+            margin-top: 2px;
+        }
+        
+        .bucket-stats {
+            text-align: right;
+        }
+        
+        .bucket-size {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        .bucket-files {
+            font-size: 11px;
+            color: var(--text-caption);
+        }
+        
+        .bucket-actions {
+            padding: 16px;
+            border-top: 1px solid var(--border-default);
+        }
+        
+        .bucket-actions .btn {
+            width: 100%;
+        }
+        
+        /* Main Content Area */
+        .file-manager-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--bg-primary);
+        }
+        
+        /* Toolbar */
+        .file-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border-default);
+            background: var(--bg-primary);
+            gap: 16px;
+        }
+        
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        
+        .breadcrumb-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .breadcrumb-item:hover {
+            color: var(--primary-500);
+        }
+        
+        .breadcrumb-item.active {
+            color: var(--text-primary);
+            font-weight: 500;
+            cursor: default;
+        }
+        
+        .breadcrumb-separator {
+            color: var(--text-caption);
+        }
+        
+        .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .view-toggle {
+            display: flex;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 4px;
+        }
+        
+        .view-btn {
+            padding: 6px 10px;
+            border-radius: var(--radius-md);
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+        
+        .view-btn:hover {
+            color: var(--text-primary);
+        }
+        
+        .view-btn.active {
+            background: var(--bg-primary);
+            color: var(--primary-500);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        /* Search Bar */
+        .file-search {
+            position: relative;
+            width: 300px;
+        }
+        
+        .file-search input {
+            width: 100%;
+            padding: 8px 12px 8px 40px;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+            background: var(--bg-secondary);
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .file-search input:focus {
+            outline: none;
+            background: var(--bg-primary);
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .file-search svg {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-caption);
+        }
+        
+        .file-search .search-clear {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-caption);
+            cursor: pointer;
+            padding: 4px;
+            display: none;
+        }
+        
+        .file-search .search-clear.visible {
+            display: block;
+        }
+        
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .action-btn:hover {
+            background: var(--bg-secondary);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+        
+        .action-btn.primary {
+            background: var(--primary-500);
+            border-color: var(--primary-500);
+            color: white;
+        }
+        
+        .action-btn.primary:hover {
+            background: var(--primary-600);
+            border-color: var(--primary-600);
+        }
+        
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* File List Container */
+        .file-list-container {
+            flex: 1;
+            overflow: auto;
+            padding: 16px 20px;
+        }
+        
+        /* Grid View */
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 16px;
+        }
+        
+        .file-grid-item {
+            position: relative;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-xl);
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        
+        .file-grid-item:hover {
+            border-color: var(--primary-300);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        
+        .file-grid-item.selected {
+            border-color: var(--primary-500);
+            background: var(--primary-50);
+        }
+        
+        .file-grid-item.drag-over {
+            border-color: var(--primary-500);
+            border-style: dashed;
+            background: var(--primary-50);
+        }
+        
+        .file-checkbox {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .file-grid-item:hover .file-checkbox,
+        .file-grid-item.selected .file-checkbox {
+            opacity: 1;
+        }
+        
+        .file-thumbnail {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-lg);
+            background: var(--bg-primary);
+            font-size: 40px;
+        }
+        
+        .file-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: var(--radius-lg);
+        }
+        
+        .file-grid-info {
+            text-align: center;
+        }
+        
+        .file-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 4px;
+        }
+        
+        .file-meta {
+            font-size: 12px;
+            color: var(--text-caption);
+        }
+        
+        /* List View */
+        .file-list {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+        }
+        
+        .file-list-header {
+            display: grid;
+            grid-template-columns: 40px 2fr 120px 150px 100px 80px;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-default);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .file-list-item {
+            display: grid;
+            grid-template-columns: 40px 2fr 120px 150px 100px 80px;
+            gap: 12px;
+            padding: 12px 16px;
+            align-items: center;
+            border-bottom: 1px solid var(--border-default);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .file-list-item:last-child {
+            border-bottom: none;
+        }
+        
+        .file-list-item:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .file-list-item.selected {
+            background: var(--primary-50);
+        }
+        
+        .file-list-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .file-list-icon {
+            font-size: 24px;
+            width: 32px;
+            text-align: center;
+        }
+        
+        .file-list-name {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .file-list-size,
+        .file-list-date,
+        .file-list-type {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .file-list-actions {
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .file-list-item:hover .file-list-actions {
+            opacity: 1;
+        }
+        
+        .file-action-btn {
+            padding: 6px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: var(--radius-md);
+            transition: all 0.2s;
+        }
+        
+        .file-action-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        
+        /* Empty State */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            text-align: center;
+        }
+        
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        .empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .empty-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+            max-width: 400px;
+        }
+        
+        /* Drop Zone */
+        .drop-zone {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(59, 130, 246, 0.1);
+            border: 4px dashed var(--primary-500);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            pointer-events: none;
+        }
+        
+        .drop-zone.active {
+            display: flex;
+        }
+        
+        .drop-zone-content {
+            text-align: center;
+            padding: 40px;
+            background: var(--bg-primary);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-2xl);
+        }
+        
+        .drop-zone-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+        
+        .drop-zone-text {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        /* Upload Progress */
+        .upload-progress-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 400px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            z-index: 900;
+            overflow: hidden;
+        }
+        
+        .upload-progress-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            border-bottom: 1px solid var(--border-default);
+            background: var(--bg-secondary);
+        }
+        
+        .upload-progress-title {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .upload-close-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+        }
+        
+        .upload-list {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        
+        .upload-item {
+            padding: 12px;
+            border-radius: var(--radius-lg);
+            margin-bottom: 8px;
+            background: var(--bg-secondary);
+        }
+        
+        .upload-item-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .upload-item-name {
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .upload-item-status {
+            font-size: 12px;
+            color: var(--text-caption);
+        }
+        
+        .upload-progress-bar {
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-full);
+            overflow: hidden;
+        }
+        
+        .upload-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-500), var(--primary-400));
+            border-radius: var(--radius-full);
+            transition: width 0.3s ease;
+        }
+        
+        .upload-progress-fill.success {
+            background: var(--success-500);
+        }
+        
+        .upload-progress-fill.error {
+            background: var(--danger-500);
+        }
+        
+        /* File Preview Modal */
+        .preview-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .preview-modal.active {
+            display: flex;
+        }
+        
+        .preview-content {
+            max-width: 90%;
+            max-height: 90%;
+            background: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .preview-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-default);
+        }
+        
+        .preview-title {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .preview-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        
+        .preview-body {
+            flex: 1;
+            overflow: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            min-width: 600px;
+            min-height: 400px;
+        }
+        
+        .preview-body img {
+            max-width: 100%;
+            max-height: 70vh;
+            object-fit: contain;
+        }
+        
+        .preview-body pre {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: var(--radius-lg);
+            max-width: 800px;
+            max-height: 70vh;
+            overflow: auto;
+            font-family: var(--font-family-mono);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .preview-body iframe {
+            width: 800px;
+            height: 600px;
+            border: none;
+        }
+        
+        /* Context Menu */
+        .context-menu {
+            position: fixed;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            padding: 8px 0;
+            min-width: 180px;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .context-menu.active {
+            display: block;
+        }
+        
+        .context-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 14px;
+        }
+        
+        .context-menu-item:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .context-menu-item.danger {
+            color: var(--danger-500);
+        }
+        
+        .context-menu-divider {
+            height: 1px;
+            background: var(--border-default);
+            margin: 8px 0;
+        }
+        
+        /* Storage Stats */
+        .storage-stats {
+            padding: 16px;
+            border-top: 1px solid var(--border-default);
+            background: var(--bg-secondary);
+        }
+        
+        .storage-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .storage-bar {
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-full);
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        
+        .storage-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-500), var(--primary-400));
+            border-radius: var(--radius-full);
+            transition: width 0.3s ease;
+        }
+        
+        .storage-fill.warning {
+            background: linear-gradient(90deg, var(--warning-500), var(--warning-400));
+        }
+        
+        .storage-fill.danger {
+            background: linear-gradient(90deg, var(--danger-500), var(--danger-400));
+        }
+        
+        .storage-text {
+            font-size: 12px;
+            color: var(--text-caption);
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        /* Selection Bar */
+        .selection-bar {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            background: var(--primary-500);
+            color: white;
+        }
+        
+        .selection-bar.active {
+            display: flex;
+        }
+        
+        .selection-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .selection-count {
+            font-weight: 600;
+        }
+        
+        .selection-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .selection-btn {
+            padding: 6px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .selection-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* New Folder Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal {
+            background: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            width: 100%;
+            max-width: 480px;
+            box-shadow: var(--shadow-2xl);
+            overflow: hidden;
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-default);
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 16px 20px;
+            border-top: 1px solid var(--border-default);
+            background: var(--bg-secondary);
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .bucket-sidebar {
+                position: fixed;
+                left: -280px;
+                top: var(--header-height);
+                bottom: 0;
+                z-index: 100;
+                transition: left 0.3s ease;
+            }
+            
+            .bucket-sidebar.open {
+                left: 0;
+            }
+            
+            .file-search {
+                width: 200px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .file-list-header,
+            .file-list-item {
+                grid-template-columns: 40px 1fr 80px;
+            }
+            
+            .file-list-cell:nth-child(4),
+            .file-list-cell:nth-child(5),
+            .file-list-cell:nth-child(6) {
+                display: none;
+            }
+            
+            .file-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+            
+            .upload-progress-container {
+                width: calc(100% - 40px);
+                left: 20px;
+                right: 20px;
+            }
+        }
+        
+        /* File Type Icons Colors */
+        .file-icon-image { color: #8b5cf6; }
+        .file-icon-video { color: #ef4444; }
+        .file-icon-audio { color: #f59e0b; }
+        .file-icon-document { color: #3b82f6; }
+        .file-icon-code { color: #10b981; }
+        .file-icon-archive { color: #f97316; }
+        .file-icon-folder { color: #fbbf24; }
+    </style>
+</head>
+<body>
+    <!-- 空状态提示 -->
+    <div id="empty-state" style="display:none; background:#fff3cd; border:1px solid #ffc107; 
+         border-radius:8px; padding:15px; margin:20px; text-align:center; color:#856404;">
+        ⚠️ 暂无数据，请确保后端服务已启动
+    </div>
+    
+    <div class="app-container">
+        <!-- Top Navigation -->
+        <header class="top-navbar" id="topNavbar">
+            <div class="navbar-left">
+                <button class="btn btn-icon sidebar-toggle" id="sidebarToggle" title="切换侧边栏">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" fill="currentColor"/>
+                    </svg>
+                </button>
+                <a href="../index.html" class="navbar-brand">
+                    <span class="brand-text">AGI 统一框架</span>
+                </a>
+            </div>
+            <div class="navbar-right">
+                <button class="btn btn-icon theme-toggle" id="themeToggle" title="切换主题">
+                    <span id="themeIcon">🌙</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- File Manager Container -->
+        <div class="file-manager-container">
+            <!-- Bucket Sidebar -->
+            <aside class="bucket-sidebar" id="bucketSidebar">
+                <div class="bucket-header">
+                    <div class="bucket-title">存储桶</div>
+                    <div class="bucket-search">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                            <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                        </svg>
+                        <input type="text" id="bucketSearch" placeholder="搜索存储桶...">
+                    </div>
+                </div>
+                
+                <div class="bucket-list" id="bucketList">
+                    <!-- Buckets will be loaded dynamically -->
+                </div>
+                
+                <div class="storage-stats">
+                    <div class="storage-title">存储使用情况</div>
+                    <div class="storage-bar">
+                        <div class="storage-fill" id="storageFill" style="width: 45%"></div>
+                    </div>
+                    <div class="storage-text">
+                        <span id="storageUsed">450 GB 已用</span>
+                        <span id="storageTotal">1 TB 总计</span>
+                    </div>
+                </div>
+                
+                <div class="bucket-actions">
+                    <button class="btn btn-primary" id="addBucketBtn">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                        </svg>
+                        添加存储桶
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="file-manager-main">
+                <!-- Selection Bar -->
+                <div class="selection-bar" id="selectionBar">
+                    <div class="selection-info">
+                        <span class="selection-count" id="selectionCount">已选择 0 个项目</span>
+                        <span id="selectionSize">总大小: 0 B</span>
+                    </div>
+                    <div class="selection-actions">
+                        <button class="selection-btn" id="downloadSelected">下载</button>
+                        <button class="selection-btn" id="moveSelected">移动</button>
+                        <button class="selection-btn" id="copySelected">复制</button>
+                        <button class="selection-btn" id="deleteSelected">删除</button>
+                        <button class="selection-btn" id="clearSelection">取消选择</button>
+                    </div>
+                </div>
+
+                <!-- Toolbar -->
+                <div class="file-toolbar" id="fileToolbar">
+                    <div class="toolbar-left">
+                        <nav class="breadcrumb" id="breadcrumb">
+                            <span class="breadcrumb-item" data-path="/">
+                                <span>🏠</span>
+                                <span>根目录</span>
+                            </span>
+                        </nav>
+                    </div>
+                    
+                    <div class="toolbar-right">
+                        <div class="file-search">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                            </svg>
+                            <input type="text" id="fileSearch" placeholder="搜索文件...">
+                            <button class="search-clear" id="searchClear">✕</button>
+                        </div>
+                        
+                        <div class="view-toggle">
+                            <button class="view-btn active" id="gridView" title="网格视图">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                    <path d="M3 3v8h8V3H3zm6 6H5V5h4v4zm-6 4v8h8v-8H3zm6 6H5v-4h4v4zm4-16v8h8V3h-8zm6 6h-4V5h4v4zm-6 4v8h8v-8h-8zm6 6h-4v-4h4v4z"/>
+                                </svg>
+                            </button>
+                            <button class="view-btn" id="listView" title="列表视图">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                    <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <button class="action-btn" id="newFolderBtn">
+                                <span>📁</span>
+                                <span>新建文件夹</span>
+                            </button>
+                            <button class="action-btn primary" id="uploadBtn">
+                                <span>⬆️</span>
+                                <span>上传</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File List Container -->
+                <div class="file-list-container" id="fileListContainer">
+                    <div class="file-grid" id="fileGrid">
+                        <!-- Files will be loaded dynamically -->
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Drop Zone -->
+        <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-content">
+                <div class="drop-zone-icon">📤</div>
+                <div class="drop-zone-text">释放以上传文件</div>
+            </div>
+        </div>
+
+        <!-- Upload Progress -->
+        <div class="upload-progress-container" id="uploadProgress" style="display: none;">
+            <div class="upload-progress-header">
+                <span class="upload-progress-title">
+                    <span>📤</span>
+                    <span>上传进度</span>
+                </span>
+                <button class="upload-close-btn" id="closeUpload">✕</button>
+            </div>
+            <div class="upload-list" id="uploadList">
+                <!-- Upload items will be added dynamically -->
+            </div>
+        </div>
+
+        <!-- File Preview Modal -->
+        <div class="preview-modal" id="previewModal">
+            <div class="preview-content">
+                <div class="preview-header">
+                    <span class="preview-title" id="previewTitle">
+                        <span>📄</span>
+                        <span>文件名</span>
+                    </span>
+                    <button class="preview-close" id="closePreview">✕</button>
+                </div>
+                <div class="preview-body" id="previewBody">
+                    <!-- Preview content will be loaded dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Context Menu -->
+        <div class="context-menu" id="contextMenu">
+            <div class="context-menu-item" id="ctxPreview">
+                <span>👁️</span>
+                <span>预览</span>
+            </div>
+            <div class="context-menu-item" id="ctxDownload">
+                <span>⬇️</span>
+                <span>下载</span>
+            </div>
+            <div class="context-menu-item" id="ctxCopy">
+                <span>📋</span>
+                <span>复制链接</span>
+            </div>
+            <div class="context-menu-divider"></div>
+            <div class="context-menu-item" id="ctxRename">
+                <span>✏️</span>
+                <span>重命名</span>
+            </div>
+            <div class="context-menu-item" id="ctxMove">
+                <span>📂</span>
+                <span>移动</span>
+            </div>
+            <div class="context-menu-divider"></div>
+            <div class="context-menu-item danger" id="ctxDelete">
+                <span>🗑️</span>
+                <span>删除</span>
+            </div>
+        </div>
+
+        <!-- New Folder Modal -->
+        <div class="modal-overlay" id="newFolderModal">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 class="modal-title">新建文件夹</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">文件夹名称</label>
+                        <input type="text" class="form-input" id="folderNameInput" placeholder="输入文件夹名称">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn" id="cancelNewFolder">取消</button>
+                    <button class="btn btn-primary" id="confirmNewFolder">创建</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // File Manager Application
+        class FileManager {
+            constructor() {
+                this.currentBucket = null;
+                this.currentPath = '/';
+                this.viewMode = 'grid';
+                this.selectedFiles = new Set();
+                this.buckets = [];
+                this.files = [];
+                this.uploadQueue = [];
+                this.contextMenuTarget = null;
+                
+                this.init();
+            }
+            
+            init() {
+                this.loadBuckets();
+                this.bindEvents();
+                this.loadTheme();
+            }
+            
+            // Load buckets from API
+            async loadBuckets() {
+                // Mock data - replace with actual API call
+                this.buckets = [
+                    { id: 'oss-1', name: 'production-assets', type: 'oss', region: 'cn-hangzhou', size: 150000000000, files: 15420 },
+                    { id: 'oss-2', name: 'user-uploads', type: 'oss', region: 'cn-beijing', size: 89000000000, files: 8932 },
+                    { id: 'cos-1', name: 'backup-storage', type: 'cos', region: 'ap-guangzhou', size: 210000000000, files: 5621 },
+                    { id: 's3-1', name: 'global-cdn', type: 's3', region: 'us-east-1', size: 450000000000, files: 23100 },
+                    { id: 'azure-1', name: 'enterprise-docs', type: 'azure', region: 'eastasia', size: 12000000000, files: 3421 }
+                ];
+                
+                this.renderBuckets();
+                if (this.buckets.length > 0) {
+                    this.selectBucket(this.buckets[0]);
+                }
+            }
+            
+            // Render bucket list
+            renderBuckets() {
+                const container = document.getElementById('bucketList');
+                container.innerHTML = this.buckets.map(bucket => `
+                    <div class="bucket-item ${bucket.id === this.currentBucket?.id ? 'active' : ''}" data-bucket-id="${bucket.id}">
+                        <div class="bucket-icon ${bucket.type}">
+                            ${this.getBucketIcon(bucket.type)}
+                        </div>
+                        <div class="bucket-info">
+                            <div class="bucket-name">${bucket.name}</div>
+                            <div class="bucket-meta">${bucket.region}</div>
+                        </div>
+                        <div class="bucket-stats">
+                            <div class="bucket-size">${this.formatSize(bucket.size)}</div>
+                            <div class="bucket-files">${bucket.files.toLocaleString()} 文件</div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                // Update storage stats
+                const totalSize = this.buckets.reduce((sum, b) => sum + b.size, 0);
+                const totalCapacity = 1099511627776; // 1TB
+                const percentage = (totalSize / totalCapacity) * 100;
+                
+                document.getElementById('storageFill').style.width = `${Math.min(percentage, 100)}%`;
+                document.getElementById('storageFill').className = `storage-fill ${percentage > 80 ? 'danger' : percentage > 60 ? 'warning' : ''}`;
+                document.getElementById('storageUsed').textContent = `${this.formatSize(totalSize)} 已用`;
+            }
+            
+            getBucketIcon(type) {
+                const icons = {
+                    oss: '☁️',
+                    cos: '☁️',
+                    s3: '☁️',
+                    azure: '☁️'
+                };
+                return icons[type] || '📦';
+            }
+            
+            // Select bucket
+            selectBucket(bucket) {
+                this.currentBucket = bucket;
+                this.currentPath = '/';
+                this.selectedFiles.clear();
+                this.updateSelectionBar();
+                this.renderBuckets();
+                this.loadFiles();
+            }
+            
+            // Load files from current bucket/path
+            async loadFiles() {
+                // Mock data - replace with actual API call
+                this.files = [
+                    { id: 'f1', name: 'documents', type: 'folder', size: 0, modified: '2024-01-15T10:30:00Z', items: 12 },
+                    { id: 'f2', name: 'images', type: 'folder', size: 0, modified: '2024-01-14T16:45:00Z', items: 45 },
+                    { id: 'f3', name: 'videos', type: 'folder', size: 0, modified: '2024-01-13T09:20:00Z', items: 8 },
+                    { id: 'f4', name: 'project-spec.pdf', type: 'document', size: 2500000, modified: '2024-01-15T14:30:00Z', ext: 'pdf' },
+                    { id: 'f5', name: 'logo.png', type: 'image', size: 450000, modified: '2024-01-14T11:20:00Z', ext: 'png' },
+                    { id: 'f6', name: 'main.js', type: 'code', size: 15000, modified: '2024-01-15T16:45:00Z', ext: 'js' },
+                    { id: 'f7', name: 'styles.css', type: 'code', size: 8500, modified: '2024-01-15T16:40:00Z', ext: 'css' },
+                    { id: 'f8', name: 'data.json', type: 'code', size: 120000, modified: '2024-01-13T10:15:00Z', ext: 'json' },
+                    { id: 'f9', name: 'archive.zip', type: 'archive', size: 15000000, modified: '2024-01-12T08:30:00Z', ext: 'zip' },
+                    { id: 'f10', name: 'presentation.pptx', type: 'document', size: 3500000, modified: '2024-01-11T14:20:00Z', ext: 'pptx' },
+                    { id: 'f11', name: 'song.mp3', type: 'audio', size: 8500000, modified: '2024-01-10T09:45:00Z', ext: 'mp3' },
+                    { id: 'f12', name: 'movie.mp4', type: 'video', size: 1500000000, modified: '2024-01-09T16:30:00Z', ext: 'mp4' }
+                ];
+                
+                this.renderFiles();
+                this.updateBreadcrumb();
+            }
+            
+            // Render files
+            renderFiles() {
+                const container = document.getElementById('fileGrid');
+                
+                if (this.files.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">📂</div>
+                            <div class="empty-title">文件夹为空</div>
+                            <div class="empty-description">拖放文件到此处或点击上传按钮添加文件</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                if (this.viewMode === 'grid') {
+                    this.renderGridView(container);
+                } else {
+                    this.renderListView(container);
+                }
+            }
+            
+            renderGridView(container) {
+                container.className = 'file-grid';
+                container.innerHTML = this.files.map(file => `
+                    <div class="file-grid-item ${this.selectedFiles.has(file.id) ? 'selected' : ''}" 
+                         data-file-id="${file.id}" data-file-type="${file.type}">
+                        <input type="checkbox" class="file-checkbox" 
+                               ${this.selectedFiles.has(file.id) ? 'checked' : ''}>
+                        <div class="file-thumbnail">
+                            ${this.getFileIcon(file)}
+                        </div>
+                        <div class="file-grid-info">
+                            <div class="file-name" title="${file.name}">${file.name}</div>
+                            <div class="file-meta">
+                                ${file.type === 'folder' ? `${file.items} 个项目` : this.formatSize(file.size)}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            renderListView(container) {
+                container.className = 'file-list';
+                container.innerHTML = `
+                    <div class="file-list-header">
+                        <div></div>
+                        <div>名称</div>
+                        <div>大小</div>
+                        <div>修改日期</div>
+                        <div>类型</div>
+                        <div></div>
+                    </div>
+                    ${this.files.map(file => `
+                        <div class="file-list-item ${this.selectedFiles.has(file.id) ? 'selected' : ''}" 
+                             data-file-id="${file.id}" data-file-type="${file.type}">
+                            <div class="file-list-cell">
+                                <input type="checkbox" ${this.selectedFiles.has(file.id) ? 'checked' : ''}>
+                            </div>
+                            <div class="file-list-cell">
+                                <span class="file-list-icon">${this.getFileIcon(file, true)}</span>
+                                <span class="file-list-name">${file.name}</span>
+                            </div>
+                            <div class="file-list-cell file-list-size">
+                                ${file.type === 'folder' ? '-' : this.formatSize(file.size)}
+                            </div>
+                            <div class="file-list-cell file-list-date">
+                                ${this.formatDate(file.modified)}
+                            </div>
+                            <div class="file-list-cell file-list-type">
+                                ${file.type === 'folder' ? '文件夹' : file.ext?.toUpperCase() || '文件'}
+                            </div>
+                            <div class="file-list-cell file-list-actions">
+                                <button class="file-action-btn" title="下载">⬇️</button>
+                                <button class="file-action-btn" title="更多">⋮</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
+            }
+            
+            getFileIcon(file, simple = false) {
+                if (file.type === 'folder') {
+                    return simple ? '📁' : '<span class="file-icon-folder">📁</span>';
+                }
+                
+                const iconMap = {
+                    image: '🖼️',
+                    video: '🎬',
+                    audio: '🎵',
+                    document: '📄',
+                    code: '💻',
+                    archive: '📦'
+                };
+                
+                const icon = iconMap[file.type] || '📄';
+                return simple ? icon : `<span class="file-icon-${file.type}">${icon}</span>`;
+            }
+            
+            // Update breadcrumb
+            updateBreadcrumb() {
+                const paths = this.currentPath.split('/').filter(p => p);
+                const container = document.getElementById('breadcrumb');
+                
+                let html = `
+                    <span class="breadcrumb-item" data-path="/">
+                        <span>🏠</span>
+                        <span>${this.currentBucket?.name || '根目录'}</span>
+                    </span>
+                `;
+                
+                let currentPath = '';
+                paths.forEach((path, index) => {
+                    currentPath += '/' + path;
+                    html += `
+                        <span class="breadcrumb-separator">/</span>
+                        <span class="breadcrumb-item ${index === paths.length - 1 ? 'active' : ''}" data-path="${currentPath}">
+                            <span>${path}</span>
+                        </span>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            }
+            
+            // Bind events
+            bindEvents() {
+                // Bucket selection
+                document.getElementById('bucketList').addEventListener('click', (e) => {
+                    const item = e.target.closest('.bucket-item');
+                    if (item) {
+                        const bucketId = item.dataset.bucketId;
+                        const bucket = this.buckets.find(b => b.id === bucketId);
+                        if (bucket) this.selectBucket(bucket);
+                    }
+                });
+                
+                // View toggle
+                document.getElementById('gridView').addEventListener('click', () => {
+                    this.viewMode = 'grid';
+                    document.getElementById('gridView').classList.add('active');
+                    document.getElementById('listView').classList.remove('active');
+                    this.renderFiles();
+                });
+                
+                document.getElementById('listView').addEventListener('click', () => {
+                    this.viewMode = 'list';
+                    document.getElementById('listView').classList.add('active');
+                    document.getElementById('gridView').classList.remove('active');
+                    this.renderFiles();
+                });
+                
+                // File selection
+                document.getElementById('fileGrid').addEventListener('click', (e) => {
+                    const item = e.target.closest('.file-grid-item, .file-list-item');
+                    if (!item) return;
+                    
+                    const fileId = item.dataset.fileId;
+                    const fileType = item.dataset.fileType;
+                    
+                    if (e.target.type === 'checkbox') {
+                        e.stopPropagation();
+                        this.toggleSelection(fileId);
+                    } else if (fileType === 'folder') {
+                        this.navigateToFolder(fileId);
+                    } else if (e.shiftKey) {
+                        this.rangeSelect(fileId);
+                    } else {
+                        this.openFile(fileId);
+                    }
+                });
+                
+                // Context menu
+                document.getElementById('fileGrid').addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    const item = e.target.closest('.file-grid-item, .file-list-item');
+                    if (item) {
+                        this.contextMenuTarget = item.dataset.fileId;
+                        this.showContextMenu(e.clientX, e.clientY);
+                    }
+                });
+                
+                document.addEventListener('click', () => {
+                    document.getElementById('contextMenu').classList.remove('active');
+                });
+                
+                // Context menu actions
+                document.getElementById('ctxPreview').addEventListener('click', () => this.previewFile(this.contextMenuTarget));
+                document.getElementById('ctxDownload').addEventListener('click', () => this.downloadFile(this.contextMenuTarget));
+                document.getElementById('ctxDelete').addEventListener('click', () => this.deleteFile(this.contextMenuTarget));
+                
+                // Drag and drop
+                this.bindDragDrop();
+                
+                // Search
+                document.getElementById('fileSearch').addEventListener('input', (e) => {
+                    this.searchFiles(e.target.value);
+                });
+                
+                document.getElementById('searchClear').addEventListener('click', () => {
+                    document.getElementById('fileSearch').value = '';
+                    this.searchFiles('');
+                });
+                
+                // New folder
+                document.getElementById('newFolderBtn').addEventListener('click', () => {
+                    document.getElementById('newFolderModal').classList.add('active');
+                    document.getElementById('folderNameInput').focus();
+                });
+                
+                document.getElementById('cancelNewFolder').addEventListener('click', () => {
+                    document.getElementById('newFolderModal').classList.remove('active');
+                });
+                
+                document.getElementById('confirmNewFolder').addEventListener('click', () => {
+                    this.createFolder();
+                });
+                
+                // Upload
+                document.getElementById('uploadBtn').addEventListener('click', () => {
+                    this.openFilePicker();
+                });
+                
+                document.getElementById('closeUpload').addEventListener('click', () => {
+                    document.getElementById('uploadProgress').style.display = 'none';
+                });
+                
+                // Preview modal
+                document.getElementById('closePreview').addEventListener('click', () => {
+                    document.getElementById('previewModal').classList.remove('active');
+                });
+                
+                document.getElementById('previewModal').addEventListener('click', (e) => {
+                    if (e.target === document.getElementById('previewModal')) {
+                        document.getElementById('previewModal').classList.remove('active');
+                    }
+                });
+                
+                // Selection bar
+                document.getElementById('clearSelection').addEventListener('click', () => {
+                    this.selectedFiles.clear();
+                    this.updateSelectionBar();
+                    this.renderFiles();
+                });
+                
+                document.getElementById('deleteSelected').addEventListener('click', () => {
+                    this.deleteSelectedFiles();
+                });
+                
+                // Theme toggle
+                document.getElementById('themeToggle').addEventListener('click', () => {
+                    this.toggleTheme();
+                });
+                
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        document.getElementById('previewModal').classList.remove('active');
+                        document.getElementById('newFolderModal').classList.remove('active');
+                        document.getElementById('contextMenu').classList.remove('active');
+                    }
+                    
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+                        e.preventDefault();
+                        this.selectAll();
+                    }
+                    
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                        e.preventDefault();
+                        document.getElementById('fileSearch').focus();
+                    }
+                });
+            }
+            
+            bindDragDrop() {
+                const container = document.getElementById('fileListContainer');
+                const dropZone = document.getElementById('dropZone');
+                
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    document.body.addEventListener(eventName, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    });
+                });
+                
+                document.body.addEventListener('dragenter', () => {
+                    dropZone.classList.add('active');
+                });
+                
+                dropZone.addEventListener('dragleave', (e) => {
+                    if (e.target === dropZone) {
+                        dropZone.classList.remove('active');
+                    }
+                });
+                
+                dropZone.addEventListener('drop', (e) => {
+                    dropZone.classList.remove('active');
+                    const files = e.dataTransfer.files;
+                    this.handleFiles(files);
+                });
+                
+                // File item drag
+                container.addEventListener('dragstart', (e) => {
+                    const item = e.target.closest('.file-grid-item, .file-list-item');
+                    if (item) {
+                        e.dataTransfer.setData('text/plain', item.dataset.fileId);
+                        item.style.opacity = '0.5';
+                    }
+                });
+                
+                container.addEventListener('dragend', (e) => {
+                    const item = e.target.closest('.file-grid-item, .file-list-item');
+                    if (item) {
+                        item.style.opacity = '';
+                    }
+                });
+                
+                container.addEventListener('dragover', (e) => {
+                    const item = e.target.closest('.file-grid-item[data-file-type="folder"], .file-list-item[data-file-type="folder"]');
+                    if (item) {
+                        item.classList.add('drag-over');
+                    }
+                });
+                
+                container.addEventListener('dragleave', (e) => {
+                    const item = e.target.closest('.file-grid-item, .file-list-item');
+                    if (item) {
+                        item.classList.remove('drag-over');
+                    }
+                });
+                
+                container.addEventListener('drop', (e) => {
+                    const item = e.target.closest('.file-grid-item[data-file-type="folder"], .file-list-item[data-file-type="folder"]');
+                    if (item) {
+                        item.classList.remove('drag-over');
+                        const draggedId = e.dataTransfer.getData('text/plain');
+                        const targetId = item.dataset.fileId;
+                        this.moveFile(draggedId, targetId);
+                    }
+                });
+            }
+            
+            // Toggle file selection
+            toggleSelection(fileId) {
+                if (this.selectedFiles.has(fileId)) {
+                    this.selectedFiles.delete(fileId);
+                } else {
+                    this.selectedFiles.add(fileId);
+                }
+                this.updateSelectionBar();
+                this.renderFiles();
+            }
+            
+            // Range selection
+            rangeSelect(fileId) {
+                const fileIds = this.files.map(f => f.id);
+                const lastSelected = Array.from(this.selectedFiles).pop();
+                const currentIndex = fileIds.indexOf(fileId);
+                const lastIndex = fileIds.indexOf(lastSelected);
+                
+                if (lastIndex !== -1) {
+                    const start = Math.min(currentIndex, lastIndex);
+                    const end = Math.max(currentIndex, lastIndex);
+                    for (let i = start; i <= end; i++) {
+                        this.selectedFiles.add(fileIds[i]);
+                    }
+                } else {
+                    this.selectedFiles.add(fileId);
+                }
+                
+                this.updateSelectionBar();
+                this.renderFiles();
+            }
+            
+            // Select all files
+            selectAll() {
+                this.files.forEach(f => this.selectedFiles.add(f.id));
+                this.updateSelectionBar();
+                this.renderFiles();
+            }
+            
+            // Update selection bar
+            updateSelectionBar() {
+                const bar = document.getElementById('selectionBar');
+                const count = this.selectedFiles.size;
+                
+                if (count > 0) {
+                    bar.classList.add('active');
+                    document.getElementById('selectionCount').textContent = `已选择 ${count} 个项目`;
+                    
+                    const totalSize = this.files
+                        .filter(f => this.selectedFiles.has(f.id))
+                        .reduce((sum, f) => sum + (f.size || 0), 0);
+                    document.getElementById('selectionSize').textContent = `总大小: ${this.formatSize(totalSize)}`;
+                } else {
+                    bar.classList.remove('active');
+                }
+            }
+            
+            // Navigate to folder
+            navigateToFolder(folderId) {
+                const folder = this.files.find(f => f.id === folderId);
+                if (folder) {
+                    this.currentPath += (this.currentPath === '/' ? '' : '/') + folder.name;
+                    this.loadFiles();
+                }
+            }
+            
+            // Open file
+            openFile(fileId) {
+                const file = this.files.find(f => f.id === fileId);
+                if (file && file.type !== 'folder') {
+                    this.previewFile(fileId);
+                }
+            }
+            
+            // Preview file
+            previewFile(fileId) {
+                const file = this.files.find(f => f.id === fileId);
+                if (!file) return;
+                
+                document.getElementById('previewTitle').innerHTML = `
+                    <span>${this.getFileIcon(file, true)}</span>
+                    <span>${file.name}</span>
+                `;
+                
+                const body = document.getElementById('previewBody');
+                
+                if (file.type === 'image') {
+                    body.innerHTML = `<img src="https://via.placeholder.com/800x600/3b82f6/ffffff?text=${file.name}" alt="${file.name}">`;
+                } else if (file.type === 'code' || file.ext === 'json') {
+                    body.innerHTML = `<pre><code>// ${file.name}
+// Size: ${this.formatSize(file.size)}
+// Modified: ${this.formatDate(file.modified)}
+
+{
+  "name": "${file.name}",
+  "type": "${file.type}",
+  "size": ${file.size},
+  "modified": "${file.modified}"
+}</code></pre>`;
+                } else if (file.ext === 'pdf') {
+                    body.innerHTML = `<iframe src="https://via.placeholder.com/800x600?text=PDF+Preview:+${file.name}"></iframe>`;
+                } else {
+                    body.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">📄</div>
+                            <div class="empty-title">无法预览此文件</div>
+                            <div class="empty-description">下载文件以查看内容</div>
+                        </div>
+                    `;
+                }
+                
+                document.getElementById('previewModal').classList.add('active');
+            }
+            
+            // Show context menu
+            showContextMenu(x, y) {
+                const menu = document.getElementById('contextMenu');
+                menu.style.left = `${Math.min(x, window.innerWidth - 200)}px`;
+                menu.style.top = `${Math.min(y, window.innerHeight - 250)}px`;
+                menu.classList.add('active');
+            }
+            
+            // Search files
+            searchFiles(query) {
+                const clearBtn = document.getElementById('searchClear');
+                clearBtn.classList.toggle('visible', query.length > 0);
+                
+                if (!query) {
+                    this.loadFiles();
+                    return;
+                }
+                
+                const filtered = this.files.filter(f => 
+                    f.name.toLowerCase().includes(query.toLowerCase())
+                );
+                
+                this.files = filtered;
+                this.renderFiles();
+            }
+            
+            // Create folder
+            createFolder() {
+                const name = document.getElementById('folderNameInput').value.trim();
+                if (!name) return;
+                
+                const newFolder = {
+                    id: 'folder-' + Date.now(),
+                    name: name,
+                    type: 'folder',
+                    size: 0,
+                    modified: new Date().toISOString(),
+                    items: 0
+                };
+                
+                this.files.unshift(newFolder);
+                this.renderFiles();
+                document.getElementById('newFolderModal').classList.remove('active');
+                document.getElementById('folderNameInput').value = '';
+                
+                this.showToast('文件夹创建成功', 'success');
+            }
+            
+            // Open file picker
+            openFilePicker() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.multiple = true;
+                input.onchange = (e) => {
+                    this.handleFiles(e.target.files);
+                };
+                input.click();
+            }
+            
+            // Handle file upload
+            handleFiles(files) {
+                if (!files.length) return;
+                
+                document.getElementById('uploadProgress').style.display = 'block';
+                const list = document.getElementById('uploadList');
+                
+                Array.from(files).forEach((file, index) => {
+                    const uploadId = 'upload-' + Date.now() + '-' + index;
+                    const uploadItem = document.createElement('div');
+                    uploadItem.className = 'upload-item';
+                    uploadItem.id = uploadId;
+                    uploadItem.innerHTML = `
+                        <div class="upload-item-header">
+                            <span class="upload-item-name">
+                                <span>📄</span>
+                                <span>${file.name}</span>
+                            </span>
+                            <span class="upload-item-status">0%</span>
+                        </div>
+                        <div class="upload-progress-bar">
+                            <div class="upload-progress-fill" style="width: 0%"></div>
+                        </div>
+                    `;
+                    list.appendChild(uploadItem);
+                    
+                    // Simulate upload progress
+                    this.simulateUpload(uploadId, file);
+                });
+            }
+            
+            simulateUpload(uploadId, file) {
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 0;
+                    if (progress >= 100) {
+                        progress = 100;
+                        clearInterval(interval);
+                        
+                        const item = document.getElementById(uploadId);
+                        item.querySelector('.upload-item-status').textContent = '完成';
+                        item.querySelector('.upload-progress-fill').classList.add('success');
+                        
+                        // Add to file list
+                        const newFile = {
+                            id: 'f-' + Date.now(),
+                            name: file.name,
+                            type: this.getFileType(file.name),
+                            size: file.size,
+                            modified: new Date().toISOString(),
+                            ext: file.name.split('.').pop()
+                        };
+                        this.files.unshift(newFile);
+                        this.renderFiles();
+                        
+                        setTimeout(() => {}, 100); // 真实进度通过API获取
+                    }
+                    
+                    const item = document.getElementById(uploadId);
+                    if (item) {
+                        item.querySelector('.upload-item-status').textContent = Math.round(progress) + '%';
+                        item.querySelector('.upload-progress-fill').style.width = progress + '%';
+                    }
+                }, 200);
+            }
+            
+            getFileType(filename) {
+                const ext = filename.split('.').pop().toLowerCase();
+                const typeMap = {
+                    'jpg': 'image', 'jpeg': 'image', 'png': 'image', 'gif': 'image', 'webp': 'image',
+                    'mp4': 'video', 'mov': 'video', 'avi': 'video', 'mkv': 'video',
+                    'mp3': 'audio', 'wav': 'audio', 'flac': 'audio', 'aac': 'audio',
+                    'pdf': 'document', 'doc': 'document', 'docx': 'document', 'ppt': 'document', 'pptx': 'document',
+                    'js': 'code', 'ts': 'code', 'py': 'code', 'java': 'code', 'cpp': 'code', 'html': 'code', 'css': 'code', 'json': 'code',
+                    'zip': 'archive', 'rar': 'archive', '7z': 'archive', 'tar': 'archive', 'gz': 'archive'
+                };
+                return typeMap[ext] || 'document';
+            }
+            
+            // Download file
+            downloadFile(fileId) {
+                const file = this.files.find(f => f.id === fileId);
+                if (!file) return;
+                
+                this.showToast(`开始下载: ${file.name}`, 'info');
+                
+                // Simulate download with presigned URL
+                setTimeout(() => {}, 100); // 真实进度通过API获取
+            }
+            
+            // Delete file
+            deleteFile(fileId) {
+                if (!confirm('确定要删除此文件吗？')) return;
+                
+                this.files = this.files.filter(f => f.id !== fileId);
+                this.selectedFiles.delete(fileId);
+                this.updateSelectionBar();
+                this.renderFiles();
+                this.showToast('文件已删除', 'success');
+            }
+            
+            // Delete selected files
+            deleteSelectedFiles() {
+                if (!confirm(`确定要删除选中的 ${this.selectedFiles.size} 个项目吗？`)) return;
+                
+                this.files = this.files.filter(f => !this.selectedFiles.has(f.id));
+                this.selectedFiles.clear();
+                this.updateSelectionBar();
+                this.renderFiles();
+                this.showToast('文件已删除', 'success');
+            }
+            
+            // Move file
+            moveFile(fileId, targetFolderId) {
+                const file = this.files.find(f => f.id === fileId);
+                const folder = this.files.find(f => f.id === targetFolderId);
+                if (file && folder) {
+                    this.showToast(`已移动 "${file.name}" 到 "${folder.name}"`, 'success');
+                }
+            }
+            
+            // Format file size
+            formatSize(bytes) {
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+            
+            // Format date
+            formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('zh-CN', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+            
+            // Show toast notification
+            showToast(message, type = 'info') {
+                const toast = document.createElement('div');
+                toast.className = `toast toast-${type}`;
+                toast.innerHTML = `
+                    <span>${type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ️'}</span>
+                    <span>${message}</span>
+                `;
+                toast.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: ${type === 'success' ? '#22c55e' : type === 'error' ? '#ef4444' : '#3b82f6'};
+                    color: white;
+                    padding: 12px 24px;
+                    border-radius: 8px;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    z-index: 10000;
+                    animation: slideUp 0.3s ease;
+                `;
+                document.body.appendChild(toast);
+                
+                                setTimeout(() => {
+                    const el = document.querySelector('.notification') || notification;
+                    if (el) {
+                        el.style.animation = 'slideOut 0.3s ease';
+                        setTimeout(() => el.remove(), 300);
+                    }
+                }, 3000);
+            }
+            
+            // Theme management
+            loadTheme() {
+                const theme = localStorage.getItem('theme') || 'light';
+                document.documentElement.setAttribute('data-theme', theme);
+                document.getElementById('themeIcon').textContent = theme === 'dark' ? '☀️' : '🌙';
+            }
+            
+            toggleTheme() {
+                const current = document.documentElement.getAttribute('data-theme') || 'light';
+                const next = current === 'light' ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+                document.getElementById('themeIcon').textContent = next === 'dark' ? '☀️' : '🌙';
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            window.fileManager = new FileManager();
+        });
+    </script>
+
+    <script src="../static/js/api-client.js"></script>
+    <script src="../static/js/page-realization.js"></script>
+    <script src="../static/js/page-realization-loader.js"></script>
+<script>
+        
+            // 侧边栏切换
+            var sidebarToggle = document.getElementById('sidebarToggle');
+            var sidebar = document.getElementById('sidebar');
+            if (sidebarToggle && sidebar) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('collapsed');
+                });
+            }
+
+        </script>
+</body>
+</html>

@@ -1,0 +1,1560 @@
+/* ============================================================
+   AGI Unified Framework - CSS Reset
+   Version: 1.0.0
+   Description: Comprehensive CSS reset that normalizes browser
+   defaults across all elements for consistent cross-browser
+   rendering.
+   ============================================================ */
+
+/* ============================================================
+   1. BOX MODEL RESET
+   ============================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ============================================================
+   2. HTML & BODY RESET
+   ============================================================ */
+html {
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  scroll-behavior: smooth;
+  tab-size: 4;
+  -moz-tab-size: 4;
+  font-feature-settings: normal;
+  font-variation-settings: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  hanging-punctuation: first last;
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--font-family-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
+  font-size: var(--text-base, 1rem);
+  font-weight: var(--font-normal, 400);
+  line-height: var(--leading-normal, 1.5);
+  color: var(--text-primary, #111827);
+  background-color: var(--bg-primary, #ffffff);
+  letter-spacing: var(--tracking-normal, 0em);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================================
+   3. DOCUMENT FRAGMENTS & SECTIONS
+   ============================================================ */
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+main,
+menu,
+nav,
+section,
+summary {
+  display: block;
+}
+
+/* ============================================================
+   4. HEADING RESET
+   ============================================================ */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+}
+
+/* ============================================================
+   5. PARAGRAPH & TEXT ELEMENTS
+   ============================================================ */
+p {
+  margin: 0;
+  padding: 0;
+}
+
+address {
+  margin: 0;
+  font-style: normal;
+}
+
+blockquote {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-style: normal;
+}
+
+pre {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family-mono, monospace);
+  font-size: inherit;
+  line-height: inherit;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+code {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family-mono, monospace);
+  font-size: 0.875em;
+  color: inherit;
+  background: none;
+  border: none;
+  border-radius: 0;
+}
+
+kbd {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family-mono, monospace);
+  font-size: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  border-radius: 0;
+}
+
+samp {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family-mono, monospace);
+  font-size: inherit;
+  color: inherit;
+}
+
+var {
+  margin: 0;
+  padding: 0;
+  font-style: normal;
+}
+
+abbr[title] {
+  text-decoration: none;
+  border-bottom: none;
+  cursor: help;
+}
+
+acronym {
+  margin: 0;
+  padding: 0;
+}
+
+dfn {
+  margin: 0;
+  padding: 0;
+  font-style: normal;
+}
+
+mark {
+  margin: 0;
+  padding: 0;
+  background: none;
+  color: inherit;
+}
+
+small {
+  font-size: inherit;
+}
+
+strong {
+  font-weight: inherit;
+}
+
+b {
+  font-weight: inherit;
+}
+
+em {
+  font-style: normal;
+}
+
+i {
+  font-style: normal;
+}
+
+cite {
+  margin: 0;
+  padding: 0;
+  font-style: normal;
+}
+
+del {
+  margin: 0;
+  padding: 0;
+  text-decoration: none;
+}
+
+ins {
+  margin: 0;
+  padding: 0;
+  text-decoration: none;
+}
+
+u {
+  margin: 0;
+  padding: 0;
+  text-decoration: none;
+}
+
+s {
+  margin: 0;
+  padding: 0;
+  text-decoration: none;
+}
+
+sub {
+  margin: 0;
+  padding: 0;
+  font-size: inherit;
+  vertical-align: baseline;
+}
+
+sup {
+  margin: 0;
+  padding: 0;
+  font-size: inherit;
+  vertical-align: baseline;
+}
+
+ruby {
+  margin: 0;
+  padding: 0;
+}
+
+rt {
+  margin: 0;
+  padding: 0;
+}
+
+rp {
+  margin: 0;
+  padding: 0;
+}
+
+bdi {
+  margin: 0;
+  padding: 0;
+}
+
+bdo {
+  margin: 0;
+  padding: 0;
+}
+
+wbr {
+  margin: 0;
+  padding: 0;
+}
+
+/* ============================================================
+   6. LINK RESET
+   ============================================================ */
+a {
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  text-decoration: none;
+  background: none;
+  border: none;
+  outline: none;
+  -webkit-text-decoration-skip: objects;
+  text-decoration-skip-ink: auto;
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+a:active {
+  text-decoration: none;
+}
+
+a:visited {
+  color: inherit;
+}
+
+a:focus {
+  outline: none;
+}
+
+/* ============================================================
+   7. LIST RESET
+   ============================================================ */
+ul,
+ol,
+dl,
+dt,
+dd,
+li {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  list-style-type: none;
+  list-style-position: outside;
+}
+
+menu {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+dir {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ============================================================
+   8. IMAGE & MEDIA RESET
+   ============================================================ */
+img,
+picture,
+video,
+canvas,
+svg,
+audio,
+iframe,
+embed,
+object {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  vertical-align: middle;
+}
+
+img {
+  border-style: none;
+  -ms-interpolation-mode: bicubic;
+  image-rendering: auto;
+}
+
+img[loading="lazy"] {
+  opacity: 0;
+  transition: opacity var(--duration-normal, 200ms) var(--ease-in-out, ease-in-out);
+}
+
+img[loading="lazy"].loaded,
+img[loading="lazy"][complete] {
+  opacity: 1;
+}
+
+picture {
+  margin: 0;
+  padding: 0;
+}
+
+source {
+  margin: 0;
+  padding: 0;
+}
+
+video {
+  margin: 0;
+  padding: 0;
+}
+
+audio {
+  margin: 0;
+  padding: 0;
+}
+
+canvas {
+  margin: 0;
+  padding: 0;
+}
+
+svg {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+iframe {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+embed {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+object {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+map {
+  margin: 0;
+  padding: 0;
+}
+
+area {
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+}
+
+/* ============================================================
+   9. TABLE RESET
+   ============================================================ */
+table {
+  margin: 0;
+  padding: 0;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border: none;
+  width: 100%;
+  font-size: inherit;
+  font-weight: inherit;
+  text-indent: 0;
+}
+
+caption {
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+}
+
+thead {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+tbody {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+tfoot {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+tr {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+th {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-size: inherit;
+  font-weight: inherit;
+  text-align: left;
+  vertical-align: inherit;
+  background: none;
+  color: inherit;
+}
+
+td {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-size: inherit;
+  font-weight: inherit;
+  text-align: left;
+  vertical-align: inherit;
+}
+
+colgroup {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+col {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+/* ============================================================
+   10. FORM ELEMENTS RESET
+   ============================================================ */
+form {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-width: 0;
+}
+
+legend {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  white-space: normal;
+  display: block;
+  width: 100%;
+}
+
+label {
+  margin: 0;
+  padding: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  cursor: inherit;
+  display: inline;
+}
+
+input {
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+  background: none;
+  border-radius: 0;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+input[type="text"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+input[type="password"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+input[type="email"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+input[type="search"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+}
+
+input[type="tel"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+input[type="url"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+input[type="number"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+input[type="date"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+input[type="time"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+input[type="datetime-local"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+input[type="month"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+input[type="week"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+input[type="color"] {
+  margin: 0;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+}
+
+input[type="file"] {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+input[type="range"] {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="checkbox"] {
+  margin: 0;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+input[type="radio"] {
+  margin: 0;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+input[type="submit"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+}
+
+input[type="reset"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+}
+
+input[type="button"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+}
+
+input[type="image"] {
+  margin: 0;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+}
+
+input[type="hidden"] {
+  display: none;
+}
+
+input::placeholder {
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  opacity: 1;
+}
+
+input::-webkit-input-placeholder {
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  opacity: 1;
+}
+
+input::-moz-placeholder {
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  opacity: 1;
+}
+
+input:-ms-input-placeholder {
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  opacity: 1;
+}
+
+input::-ms-input-placeholder {
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  opacity: 1;
+}
+
+input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+input:disabled {
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+input:read-only {
+  cursor: default;
+}
+
+input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 30px var(--bg-primary, #ffffff) inset;
+  -webkit-text-fill-color: var(--text-primary, #111827);
+}
+
+input:-webkit-autofill:hover {
+  -webkit-box-shadow: 0 0 0 30px var(--bg-primary, #ffffff) inset;
+  -webkit-text-fill-color: var(--text-primary, #111827);
+}
+
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 30px var(--bg-primary, #ffffff) inset;
+  -webkit-text-fill-color: var(--text-primary, #111827);
+}
+
+textarea {
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+  background: none;
+  border-radius: 0;
+  resize: vertical;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  overflow: auto;
+}
+
+textarea::placeholder {
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  opacity: 1;
+}
+
+textarea::-webkit-input-placeholder {
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  opacity: 1;
+}
+
+textarea::-moz-placeholder {
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  opacity: 1;
+}
+
+textarea:-ms-input-placeholder {
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  opacity: 1;
+}
+
+textarea::-ms-input-placeholder {
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  opacity: 1;
+}
+
+textarea:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+textarea:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+textarea:disabled {
+  cursor: not-allowed;
+  opacity: 1;
+  resize: none;
+}
+
+textarea:read-only {
+  cursor: default;
+  resize: none;
+}
+
+select {
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+  background: none;
+  border-radius: 0;
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+select:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+select:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+select:disabled {
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+select option {
+  margin: 0;
+  padding: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  background: inherit;
+}
+
+select optgroup {
+  margin: 0;
+  padding: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+}
+
+datalist {
+  margin: 0;
+  padding: 0;
+}
+
+output {
+  margin: 0;
+  padding: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+}
+
+progress {
+  margin: 0;
+  padding: 0;
+  border: none;
+  vertical-align: baseline;
+  display: inline-block;
+}
+
+meter {
+  margin: 0;
+  padding: 0;
+  border: none;
+  vertical-align: baseline;
+  display: inline-block;
+}
+
+/* ============================================================
+   11. BUTTON RESET
+   ============================================================ */
+button {
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+  background: none;
+  border-radius: 0;
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  text-align: inherit;
+  text-transform: none;
+  letter-spacing: inherit;
+  word-spacing: inherit;
+  white-space: inherit;
+  overflow: visible;
+}
+
+button:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+button:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 1;
+  pointer-events: none;
+}
+
+button:not(:disabled) {
+  pointer-events: auto;
+}
+
+button::-moz-focus-inner {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+button::-webkit-focus-inner {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+/* ============================================================
+   12. DIALOG RESET
+   ============================================================ */
+dialog {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+dialog::backdrop {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+/* ============================================================
+   13. DETAILS & SUMMARY RESET
+   ============================================================ */
+details {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+summary {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  cursor: pointer;
+  display: block;
+  list-style: none;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+summary::marker {
+  display: none;
+  content: none;
+}
+
+/* ============================================================
+   14. HORIZONTAL RULE RESET
+   ============================================================ */
+hr {
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-top: none;
+  border-bottom: none;
+  height: 0;
+  overflow: visible;
+  color: inherit;
+  background: none;
+}
+
+/* ============================================================
+   15. DIVIDER RESET
+   ============================================================ */
+div {
+  margin: 0;
+  padding: 0;
+}
+
+span {
+  margin: 0;
+  padding: 0;
+}
+
+/* ============================================================
+   16. IFRAME RESET
+   ============================================================ */
+iframe {
+  margin: 0;
+  padding: 0;
+  border: none;
+  display: block;
+}
+
+/* ============================================================
+   17. SCROLLBAR STYLES - WebKit
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track, #f1f5f9);
+  border: none;
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb, #cbd5e1);
+  border: 2px solid var(--scrollbar-track, #f1f5f9);
+  border-radius: 4px;
+  min-height: 40px;
+  min-width: 40px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover, #94a3b8);
+  border-color: var(--scrollbar-track, #f1f5f9);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--scrollbar-thumb-hover, #94a3b8);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--scrollbar-track, #f1f5f9);
+  border: none;
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* ============================================================
+   18. SCROLLBAR STYLES - Firefox
+   ============================================================ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb, #cbd5e1) var(--scrollbar-track, #f1f5f9);
+}
+
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb, #cbd5e1) var(--scrollbar-track, #f1f5f9);
+}
+
+/* ============================================================
+   19. FOCUS STYLES
+   ============================================================ */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--border-focus, #3b82f6);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ============================================================
+   20. SELECTION STYLES
+   ============================================================ */
+::selection {
+  background-color: var(--primary-200, #bfdbfe);
+  color: var(--primary-900, #1e3a8a);
+}
+
+::-moz-selection {
+  background-color: var(--primary-200, #bfdbfe);
+  color: var(--primary-900, #1e3a8a);
+}
+
+/* ============================================================
+   21. PSEUDO-ELEMENT RESETS
+   ============================================================ */
+::before {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+::first-line {
+  margin: 0;
+  padding: 0;
+  font-weight: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+::first-letter {
+  margin: 0;
+  padding: 0;
+  font-weight: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* ============================================================
+   22. HELPER CLASSES - Screen Reader Only
+   ============================================================ */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+  word-wrap: normal;
+}
+
+.sr-only-focusable:focus,
+.sr-only-focusable:focus-visible {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  clip-path: none;
+  white-space: normal;
+}
+
+/* ============================================================
+   23. HELPER CLASSES - Hidden
+   ============================================================ */
+.hidden {
+  display: none !important;
+}
+
+.invisible {
+  visibility: hidden;
+}
+
+.visibility-hidden {
+  visibility: hidden;
+}
+
+.visibility-visible {
+  visibility: visible;
+}
+
+/* ============================================================
+   24. HELPER CLASSES - Transparent
+   ============================================================ */
+.transparent {
+  opacity: 0;
+}
+
+/* ============================================================
+   25. HELPER CLASSES - No Scroll
+   ============================================================ */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ============================================================
+   26. HELPER CLASSES - Truncate
+   ============================================================ */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   27. PRINT STYLES
+   ============================================================ */
+@media print {
+  *,
+  *::before,
+  *::after {
+    background: transparent !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  p,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    orphans: 3;
+    widows: 3;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    page-break-after: avoid;
+    page-break-inside: avoid;
+    break-after: avoid;
+    break-inside: avoid;
+  }
+
+  img {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    max-width: 100% !important;
+  }
+
+  table {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  pre {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    white-space: pre-wrap !important;
+    border: 1px solid #999999;
+    padding: 8px;
+  }
+
+  blockquote {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    border: 1px solid #999999;
+    padding: 8px;
+  }
+
+  a,
+  a:visited {
+    text-decoration: underline;
+    color: #000000 !important;
+  }
+
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    font-weight: normal;
+    color: #666666;
+  }
+
+  a[href^="#"]::after {
+    content: "";
+  }
+
+  a[href^="javascript:"]::after {
+    content: "";
+  }
+
+  abbr[title]::after {
+    content: " (" attr(title) ")";
+  }
+
+  .no-print,
+  .hidden-print,
+  [aria-hidden="true"] {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    font-size: 12pt;
+    line-height: 1.5;
+    color: #000000;
+    background: #ffffff;
+  }
+
+  @page {
+    margin: 2cm;
+    size: A4;
+  }
+
+  @page :first {
+    margin-top: 0;
+  }
+
+  @page :left {
+    margin-right: 3cm;
+  }
+
+  @page :right {
+    margin-left: 3cm;
+  }
+}
+
+/* ============================================================
+   28. REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ============================================================
+   29. DARK MODE AUTO DETECTION
+   ============================================================ */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]) {
+    color-scheme: dark;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  html:not([data-theme]) {
+    color-scheme: light;
+  }
+}
+
+/* ============================================================
+   30. FORCED COLORS / HIGH CONTRAST
+   ============================================================ */
+@media (forced-colors: active) {
+  *,
+  *::before,
+  *::after {
+    forced-color-adjust: auto;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    forced-color-adjust: auto;
+  }
+
+  a {
+    color: LinkText;
+  }
+
+  a:visited {
+    color: VisitedText;
+  }
+
+  button {
+    border: 1px solid ButtonText;
+  }
+
+  input[type="checkbox"] {
+    appearance: auto;
+  }
+
+  input[type="radio"] {
+    appearance: auto;
+  }
+}
+
+/* ============================================================
+   31. COLOR SCHEME
+   ============================================================ */
+:root {
+  color-scheme: light dark;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+/* ============================================================
+   32. MISC ELEMENT RESETS
+   ============================================================ */
+template {
+  display: none;
+}
+
+slot {
+  display: contents;
+}
+
+noscript {
+  margin: 0;
+  padding: 0;
+  font-size: inherit;
+  color: inherit;
+}
+
+br {
+  margin: 0;
+  padding: 0;
+}
+
+hr {
+  margin: 0;
+  padding: 0;
+}
+
+figure {
+  margin: 0;
+  padding: 0;
+}
+
+figcaption {
+  margin: 0;
+  padding: 0;
+  font-size: inherit;
+  color: inherit;
+}
+
+marquee {
+  margin: 0;
+  padding: 0;
+}
+
+search {
+  margin: 0;
+  padding: 0;
+}
+
+math {
+  margin: 0;
+  padding: 0;
+}
+
+/* ============================================================
+   END OF RESET.CSS
+   ============================================================ */

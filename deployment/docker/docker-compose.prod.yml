@@ -1,0 +1,30 @@
+# 生产环境配置
+version: "3.8"
+
+services:
+  app:
+    image: agi-framework:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - LOG_LEVEL=INFO
+      - DEBUG=false
+    volumes:
+      - ./data:/data
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: agi
+      POSTGRES_USER: admin
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

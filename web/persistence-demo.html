@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AGI持久化系统演示 - AGI Unified Framework</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        .header {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px 40px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .header h1 { font-size: 28px; color: #00d4ff; margin-bottom: 8px; }
+        .header p { color: #888; font-size: 14px; }
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 20px 40px;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .nav-tab {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #a0a0a0;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        .nav-tab:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+        .nav-tab.active {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: #fff;
+            border-color: transparent;
+        }
+        .content { padding: 40px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .section-title {
+            font-size: 20px;
+            color: #00d4ff;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .demo-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .demo-card h3 {
+            font-size: 16px;
+            color: #fff;
+            margin-bottom: 16px;
+        }
+        .btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            margin: 4px;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3); }
+        .btn.secondary { background: rgba(255, 255, 255, 0.1); }
+        .btn.secondary:hover { background: rgba(255, 255, 255, 0.2); }
+        .input-group { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }
+        .input-group label { min-width: 100px; color: #a0a0a0; font-size: 14px; }
+        .input-group input, .input-group select, .input-group textarea {
+            flex: 1;
+            padding: 10px 14px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 14px;
+        }
+        .log-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 16px;
+        }
+        .log-entry { padding: 4px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        .log-time { color: #666; margin-right: 8px; }
+        .log-info { color: #3498db; }
+        .log-success { color: #2ecc71; }
+        .log-warning { color: #f39c12; }
+        .log-error { color: #e74c3c; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .stat-value { font-size: 32px; font-weight: 700; color: #00d4ff; }
+        .stat-label { font-size: 12px; color: #888; margin-top: 4px; }
+        .storage-info {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .storage-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .storage-card h4 { color: #00d4ff; margin-bottom: 8px; }
+        .storage-card p { color: #888; font-size: 13px; margin: 4px 0; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>💾 AGI持久化系统演示</h1>
+        <p>生产级数据持久化系统 - 用户设置、历史记录、缓存、同步</p>
+    </div>
+    
+    <div class="nav-tabs">
+        <div class="nav-tab active" data-tab="overview">概览</div>
+        <div class="nav-tab" data-tab="storage">存储适配器</div>
+        <div class="nav-tab" data-tab="settings">用户设置</div>
+        <div class="nav-tab" data-tab="history">历史记录</div>
+        <div class="nav-tab" data-tab="cache">缓存系统</div>
+        <div class="nav-tab" data-tab="sync">数据同步</div>
+    </div>
+    
+    <div class="content">
+        <!-- 概览 -->
+        <div class="tab-content active" id="tab-overview">
+            <h2 class="section-title">系统概览</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalStorage">0</div>
+                    <div class="stat-label">存储条目</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="cacheHitRate">0%</div>
+                    <div class="stat-label">缓存命中率</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="syncStatus">✓</div>
+                    <div class="stat-label">同步状态</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="storageUsed">0MB</div>
+                    <div class="stat-label">存储使用</div>
+                </div>
+            </div>
+            
+            <div class="demo-card">
+                <h3>存储层级信息</h3>
+                <div class="storage-info" id="storageInfo">
+                    <div class="storage-card">
+                        <h4>Memory</h4>
+                        <p>状态: <span id="memoryStatus">检测中...</span></p>
+                        <p>条目数: <span id="memoryCount">0</span></p>
+                    </div>
+                    <div class="storage-card">
+                        <h4>LocalStorage</h4>
+                        <p>状态: <span id="localStatus">检测中...</span></p>
+                        <p>使用量: <span id="localUsage">0</span></p>
+                    </div>
+                    <div class="storage-card">
+                        <h4>IndexedDB</h4>
+                        <p>状态: <span id="indexedStatus">检测中...</span></p>
+                        <p>数据库: <span id="indexedDB">AGIFrameworkDB</span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="demo-card">
+                <h3>操作日志</h3>
+                <div class="log-container" id="overviewLog"></div>
+            </div>
+        </div>
+        
+        <!-- 存储适配器 -->
+        <div class="tab-content" id="tab-storage">
+            <h2 class="section-title">存储适配器测试</h2>
+            <div class="demo-card">
+                <h3>基础操作</h3>
+                <div class="input-group">
+                    <label>键名:</label>
+                    <input type="text" id="storageKey" placeholder="输入键名" value="test_key">
+                </div>
+                <div class="input-group">
+                    <label>数值:</label>
+                    <textarea id="storageValue" rows="3" placeholder="输入JSON值">{"message": "Hello Persistence!", "timestamp": 1234567890}</textarea>
+                </div>
+                <div class="input-group">
+                    <label>存储类型:</label>
+                    <select id="storageType">
+                        <option value="memory">Memory</option>
+                        <option value="local">LocalStorage</option>
+                        <option value="indexedDB">IndexedDB</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="storageSet()">💾 保存</button>
+                <button class="btn" onclick="storageGet()">📖 读取</button>
+                <button class="btn secondary" onclick="storageRemove()">🗑 删除</button>
+                <button class="btn secondary" onclick="storageClear()">🧹 清空</button>
+            </div>
+            <div class="log-container" id="storageLog"></div>
+        </div>
+        
+        <!-- 用户设置 -->
+        <div class="tab-content" id="tab-settings">
+            <h2 class="section-title">用户设置管理</h2>
+            <div class="demo-card">
+                <h3>外观设置</h3>
+                <div class="input-group">
+                    <label>主题:</label>
+                    <select id="themeSetting" onchange="updateSetting('appearance.theme', this.value)">
+                        <option value="dark">深色</option>
+                        <option value="light">浅色</option>
+                        <option value="auto">自动</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>主题色:</label>
+                    <input type="color" id="colorSetting" onchange="updateSetting('appearance.primaryColor', this.value)" value="#00d4ff">
+                </div>
+                <div class="input-group">
+                    <label>字体大小:</label>
+                    <input type="range" id="fontSizeSetting" min="12" max="20" value="14" onchange="updateSetting('appearance.fontSize', parseInt(this.value))">
+                    <span id="fontSizeValue">14px</span>
+                </div>
+            </div>
+            
+            <div class="demo-card">
+                <h3>设置操作</h3>
+                <button class="btn" onclick="saveSettings()">💾 保存设置</button>
+                <button class="btn" onclick="loadSettings()">📖 加载设置</button>
+                <button class="btn secondary" onclick="resetSettings()">🔄 重置设置</button>
+                <button class="btn secondary" onclick="exportSettings()">📤 导出设置</button>
+                <button class="btn secondary" onclick="importSettings()">📥 导入设置</button>
+            </div>
+            <div class="log-container" id="settingsLog"></div>
+        </div>
+        
+        <!-- 历史记录 -->
+        <div class="tab-content" id="tab-history">
+            <h2 class="section-title">历史记录管理</h2>
+            <div class="demo-card">
+                <h3>添加历史记录</h3>
+                <div class="input-group">
+                    <label>标题:</label>
+                    <input type="text" id="historyTitle" placeholder="输入标题">
+                </div>
+                <div class="input-group">
+                    <label>描述:</label>
+                    <input type="text" id="historyDesc" placeholder="输入描述">
+                </div>
+                <div class="input-group">
+                    <label>标签:</label>
+                    <input type="text" id="historyTags" placeholder="标签1,标签2,标签3">
+                </div>
+                <button class="btn" onclick="addHistory()">➕ 添加记录</button>
+            </div>
+            
+            <div class="demo-card">
+                <h3>历史记录列表</h3>
+                <button class="btn" onclick="loadHistory()">🔄 刷新列表</button>
+                <button class="btn secondary" onclick="clearHistory()">🧹 清空历史</button>
+                <div id="historyList" style="margin-top: 16px;"></div>
+            </div>
+            <div class="log-container" id="historyLog"></div>
+        </div>
+        
+        <!-- 缓存系统 -->
+        <div class="tab-content" id="tab-cache">
+            <h2 class="section-title">多级缓存系统</h2>
+            <div class="demo-card">
+                <h3>缓存操作</h3>
+                <div class="input-group">
+                    <label>缓存键:</label>
+                    <input type="text" id="cacheKey" placeholder="输入缓存键">
+                </div>
+                <div class="input-group">
+                    <label>缓存值:</label>
+                    <input type="text" id="cacheValue" placeholder="输入缓存值">
+                </div>
+                <div class="input-group">
+                    <label>TTL (ms):</label>
+                    <input type="number" id="cacheTTL" placeholder="过期时间" value="60000">
+                </div>
+                <button class="btn" onclick="cacheSet()">💾 写入缓存</button>
+                <button class="btn" onclick="cacheGet()">📖 读取缓存</button>
+                <button class="btn secondary" onclick="cacheDelete()">🗑 删除缓存</button>
+                <button class="btn secondary" onclick="cacheClear()">🧹 清空缓存</button>
+                <button class="btn" onclick="preloadCache()">⚡ 预加载</button>
+            </div>
+            
+            <div class="demo-card">
+                <h3>缓存统计</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="l1Size">0</div>
+                        <div class="stat-label">L1 缓存条目</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="l2Size">0</div>
+                        <div class="stat-label">L2 缓存条目</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="l1Hits">0</div>
+                        <div class="stat-label">L1 命中</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="l2Hits">0</div>
+                        <div class="stat-label">L2 命中</div>
+                    </div>
+                </div>
+            </div>
+            <div class="log-container" id="cacheLog"></div>
+        </div>
+        
+        <!-- 数据同步 -->
+        <div class="tab-content" id="tab-sync">
+            <h2 class="section-title">数据同步</h2>
+            <div class="demo-card">
+                <h3>同步控制</h3>
+                <button class="btn" onclick="startSync()">🔄 立即同步</button>
+                <button class="btn secondary" onclick="toggleAutoSync()">⏯ 自动同步</button>
+                <button class="btn secondary" onclick="viewSyncStatus()">📊 同步状态</button>
+            </div>
+            
+            <div class="demo-card">
+                <h3>冲突解决</h3>
+                <div class="input-group">
+                    <label>冲突策略:</label>
+                    <select id="conflictStrategy">
+                        <option value="lastWrite">最后写入优先</option>
+                        <option value="firstWrite">首次写入优先</option>
+                        <option value="server">服务器优先</option>
+                        <option value="client">客户端优先</option>
+                        <option value="merge">合并</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="applyConflictStrategy()">✓ 应用策略</button>
+            </div>
+            
+            <div class="demo-card">
+                <h3>同步统计</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="syncCount">0</div>
+                        <div class="stat-label">同步次数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="syncSuccess">0</div>
+                        <div class="stat-label">成功</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="syncFailed">0</div>
+                        <div class="stat-label">失败</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="syncConflicts">0</div>
+                        <div class="stat-label">冲突</div>
+                    </div>
+                </div>
+            </div>
+            <div class="log-container" id="syncLog"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import {
+            PersistenceManager, UserSettingsManager, HistoryManager,
+            MultiLevelCache, SyncManager, PerformanceMonitor
+        } from './js/persistence-index.js';
+
+        // 全局实例
+        window.persistence = null;
+        window.settingsManager = null;
+        window.historyManager = null;
+        window.cache = null;
+        window.syncManager = null;
+        window.performanceMonitor = null;
+
+        // 初始化
+        async function init() {
+            // 初始化持久化管理器
+            window.persistence = new PersistenceManager();
+            await window.persistence.init();
+
+            // 初始化用户设置
+            window.settingsManager = new UserSettingsManager({
+                persistence: window.persistence
+            });
+            await window.settingsManager.init();
+
+            // 初始化历史记录
+            window.historyManager = new HistoryManager({
+                type: 'custom',
+                persistence: window.persistence
+            });
+            await window.historyManager.init();
+
+            // 初始化缓存
+            window.cache = new MultiLevelCache();
+            await window.cache.init(window.persistence);
+
+            // 初始化同步管理器
+            window.syncManager = new SyncManager();
+            await window.syncManager.init(window.persistence);
+
+            // 初始化性能监控
+            window.performanceMonitor = new PerformanceMonitor();
+
+            log('overview', '系统初始化完成', 'success');
+            updateOverview();
+        }
+
+        // 日志函数
+        function log(containerId, message, type = 'info') {
+            const container = document.getElementById(containerId + 'Log') || document.getElementById('overviewLog');
+            const time = new Date().toLocaleTimeString();
+            container.innerHTML += `<div class="log-entry"><span class="log-time">[${time}]</span><span class="log-${type}">${message}</span></div>`;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 更新概览
+        async function updateOverview() {
+            const stats = window.persistence.getStats();
+            document.getElementById('totalStorage').textContent = stats.cacheSize || 0;
+            
+            const quota = window.persistence.quotaManager.getQuotaInfo('localStorage');
+            const usageMB = (quota.usage / 1024 / 1024).toFixed(2);
+            document.getElementById('storageUsed').textContent = usageMB + 'MB';
+        }
+
+        // 标签页切换
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+            });
+        });
+
+        // 存储操作
+        window.storageSet = async () => {
+            const key = document.getElementById('storageKey').value;
+            const value = JSON.parse(document.getElementById('storageValue').value);
+            const type = document.getElementById('storageType').value;
+            
+            const success = await window.persistence.set(key, value, { storage: type });
+            log('storage', success ? `保存成功: ${key}` : `保存失败: ${key}`, success ? 'success' : 'error');
+        };
+
+        window.storageGet = async () => {
+            const key = document.getElementById('storageKey').value;
+            const value = await window.persistence.get(key);
+            log('storage', value ? `读取成功: ${JSON.stringify(value)}` : '未找到', value ? 'success' : 'warning');
+        };
+
+        window.storageRemove = async () => {
+            const key = document.getElementById('storageKey').value;
+            const success = await window.persistence.remove(key);
+            log('storage', success ? `删除成功: ${key}` : `删除失败: ${key}`, success ? 'success' : 'error');
+        };
+
+        window.storageClear = async () => {
+            const success = await window.persistence.clear();
+            log('storage', success ? '清空成功' : '清空失败', success ? 'success' : 'error');
+        };
+
+        // 设置操作
+        window.updateSetting = async (path, value) => {
+            await window.settingsManager.set(path, value);
+            log('settings', `设置更新: ${path} = ${value}`, 'success');
+        };
+
+        window.saveSettings = async () => {
+            const success = await window.settingsManager.save();
+            log('settings', success ? '设置保存成功' : '设置保存失败', success ? 'success' : 'error');
+        };
+
+        window.loadSettings = async () => {
+            await window.settingsManager.init();
+            log('settings', '设置加载完成', 'success');
+        };
+
+        window.resetSettings = () => {
+            window.settingsManager.reset();
+            log('settings', '设置已重置', 'warning');
+        };
+
+        // 历史记录操作
+        window.addHistory = async () => {
+            const title = document.getElementById('historyTitle').value;
+            const description = document.getElementById('historyDesc').value;
+            const tags = document.getElementById('historyTags').value.split(',').filter(t => t);
+            
+            const id = window.historyManager.add({
+                title,
+                description,
+                tags,
+                data: { timestamp: Date.now() }
+            });
+            
+            log('history', `添加历史记录: ${id}`, 'success');
+            loadHistory();
+        };
+
+        window.loadHistory = () => {
+            const result = window.historyManager.query({ limit: 10 });
+            const list = document.getElementById('historyList');
+            list.innerHTML = result.entries.map(e => 
+                `<div style="padding: 8px; background: rgba(0,0,0,0.2); margin: 4px 0; border-radius: 4px;">
+                    <strong>${e.title}</strong> - ${new Date(e.timestamp).toLocaleString()}
+                    ${e.isFavorite ? '⭐' : ''}
+                </div>`
+            ).join('');
+            log('history', `加载 ${result.entries.length} 条历史记录`, 'success');
+        };
+
+        window.clearHistory = async () => {
+            const count = window.historyManager.clear();
+            log('history', `清空 ${count} 条历史记录`, 'warning');
+            loadHistory();
+        };
+
+        // 缓存操作
+        window.cacheSet = async () => {
+            const key = document.getElementById('cacheKey').value;
+            const value = document.getElementById('cacheValue').value;
+            const ttl = parseInt(document.getElementById('cacheTTL').value);
+            
+            await window.cache.set(key, value, { ttl });
+            log('cache', `缓存写入: ${key}`, 'success');
+            updateCacheStats();
+        };
+
+        window.cacheGet = () => {
+            const key = document.getElementById('cacheKey').value;
+            const value = window.cache.get(key);
+            log('cache', value ? `缓存命中: ${value}` : '缓存未命中', value ? 'success' : 'warning');
+            updateCacheStats();
+        };
+
+        window.cacheDelete = () => {
+            const key = document.getElementById('cacheKey').value;
+            window.cache.delete(key);
+            log('cache', `缓存删除: ${key}`, 'success');
+            updateCacheStats();
+        };
+
+        window.cacheClear = () => {
+            window.cache.clear();
+            log('cache', '缓存已清空', 'warning');
+            updateCacheStats();
+        };
+
+        window.preloadCache = async () => {
+            const keys = ['key1', 'key2', 'key3', 'key4', 'key5'];
+            await window.cache.preload(keys, async (k) => `value_${k}`);
+            log('cache', '预加载完成', 'success');
+            updateCacheStats();
+        };
+
+        function updateCacheStats() {
+            const stats = window.cache.getStats();
+            document.getElementById('l1Size').textContent = stats.l1?.entries || 0;
+            document.getElementById('l2Size').textContent = stats.l2?.entries || 0;
+            document.getElementById('l1Hits').textContent = stats.l1?.hits || 0;
+            document.getElementById('l2Hits').textContent = stats.l2?.hits || 0;
+        }
+
+        // 同步操作
+        window.startSync = async () => {
+            const result = await window.syncManager.sync();
+            log('sync', result.success ? '同步成功' : `同步失败: ${result.reason}`, result.success ? 'success' : 'error');
+            updateSyncStats();
+        };
+
+        window.viewSyncStatus = () => {
+            const status = window.syncManager.getStatus();
+            log('sync', `状态: ${status.status}, 在线: ${status.isOnline}, 待同步: ${status.pendingChanges}`, 'info');
+        };
+
+        function updateSyncStats() {
+            const stats = window.syncManager.getStats();
+            document.getElementById('syncCount').textContent = stats.totalSyncs;
+            document.getElementById('syncSuccess').textContent = stats.successfulSyncs;
+            document.getElementById('syncFailed').textContent = stats.failedSyncs;
+            document.getElementById('syncConflicts').textContent = stats.conflicts;
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

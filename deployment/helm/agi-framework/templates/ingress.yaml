@@ -1,0 +1,133 @@
+{{/* =============================================================================
+AGI Unified Framework - Ingress Template
+============================================================================= */}}
+{{- if and .Values.api.enabled .Values.api.ingress.enabled }}
+{{- $fullName := include "agi-framework.api.name" . -}}
+{{- $svcPort := .Values.api.service.port -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "agi-framework.api.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.api.ingress.annotations }}
+    {{- toYaml .Values.api.ingress.annotations | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if .Values.api.ingress.className }}
+  ingressClassName: {{ .Values.api.ingress.className }}
+  {{- end }}
+  {{- if .Values.api.ingress.tls }}
+  tls:
+    {{- range .Values.api.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.api.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ $fullName }}
+                port:
+                  number: {{ $svcPort }}
+          {{- end }}
+    {{- end }}
+{{- end }}
+
+---
+{{/* =============================================================================
+AGI Unified Framework - WebSocket Ingress Template
+============================================================================= */}}
+{{- if and .Values.api.enabled .Values.api.ingress.enabled .Values.api.websocket.enabled }}
+{{- $fullName := include "agi-framework.api.name" . -}}
+{{- $svcPort := .Values.api.service.port -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}-websocket
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "agi-framework.api.labels" . | nindent 4 }}
+    app.kubernetes.io/component: websocket
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "3600"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/session-cookie-name: "ws_session"
+    {{- if .Values.api.ingress.annotations }}
+    {{- toYaml .Values.api.ingress.annotations | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if .Values.api.ingress.className }}
+  ingressClassName: {{ .Values.api.ingress.className }}
+  {{- end }}
+  {{- if .Values.api.ingress.tls }}
+  tls:
+    - hosts:
+        - ws.{{ (index .Values.api.ingress.hosts 0).host }}
+      secretName: {{ (index .Values.api.ingress.tls 0).secretName }}-ws
+  {{- end }}
+  rules:
+    - host: ws.{{ (index .Values.api.ingress.hosts 0).host }}
+      http:
+        paths:
+          - path: /ws
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $fullName }}
+                port:
+                  number: {{ $svcPort }}
+{{- end }}
+
+---
+{{/* =============================================================================
+AGI Unified Framework - Internal Ingress Template
+============================================================================= */}}
+{{- if and .Values.api.enabled .Values.api.ingress.enabled .Values.api.internalIngress.enabled }}
+{{- $fullName := include "agi-framework.api.name" . -}}
+{{- $svcPort := .Values.api.service.port -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}-internal
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "agi-framework.api.labels" . | nindent 4 }}
+    app.kubernetes.io/component: internal
+  annotations:
+    kubernetes.io/ingress.class: nginx-internal
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: basic-auth
+    nginx.ingress.kubernetes.io/auth-realm: "Authentication Required"
+spec:
+  rules:
+    - host: internal.{{ (index .Values.api.ingress.hosts 0).host }}
+      http:
+        paths:
+          - path: /admin
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $fullName }}
+                port:
+                  number: {{ $svcPort }}
+{{- end }}

@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>前后端连接测试 - AGI Unified Framework</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #00d4ff;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .test-section h2 {
+            color: #00d4ff;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .test-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+        .test-item .name {
+            flex: 1;
+        }
+        .test-item .status {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status.pending {
+            background: #555;
+            color: #aaa;
+        }
+        .status.success {
+            background: #2d5a27;
+            color: #4ade80;
+        }
+        .status.error {
+            background: #5a2727;
+            color: #f87171;
+        }
+        .status.running {
+            background: #5a4a27;
+            color: #fbbf24;
+        }
+        .btn {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .log {
+            background: #0a0a0a;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+        .log-entry {
+            margin: 2px 0;
+        }
+        .log-entry.info { color: #60a5fa; }
+        .log-entry.success { color: #4ade80; }
+        .log-entry.error { color: #f87171; }
+        .log-entry.warn { color: #fbbf24; }
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .summary-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .summary-card .value {
+            font-size: 32px;
+            font-weight: 700;
+        }
+        .summary-card .label {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+        .summary-card.total .value { color: #60a5fa; }
+        .summary-card.passed .value { color: #4ade80; }
+        .summary-card.failed .value { color: #f87171; }
+        .summary-card.pending .value { color: #fbbf24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 前后端连接测试</h1>
+        
+        <div class="summary">
+            <div class="summary-card total">
+                <div class="value" id="totalCount">0</div>
+                <div class="label">总测试数</div>
+            </div>
+            <div class="summary-card passed">
+                <div class="value" id="passedCount">0</div>
+                <div class="label">通过</div>
+            </div>
+            <div class="summary-card failed">
+                <div class="value" id="failedCount">0</div>
+                <div class="label">失败</div>
+            </div>
+            <div class="summary-card pending">
+                <div class="value" id="pendingCount">0</div>
+                <div class="label">待测试</div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-bottom: 20px;">
+            <button class="btn" onclick="runAllTests()">▶ 运行所有测试</button>
+            <button class="btn" onclick="runApiTests()">🔌 API测试</button>
+            <button class="btn" onclick="runWsTests()">📡 WebSocket测试</button>
+            <button class="btn" onclick="clearLogs()">🗑 清除日志</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>📦 模块加载测试</h2>
+            <div id="moduleTests"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔌 API客户端测试</h2>
+            <div id="apiTests"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📡 WebSocket测试</h2>
+            <div id="wsTests"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📊 状态管理测试</h2>
+            <div id="stateTests"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📝 测试日志</h2>
+            <div class="log" id="testLog"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        // 导入模块
+        import { APIClient, apiClient } from './js/api-client.js';
+        import { WebSocketManager } from './js/websocket.js';
+        import { StateManager } from './js/state.js';
+        
+        // 测试结果存储
+        window.testResults = {
+            module: {},
+            api: {},
+            ws: {},
+            state: {}
+        };
+        
+        // 日志函数
+        window.log = function(message, type = 'info') {
+            const logEl = document.getElementById('testLog');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const time = new Date().toLocaleTimeString();
+            entry.textContent = `[${time}] ${message}`;
+            logEl.appendChild(entry);
+            logEl.scrollTop = logEl.scrollHeight;
+        };
+        
+        window.clearLogs = function() {
+            document.getElementById('testLog').innerHTML = '';
+        };
+        
+        // 更新测试项状态
+        window.updateTestStatus = function(section, name, status) {
+            const container = document.getElementById(section + 'Tests');
+            let item = container.querySelector(`[data-test="${name}"]`);
+            if (!item) {
+                item = document.createElement('div');
+                item.className = 'test-item';
+                item.setAttribute('data-test', name);
+                item.innerHTML = `<span class="name">${name}</span><span class="status pending">待测试</span>`;
+                container.appendChild(item);
+            }
+            const statusEl = item.querySelector('.status');
+            statusEl.className = `status ${status}`;
+            statusEl.textContent = status === 'success' ? '✓ 通过' : 
+                                  status === 'error' ? '✗ 失败' : 
+                                  status === 'running' ? '⟳ 运行中' : '待测试';
+            
+            window.testResults[section][name] = status;
+            window.updateSummary();
+        };
+        
+        window.updateSummary = function() {
+            const all = Object.values(window.testResults).flatMap(Object.values);
+            const total = all.length;
+            const passed = all.filter(s => s === 'success').length;
+            const failed = all.filter(s => s === 'error').length;
+            const pending = all.filter(s => s === 'pending' || s === 'running').length;
+            
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('passedCount').textContent = passed;
+            document.getElementById('failedCount').textContent = failed;
+            document.getElementById('pendingCount').textContent = pending;
+        };
+        
+        // 模块加载测试
+        window.testModules = async function() {
+            log('开始模块加载测试...', 'info');
+            
+            // APIClient
+            updateTestStatus('module', 'APIClient类定义', 'running');
+            if (typeof APIClient === 'function') {
+                updateTestStatus('module', 'APIClient类定义', 'success');
+                log('APIClient类加载成功', 'success');
+            } else {
+                updateTestStatus('module', 'APIClient类定义', 'error');
+                log('APIClient类加载失败', 'error');
+            }
+            
+            // apiClient实例
+            updateTestStatus('module', 'apiClient默认实例', 'running');
+            if (apiClient && apiClient instanceof APIClient) {
+                updateTestStatus('module', 'apiClient默认实例', 'success');
+                log('apiClient默认实例验证成功', 'success');
+            } else {
+                updateTestStatus('module', 'apiClient默认实例', 'error');
+                log('apiClient默认实例验证失败', 'error');
+            }
+            
+            // WebSocketManager
+            updateTestStatus('module', 'WebSocketManager类', 'running');
+            if (typeof WebSocketManager === 'function') {
+                updateTestStatus('module', 'WebSocketManager类', 'success');
+                log('WebSocketManager类加载成功', 'success');
+            } else {
+                updateTestStatus('module', 'WebSocketManager类', 'error');
+                log('WebSocketManager类加载失败', 'error');
+            }
+            
+            // StateManager
+            updateTestStatus('module', 'StateManager类', 'running');
+            if (typeof StateManager === 'function') {
+                updateTestStatus('module', 'StateManager类', 'success');
+                log('StateManager类加载成功', 'success');
+            } else {
+                updateTestStatus('module', 'StateManager类', 'error');
+                log('StateManager类加载失败', 'error');
+            }
+            
+            log('模块加载测试完成', 'info');
+        };
+        
+        // API测试
+        window.testApi = async function() {
+            log('开始API客户端测试...', 'info');
+            
+            // 测试API方法存在性
+            const apiMethods = [
+                'get', 'post', 'put', 'delete', 'patch',
+                'login', 'logout', 'register', 'getCurrentUser',
+                'getConversations', 'sendMessage', 'streamMessage',
+                'getModels', 'testModel', 'enableModel',
+                'getTrainingJobs', 'startTraining', 'getTrainingLogs',
+                'generateVideo', 'generateImage', 'generateAudio',
+                'getDashboardStats', 'getSystemMetrics', 'getSettings',
+                'getAgents', 'getWorkflows', 'getPlugins',
+                'ragSearch', 'ragIndexDocument', 'getRagCollections'
+            ];
+            
+            for (const method of apiMethods) {
+                updateTestStatus('api', `方法: ${method}`, 'running');
+                if (typeof apiClient[method] === 'function') {
+                    updateTestStatus('api', `方法: ${method}`, 'success');
+                } else {
+                    updateTestStatus('api', `方法: ${method}`, 'error');
+                    log(`API方法缺失: ${method}`, 'warn');
+                }
+            }
+            
+            // 测试请求拦截器
+            updateTestStatus('api', '请求拦截器', 'running');
+            if (apiClient.interceptors && apiClient.interceptors.request) {
+                updateTestStatus('api', '请求拦截器', 'success');
+                log('请求拦截器配置正确', 'success');
+            } else {
+                updateTestStatus('api', '请求拦截器', 'error');
+            }
+            
+            // 测试响应拦截器
+            updateTestStatus('api', '响应拦截器', 'running');
+            if (apiClient.interceptors && apiClient.interceptors.response) {
+                updateTestStatus('api', '响应拦截器', 'success');
+                log('响应拦截器配置正确', 'success');
+            } else {
+                updateTestStatus('api', '响应拦截器', 'error');
+            }
+            
+            // 测试缓存
+            updateTestStatus('api', '请求缓存', 'running');
+            if (apiClient.cache && typeof apiClient.cache.get === 'function') {
+                updateTestStatus('api', '请求缓存', 'success');
+                log('请求缓存配置正确', 'success');
+            } else {
+                updateTestStatus('api', '请求缓存', 'error');
+            }
+            
+            log('API客户端测试完成', 'info');
+        };
+        
+        // WebSocket测试
+        window.testWebSocket = async function() {
+            log('开始WebSocket测试...', 'info');
+            
+            // 创建WebSocket实例
+            updateTestStatus('ws', '创建WebSocket实例', 'running');
+            try {
+                const wsManager = new WebSocketManager();
+                updateTestStatus('ws', '创建WebSocket实例', 'success');
+                log('WebSocket实例创建成功', 'success');
+                
+                // 测试方法存在性
+                const wsMethods = [
+                    'connect', 'disconnect', 'send', 'subscribe',
+                    'unsubscribe', 'isConnected', 'getState'
+                ];
+                
+                for (const method of wsMethods) {
+                    updateTestStatus('ws', `方法: ${method}`, 'running');
+                    if (typeof wsManager[method] === 'function') {
+                        updateTestStatus('ws', `方法: ${method}`, 'success');
+                    } else {
+                        updateTestStatus('ws', `方法: ${method}`, 'error');
+                    }
+                }
+                
+            } catch (error) {
+                updateTestStatus('ws', '创建WebSocket实例', 'error');
+                log('WebSocket实例创建失败: ' + error.message, 'error');
+            }
+            
+            log('WebSocket测试完成', 'info');
+        };
+        
+        // 状态管理测试
+        window.testState = async function() {
+            log('开始状态管理测试...', 'info');
+            
+            // 获取StateManager实例
+            updateTestStatus('state', '获取StateManager实例', 'running');
+            try {
+                const stateManager = StateManager.getInstance();
+                updateTestStatus('state', '获取StateManager实例', 'success');
+                log('StateManager实例获取成功', 'success');
+                
+                // 测试方法存在性
+                const stateMethods = [
+                    'get', 'set', 'subscribe', 'unsubscribe',
+                    'compute', 'persist', 'restore', 'reset'
+                ];
+                
+                for (const method of stateMethods) {
+                    updateTestStatus('state', `方法: ${method}`, 'running');
+                    if (typeof stateManager[method] === 'function') {
+                        updateTestStatus('state', `方法: ${method}`, 'success');
+                    } else {
+                        updateTestStatus('state', `方法: ${method}`, 'error');
+                    }
+                }
+                
+                // 测试状态操作
+                updateTestStatus('state', '状态读写测试', 'running');
+                stateManager.set('test.key', 'test_value');
+                const value = stateManager.get('test.key');
+                if (value === 'test_value') {
+                    updateTestStatus('state', '状态读写测试', 'success');
+                    log('状态读写测试成功', 'success');
+                } else {
+                    updateTestStatus('state', '状态读写测试', 'error');
+                    log('状态读写测试失败', 'error');
+                }
+                
+            } catch (error) {
+                updateTestStatus('state', '获取StateManager实例', 'error');
+                log('StateManager实例获取失败: ' + error.message, 'error');
+            }
+            
+            log('状态管理测试完成', 'info');
+        };
+        
+        // 运行所有测试
+        window.runAllTests = async function() {
+            log('========== 开始所有测试 ==========', 'info');
+            await window.testModules();
+            await window.testApi();
+            await window.testWebSocket();
+            await window.testState();
+            log('========== 所有测试完成 ==========', 'info');
+        };
+        
+        window.runApiTests = async function() {
+            log('========== 开始API测试 ==========', 'info');
+            await window.testApi();
+            log('========== API测试完成 ==========', 'info');
+        };
+        
+        window.runWsTests = async function() {
+            log('========== 开始WebSocket测试 ==========', 'info');
+            await window.testWebSocket();
+            log('========== WebSocket测试完成 ==========', 'info');
+        };
+        
+        // 页面加载完成后自动运行测试
+        log('测试页面加载完成，点击按钮开始测试', 'info');
+    </script>
+</body>
+</html>

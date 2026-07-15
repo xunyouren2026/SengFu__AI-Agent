@@ -1,0 +1,505 @@
+# =============================================================================
+# UFO AGI 统一框架 - Ollama 部署配置模板
+# =============================================================================
+# 此配置文件用于配置Ollama本地模型部署
+# 支持模型路径、量化选项、上下文长度等配置
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 基本配置
+# -----------------------------------------------------------------------------
+ollama:
+  # 服务配置
+  host: "0.0.0.0"           # 服务监听地址
+  port: 11434               # 服务端口
+  
+  # 模型存储路径
+  models_path: "./models/ollama"
+  
+  # 是否允许跨域请求
+  cors: true
+  
+  # 并发请求数限制
+  max_concurrent_requests: 10
+  
+  # 请求超时时间（秒）
+  request_timeout: 300
+
+# -----------------------------------------------------------------------------
+# 模型配置
+# -----------------------------------------------------------------------------
+models:
+  # 默认模型
+  default: "llama2-7b"
+  
+  # 模型列表
+  available:
+    # -----------------------------------------------------------------------------
+    # Llama 2 系列
+    # -----------------------------------------------------------------------------
+    - name: "llama2-7b"
+      display_name: "Llama 2 7B"
+      description: "Meta Llama 2 7B 基础模型"
+      model_file: "llama2:7b"
+      quantization: "q4_0"           # 量化类型: q4_0, q4_1, q5_0, q5_1, q8_0, f16, f32
+      context_length: 4096           # 上下文长度
+      max_tokens: 2048               # 最大生成token数
+      temperature: 0.7               # 默认温度
+      top_p: 0.9                     # 默认top_p
+      top_k: 40                      # 默认top_k
+      repeat_penalty: 1.1            # 重复惩罚
+      num_gpu: 1                     # 使用的GPU数量
+      num_thread: 4                  # CPU线程数
+      batch_size: 512                # 批处理大小
+      
+    - name: "llama2-13b"
+      display_name: "Llama 2 13B"
+      description: "Meta Llama 2 13B 基础模型"
+      model_file: "llama2:13b"
+      quantization: "q4_0"
+      context_length: 4096
+      max_tokens: 2048
+      temperature: 0.7
+      top_p: 0.9
+      top_k: 40
+      repeat_penalty: 1.1
+      num_gpu: 1
+      num_thread: 4
+      batch_size: 512
+      
+    - name: "llama2-70b"
+      display_name: "Llama 2 70B"
+      description: "Meta Llama 2 70B 基础模型"
+      model_file: "llama2:70b"
+      quantization: "q4_0"
+      context_length: 4096
+      max_tokens: 2048
+      temperature: 0.7
+      top_p: 0.9
+      top_k: 40
+      repeat_penalty: 1.1
+      num_gpu: 2                     # 大模型需要更多GPU
+      num_thread: 8
+      batch_size: 256
+      
+    # -----------------------------------------------------------------------------
+    # Llama 3 系列
+    # -----------------------------------------------------------------------------
+    - name: "llama3-8b"
+      display_name: "Llama 3 8B"
+      description: "Meta Llama 3 8B 基础模型"
+      model_file: "llama3:8b"
+      quantization: "q4_0"
+      context_length: 8192           # Llama 3 支持更长上下文
+      max_tokens: 4096
+      temperature: 0.7
+      top_p: 0.9
+      top_k: 40
+      repeat_penalty: 1.1
+      num_gpu: 1
+      num_thread: 4
+      batch_size: 512
+      
+    - name: "llama3-70b"
+      display_name: "Llama 3 70B"
+      description: "Meta Llama 3 70B 基础模型"
+      model_file: "llama3:70b"
+      quantization: "q4_0"
+      context_length: 8192
+      max_tokens: 4096
+      temperature: 0.7
+      top_p: 0.9
+      top_k: 40
+      repeat_penalty: 1.1
+      num_gpu: 2
+      num_thread: 8
+      batch_size: 256
+      
+    # -----------------------------------------------------------------------------
+    # Mistral 系列
+    # -----------------------------------------------------------------------------
+    - name: "mistral-7b"
+      display_name: "Mistral 7B"
+      description: "Mistral AI 7B 模型"
+      model_file: "mistral:7b"
+      quantization: "q4_0"
+      context_length: 8192
+      max_tokens: 4096
+      temperature: 0.7
+      top_p: 0.9
+      top_k: 40
+      repeat_penalty: 1.1
+      num_gpu: 1
+      num_thread: 4
+      batch_size: 512
+      
+    - name: "mistral-7b-instruct"
+      display_name: "Mistral 7B Instruct"
+      description: "Mistral AI 7B 指令微调模型"
+      model_file: "mistral:7b-instruct"
+      quantization: "q4_0"
+      context_length: 8192
+      max_tokens: 4096
+      temperature: 0.7
+      top_p: 0.9
+      top_k: 40
+      repeat_penalty: 1.1
+      num_gpu: 1
+      num_thread: 4
+      batch_size: 512
+      
+    # -----------------------------------------------------------------------------
+    # CodeLlama 系列
+    # -----------------------------------------------------------------------------
+    - name: "codellama-7b"
+      display_name: "CodeLlama 7B"
+      description: "Meta CodeLlama 7B 代码模型"
+      model_file: "codellama:7b"
+      quantization: "q4_0"
+      context_length: 16384          # 代码模型支持更长上下文
+      max_tokens: 4096
+      temperature: 0.7
+      top_p: 0.9
+      top_k: 40
+      repeat_penalty: 1.1
+      num_gpu: 1
+      num_thread: 4
+      batch_size: 512
+      
+    - name: "codellama-13b"
+      display_name: "CodeLlama 13B"
+      description: "Meta CodeLlama 13B 代码模型"
+      model_file: "codellama:13b"
+      quantization: "q4_0"
+      context_length: 16384
+      max_tokens: 4096
+      temperature: 0.7
+      top_p: 0.9
+      top_k: 40
+      repeat_penalty: 1.1
+      num_gpu: 1
+      num_thread: 4
+      batch_size: 512
+      
+    # -----------------------------------------------------------------------------
+    # 中文模型
+    # -----------------------------------------------------------------------------
+    - name: "qwen-7b"
+      display_name: "Qwen 7B"
+      description: "阿里巴巴通义千问 7B 模型"
+      model_file: "qwen:7b"
+      quantization: "q4_0"
+      context_length: 8192
+      max_tokens: 4096
+      temperature: 0.7
+      top_p: 0.9
+      top_k: 40
+      repeat_penalty: 1.1
+      num_gpu: 1
+      num_thread: 4
+      batch_size: 512
+      
+    - name: "qwen-14b"
+      display_name: "Qwen 14B"
+      description: "阿里巴巴通义千问 14B 模型"
+      model_file: "qwen:14b"
+      quantization: "q4_0"
+      context_length: 8192
+      max_tokens: 4096
+      temperature: 0.7
+      top_p: 0.9
+      top_k: 40
+      repeat_penalty: 1.1
+      num_gpu: 1
+      num_thread: 4
+      batch_size: 512
+      
+    - name: "yi-6b"
+      display_name: "Yi 6B"
+      description: "零一万物 Yi 6B 模型"
+      model_file: "yi:6b"
+      quantization: "q4_0"
+      context_length: 4096
+      max_tokens: 2048
+      temperature: 0.7
+      top_p: 0.9
+      top_k: 40
+      repeat_penalty: 1.1
+      num_gpu: 1
+      num_thread: 4
+      batch_size: 512
+      
+    - name: "yi-34b"
+      display_name: "Yi 34B"
+      description: "零一万物 Yi 34B 模型"
+      model_file: "yi:34b"
+      quantization: "q4_0"
+      context_length: 4096
+      max_tokens: 2048
+      temperature: 0.7
+      top_p: 0.9
+      top_k: 40
+      repeat_penalty: 1.1
+      num_gpu: 1
+      num_thread: 8
+      batch_size: 256
+
+# -----------------------------------------------------------------------------
+# 量化配置
+# -----------------------------------------------------------------------------
+quantization:
+  # 量化类型说明:
+  # - q4_0: 4-bit quantization, lowest size, fastest inference
+  # - q4_1: 4-bit quantization, slightly better quality than q4_0
+  # - q5_0: 5-bit quantization, balanced size and quality
+  # - q5_1: 5-bit quantization, better quality than q5_0
+  # - q8_0: 8-bit quantization, high quality, larger size
+  # - f16: 16-bit floating point, highest quality, largest size
+  # - f32: 32-bit floating point, original quality, largest size
+  
+  # 默认量化类型
+  default: "q4_0"
+  
+  # 量化选项
+  options:
+    q4_0:
+      bits: 4
+      description: "4-bit quantization (default)"
+      size_reduction: "~75%"
+      quality_impact: "Minimal"
+      
+    q4_1:
+      bits: 4
+      description: "4-bit quantization (improved)"
+      size_reduction: "~75%"
+      quality_impact: "Very Low"
+      
+    q5_0:
+      bits: 5
+      description: "5-bit quantization"
+      size_reduction: "~68%"
+      quality_impact: "Low"
+      
+    q5_1:
+      bits: 5
+      description: "5-bit quantization (improved)"
+      size_reduction: "~68%"
+      quality_impact: "Very Low"
+      
+    q8_0:
+      bits: 8
+      description: "8-bit quantization"
+      size_reduction: "~50%"
+      quality_impact: "Negligible"
+      
+    f16:
+      bits: 16
+      description: "16-bit floating point"
+      size_reduction: "0%"
+      quality_impact: "None"
+      
+    f32:
+      bits: 32
+      description: "32-bit floating point"
+      size_reduction: "0%"
+      quality_impact: "None"
+
+# -----------------------------------------------------------------------------
+# 硬件配置
+# -----------------------------------------------------------------------------
+hardware:
+  # GPU配置
+  gpu:
+    enabled: true
+    # 可见的GPU设备 (CUDA_VISIBLE_DEVICES)
+    visible_devices: "0"
+    # 每个模型使用的GPU内存限制 (MB)
+    memory_limit: 0  # 0表示无限制
+    
+  # CPU配置
+  cpu:
+    # 使用的线程数 (0表示自动)
+    threads: 0
+    # 是否使用AVX/AVX2指令集
+    use_avx: true
+    
+  # 内存配置
+  memory:
+    # 模型加载内存限制 (MB)
+    model_limit: 0  # 0表示无限制
+    # 是否使用内存映射
+    use_mmap: true
+    # 是否锁定内存
+    lock_memory: false
+
+# -----------------------------------------------------------------------------
+# 推理配置
+# -----------------------------------------------------------------------------
+inference:
+  # 批处理配置
+  batching:
+    enabled: true
+    max_batch_size: 16
+    max_wait_time: 10  # 毫秒
+    
+  # 流式输出
+  streaming:
+    enabled: true
+    chunk_size: 10     # 每次发送的token数
+    
+  # 缓存配置
+  cache:
+    enabled: true
+    type: "kv_cache"   # kv_cache, none
+    max_size: "2GB"    # 最大缓存大小
+    
+  # 系统提示词
+  system_prompt: |
+    You are a helpful AI assistant. You are part of the UFO AGI Unified Framework.
+    Please provide accurate, helpful, and harmless responses.
+
+# -----------------------------------------------------------------------------
+# 安全配置
+# -----------------------------------------------------------------------------
+security:
+  # API认证
+  auth:
+    enabled: false
+    type: "api_key"    # api_key, jwt, none
+    api_key_header: "X-API-Key"
+    
+  # 速率限制
+  rate_limit:
+    enabled: true
+    requests_per_minute: 60
+    requests_per_hour: 1000
+    
+  # 内容过滤
+  content_filter:
+    enabled: true
+    blocked_patterns: []
+    
+  # 最大请求大小 (MB)
+  max_request_size: 10
+
+# -----------------------------------------------------------------------------
+# 监控配置
+# -----------------------------------------------------------------------------
+monitoring:
+  # 日志级别: debug, info, warning, error
+  log_level: "info"
+  
+  # 指标收集
+  metrics:
+    enabled: true
+    interval: 60  # 秒
+    
+  # 健康检查
+  health_check:
+    enabled: true
+    interval: 30  # 秒
+    
+  # Prometheus导出
+  prometheus:
+    enabled: false
+    port: 9090
+
+# -----------------------------------------------------------------------------
+# 自定义Modelfile模板
+# -----------------------------------------------------------------------------
+modelfile_templates:
+  # 基础模板
+  base: |
+    FROM {{ model_file }}
+    
+    PARAMETER temperature {{ temperature }}
+    PARAMETER top_p {{ top_p }}
+    PARAMETER top_k {{ top_k }}
+    PARAMETER repeat_penalty {{ repeat_penalty }}
+    PARAMETER num_ctx {{ context_length }}
+    PARAMETER num_predict {{ max_tokens }}
+    PARAMETER num_gpu {{ num_gpu }}
+    PARAMETER num_thread {{ num_thread }}
+    
+    SYSTEM """
+    {{ system_prompt }}
+    """
+  
+  # 代码模型模板
+  code: |
+    FROM {{ model_file }}
+    
+    PARAMETER temperature 0.2
+    PARAMETER top_p 0.95
+    PARAMETER top_k 40
+    PARAMETER repeat_penalty 1.0
+    PARAMETER num_ctx {{ context_length }}
+    PARAMETER num_predict {{ max_tokens }}
+    PARAMETER num_gpu {{ num_gpu }}
+    PARAMETER num_thread {{ num_thread }}
+    PARAMETER stop "```"
+    
+    SYSTEM """
+    You are an expert programming assistant. Provide clear, efficient, and well-documented code.
+    """
+  
+  # 创意写作模板
+  creative: |
+    FROM {{ model_file }}
+    
+    PARAMETER temperature 0.9
+    PARAMETER top_p 0.95
+    PARAMETER top_k 60
+    PARAMETER repeat_penalty 1.1
+    PARAMETER num_ctx {{ context_length }}
+    PARAMETER num_predict {{ max_tokens }}
+    PARAMETER num_gpu {{ num_gpu }}
+    PARAMETER num_thread {{ num_thread }}
+    
+    SYSTEM """
+    You are a creative writing assistant. Help with storytelling, poetry, and creative content.
+    """
+
+# -----------------------------------------------------------------------------
+# 部署配置
+# -----------------------------------------------------------------------------
+deployment:
+  # Docker配置
+  docker:
+    enabled: true
+    image: "ollama/ollama:latest"
+    container_name: "ufo-ollama"
+    ports:
+      - "11434:11434"
+    volumes:
+      - "./models/ollama:/root/.ollama"
+    environment:
+      - "OLLAMA_HOST=0.0.0.0:11434"
+    # GPU支持
+    gpu:
+      enabled: true
+      runtime: "nvidia"
+      devices:
+        - driver: nvidia
+          count: all
+          capabilities: [gpu]
+    
+  # Kubernetes配置
+  kubernetes:
+    enabled: false
+    namespace: "ufo-agi"
+    replicas: 1
+    resources:
+      requests:
+        memory: "4Gi"
+        cpu: "2"
+      limits:
+        memory: "16Gi"
+        cpu: "4"
+        nvidia.com/gpu: 1
+    
+  # 服务发现
+  service_discovery:
+    enabled: true
+    type: "consul"  # consul, etcd, kubernetes
+    address: "localhost:8500"

@@ -1,0 +1,195 @@
+# =============================================================================
+# AGI Unified Framework - Kubernetes ConfigMap
+# =============================================================================
+# 存储非敏感的配置数据，如应用设置、环境变量等
+# ConfigMap允许将配置与容器镜像分离，便于不同环境的配置管理
+# =============================================================================
+
+---
+# 应用核心配置
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agi-framework-config
+  namespace: agi-framework-prod
+  labels:
+    app.kubernetes.io/name: agi-framework
+    app.kubernetes.io/component: config
+    app.kubernetes.io/part-of: agi-unified-framework
+data:
+  # 应用基础配置
+  APP_NAME: "AGI Unified Framework"
+  APP_ENV: "production"
+  APP_DEBUG: "false"
+  APP_VERSION: "1.0.0"
+  
+  # 服务器配置
+  SERVER_HOST: "0.0.0.0"
+  SERVER_PORT: "8000"
+  WORKERS: "4"
+  TIMEOUT: "120"
+  
+  # 日志配置
+  LOG_LEVEL: "info"
+  LOG_FORMAT: "json"
+  LOG_OUTPUT: "stdout"
+  
+  # 数据库连接池配置
+  DB_POOL_SIZE: "20"
+  DB_MAX_OVERFLOW: "10"
+  DB_POOL_TIMEOUT: "30"
+  DB_POOL_RECYCLE: "3600"
+  
+  # Redis配置
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+  REDIS_SSL: "false"
+  
+  # Celery配置
+  CELERY_WORKER_CONCURRENCY: "4"
+  CELERY_WORKER_PREFETCH_MULTIPLIER: "1"
+  CELERY_TASK_ACKS_LATE: "true"
+  CELERY_TASK_REJECT_ON_WORKER_LOST: "true"
+  
+  # 缓存配置
+  CACHE_TYPE: "redis"
+  CACHE_DEFAULT_TIMEOUT: "300"
+  
+  # 限流配置
+  RATE_LIMIT_ENABLED: "true"
+  RATE_LIMIT_DEFAULT: "100/minute"
+  RATE_LIMIT_STORAGE_URL: "redis://redis:6379/3"
+  
+  # 文件上传配置
+  MAX_UPLOAD_SIZE: "104857600"
+  ALLOWED_EXTENSIONS: "txt,md,pdf,doc,docx,png,jpg,jpeg,gif,mp3,mp4,wav"
+  
+  # 模型服务配置
+  MODEL_TIMEOUT: "60"
+  MODEL_MAX_RETRIES: "3"
+  MODEL_RETRY_DELAY: "1"
+  
+  # 监控配置
+  METRICS_ENABLED: "true"
+  METRICS_PORT: "9090"
+  HEALTH_CHECK_PATH: "/health"
+  
+  # CORS配置
+  CORS_ORIGINS: "*"
+  CORS_METHODS: "GET,POST,PUT,DELETE,OPTIONS,PATCH"
+  CORS_HEADERS: "Content-Type,Authorization,X-Request-ID"
+
+---
+# Nginx配置
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: agi-framework-prod
+  labels:
+    app.kubernetes.io/name: nginx
+    app.kubernetes.io/component: config
+    app.kubernetes.io/part-of: agi-unified-framework
+data:
+  nginx.conf: |
+    user nginx;
+    worker_processes auto;
+    error_log /var/log/nginx/error.log warn;
+    pid /var/run/nginx.pid;
+    
+    events {
+        worker_connections 4096;
+        use epoll;
+        multi_accept on;
+    }
+    
+    http {
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+        
+        log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                        '$status $body_bytes_sent "$http_referer" '
+                        '"$http_user_agent" "$http_x_forwarded_for"';
+        
+        access_log /var/log/nginx/access.log main;
+        
+        sendfile on;
+        tcp_nopush on;
+        tcp_nodelay on;
+        keepalive_timeout 65;
+        
+        gzip on;
+        gzip_vary on;
+        gzip_proxied any;
+        gzip_comp_level 6;
+        
+        upstream app {
+            server localhost:8000;
+        }
+        
+        server {
+            listen 80;
+            server_name _;
+            
+            location / {
+                proxy_pass http://app;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            }
+        }
+    }
+
+---
+# Prometheus监控配置
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: agi-framework-prod
+  labels:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/component: config
+    app.kubernetes.io/part-of: agi-unified-framework
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+      external_labels:
+        cluster: agi-framework
+        replica: '{{.ExternalURL}}'
+    
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets: ['alertmanager:9093']
+    
+    rule_files:
+      - /etc/prometheus/rules/*.yml
+    
+    scrape_configs:
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+      
+      - job_name: 'agi-framework-api'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - agi-framework-prod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__

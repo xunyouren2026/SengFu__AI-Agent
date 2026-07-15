@@ -1,0 +1,812 @@
+# =============================================================================
+# AGI Unified Framework - 部署配置模板
+# =============================================================================
+# 描述: 定义模型推理服务的部署配置，包括API服务、Docker容器化、
+#       Kubernetes编排、负载均衡、SSL/TLS证书、监控告警等
+# 版本: 2.0.0
+# 用法: 根据部署环境选择对应配置段，支持 dev/test/prod 多环境
+# =============================================================================
+
+version: "2.0.0"
+
+# -----------------------------------------------------------------------------
+# API 服务配置
+# -----------------------------------------------------------------------------
+api:
+  # 服务名称 (默认: "agi-unified-api")
+  name: "agi-unified-api"
+
+  # 服务版本 (默认: "1.0.0")
+  version: "1.0.0"
+
+  # API框架: "fastapi", "flask", "tgi"(Text Generation Inference),
+  #   "triton"(NVIDIA Triton), "vllm"
+  framework: "fastapi"
+
+  # 监听地址 (默认: "0.0.0.0")
+  host: "0.0.0.0"
+
+  # 监听端口 (默认: 8000)
+  port: 8000
+
+  # 工作进程数，null则自动根据CPU核心数设置 (默认: null)
+  workers: null
+
+  # 工作线程模式: "uvloop"(异步), "worker"(多进程)
+  worker_type: "uvloop"
+
+  # 请求超时时间，秒 (默认: 30)
+  request_timeout: 30
+
+  # 最大请求体大小，MB (默认: 100)
+  max_request_size_mb: 100
+
+  # API前缀路径 (默认: "/api/v1")
+  api_prefix: "/api/v1"
+
+  # 是否启用CORS跨域 (默认: true)
+  cors_enabled: true
+
+  # CORS允许的源，"*"表示全部 (默认: ["*"])
+  cors_origins: ["*"]
+
+  # 是否启用API文档 (Swagger/ReDoc) (默认: true)
+  docs_enabled: true
+
+  # API文档路径
+  docs_path: "/docs"       # Swagger UI路径 (默认: "/docs")
+  redoc_path: "/redoc"     # ReDoc路径 (默认: "/redoc")
+
+  # 认证方式: "none", "api_key", "jwt", "oauth2", "basic"
+  auth_type: "api_key"
+
+  # API密钥配置
+  api_keys:
+    # 密钥存储方式: "env"(环境变量), "file"(文件), "vault"(HashiCorp Vault)
+    storage: "env"
+    # 环境变量名 (默认: "API_KEYS")
+    env_var: "API_KEYS"
+    # 密钥文件路径 (默认: null)
+    file_path: null
+
+  # 速率限制
+  rate_limiting:
+    # 是否启用速率限制 (默认: true)
+    enabled: true
+    # 每分钟最大请求数 (默认: 60)
+    requests_per_minute: 60
+    # 每分钟最大token数 (默认: 100000)
+    tokens_per_minute: 100000
+    # 速率限制存储后端: "memory"(内存), "redis"
+    backend: "memory"
+    # Redis连接URL (默认: "redis://localhost:6379")
+    redis_url: "redis://localhost:6379"
+
+  # 响应缓存
+  cache:
+    # 是否启用响应缓存 (默认: false)
+    enabled: false
+    # 缓存后端: "memory", "redis"
+    backend: "redis"
+    # 缓存过期时间，秒 (默认: 300)
+    ttl: 300
+    # 最大缓存条目数 (默认: 10000)
+    max_entries: 10000
+
+# -----------------------------------------------------------------------------
+# 推理引擎配置
+# -----------------------------------------------------------------------------
+inference:
+  # 推理引擎: "pytorch"(PyTorch原生), "vllm"(vLLM), "tgi"(TGI),
+  #   "triton"(Triton Inference Server), "onnx"(ONNX Runtime),
+  #   "tensorrt"(TensorRT), "deepspeed"(DeepSpeed)
+  engine: "vllm"
+
+  # 模型路径 (默认: "./models")
+  model_path: "./models"
+
+  # 模型精度: "fp32", "fp16", "bf16", "int8", "int4" (默认: "bf16")
+  precision: "bf16"
+
+  # 最大批次大小 (默认: 32)
+  max_batch_size: 32
+
+  # 最大输入token数 (默认: 4096)
+  max_input_tokens: 4096
+
+  # 最大输出token数 (默认: 2048)
+  max_output_tokens: 2048
+
+  # 是否启用流式输出 (默认: true)
+  streaming: true
+
+  # GPU显存使用比例 (默认: 0.9)
+  gpu_memory_utilization: 0.9
+
+  # 是否启用KV Cache (默认: true)
+  enable_kv_cache: true
+
+  # 是否启用PagedAttention (vLLM) (默认: true)
+  enable_paged_attention: true
+
+  # Tensor并行度 (默认: 1)
+  tensor_parallel_size: 1
+
+  # 流水线并行度 (默认: 1)
+  pipeline_parallel_size: 1
+
+# -----------------------------------------------------------------------------
+# Docker 配置
+# -----------------------------------------------------------------------------
+docker:
+  # 是否启用Docker部署 (默认: true)
+  enabled: true
+
+  # 基础镜像 (默认: "nvidia/cuda:12.1.0-runtime-ubuntu22.04")
+  base_image: "nvidia/cuda:12.1.0-runtime-ubuntu22.04"
+
+  # 构建镜像名称 (默认: "agi-unified-framework")
+  image_name: "agi-unified-framework"
+
+  # 构建镜像标签 (默认: "latest")
+  image_tag: "latest"
+
+  # Dockerfile路径 (默认: "./deployment/docker/Dockerfile")
+  dockerfile_path: "./deployment/docker/Dockerfile"
+
+  # docker-compose文件路径 (默认: "./deployment/docker/docker-compose.yml")
+  compose_path: "./deployment/docker/docker-compose.yml"
+
+  # 容器资源配置
+  resources:
+    # CPU限制，核心数 (默认: 4)
+    cpu_limit: 4
+    # CPU预留，核心数 (默认: 2)
+    cpu_reservation: 2
+    # 内存限制 (默认: "8g")
+    memory_limit: "8g"
+    # 内存预留 (默认: "4g")
+    memory_reservation: "4g"
+    # GPU设备列表 (默认: ["all"])
+    gpus: ["all"]
+
+  # 容器端口映射 (默认: ["8000:8000"])
+  ports:
+    - "8000:8000"
+
+  # 容器卷挂载
+  volumes:
+    - "./models:/app/models:ro"       # 模型文件只读挂载
+    - "./config:/app/config:ro"        # 配置文件只读挂载
+    - "./logs:/app/logs"               # 日志目录读写挂载
+    - "./data:/app/data:ro"            # 数据目录只读挂载
+
+  # 环境变量文件路径 (默认: ".env")
+  env_file: ".env"
+
+  # 容器重启策略: "no", "on-failure", "always", "unless-stopped"
+  #   (默认: "unless-stopped")
+  restart_policy: "unless-stopped"
+
+  # 健康检查
+  healthcheck:
+    # 是否启用健康检查 (默认: true)
+    enabled: true
+    # 健康检查端点 (默认: "/health")
+    endpoint: "/health"
+    # 检查间隔，秒 (默认: 30)
+    interval: 30
+    # 超时时间，秒 (默认: 10)
+    timeout: 10
+    # 重试次数 (默认: 3)
+    retries: 3
+    # 启动等待时间，秒 (默认: 40)
+    start_period: 40
+
+  # 网络配置
+  network:
+    # 网络模式: "bridge", "host", "none"
+    #   (默认: "bridge")
+    mode: "bridge"
+    # 自定义网络名称 (默认: "agi-network")
+    network_name: "agi-network"
+
+  # 日志驱动配置
+  logging:
+    # 日志驱动: "json-file", "syslog", "fluentd", "journald"
+    #   (默认: "json-file")
+    driver: "json-file"
+    # 最大日志文件大小 (默认: "10m")
+    max_size: "10m"
+    # 最大日志文件数量 (默认: 3)
+    max_file: 3
+
+# -----------------------------------------------------------------------------
+# Kubernetes 配置
+# -----------------------------------------------------------------------------
+kubernetes:
+  # 是否启用K8s部署 (默认: false)
+  enabled: false
+
+  # 命名空间 (默认: "agi-framework")
+  namespace: "agi-framework"
+
+  # K8s配置文件目录 (默认: "./deployment/kubernetes")
+  manifests_dir: "./deployment/kubernetes"
+
+  # Deployment配置
+  deployment:
+    # 副本数 (默认: 2)
+    replicas: 2
+
+    # 部署策略: "rolling_update"(滚动更新), "recreate"(重建)
+    #   (默认: "rolling_update")
+    strategy: "rolling_update"
+
+    # 滚动更新配置
+    rolling_update:
+      max_unavailable: "25%"   # 最大不可用比例 (默认: "25%")
+      max_surge: "25%"         # 最大超出比例 (默认: "25%")
+
+    # Pod最小可用数 (默认: 1)
+    min_ready_seconds: 10
+
+    # 修订历史限制 (默认: 10)
+    revision_history_limit: 10
+
+  # 容器资源配置
+  resources:
+    requests:
+      cpu: "2"                # CPU请求 (默认: "2")
+      memory: "4Gi"           # 内存请求 (默认: "4Gi")
+      gpu: "1"                # GPU请求 (默认: "1")
+    limits:
+      cpu: "4"                # CPU限制 (默认: "4")
+      memory: "8Gi"           # 内存限制 (默认: "8Gi")
+      gpu: "1"                # GPU限制 (默认: "1")
+
+  # HPA (水平Pod自动伸缩) 配置
+  hpa:
+    # 是否启用HPA (默认: true)
+    enabled: true
+    # 最小副本数 (默认: 2)
+    min_replicas: 2
+    # 最大副本数 (默认: 10)
+    max_replicas: 10
+    # 目标CPU利用率，百分比 (默认: 70)
+    target_cpu_utilization: 70
+    # 目标内存利用率，百分比 (默认: 80)
+    target_memory_utilization: 80
+    # 扩缩容冷却时间，秒
+    scale_up_period: 60       # 扩容冷却 (默认: 60)
+    scale_down_period: 300    # 缩容冷却 (默认: 300)
+
+  # Service配置
+  service:
+    # 服务类型: "ClusterIP", "NodePort", "LoadBalancer"
+    #   (默认: "ClusterIP")
+    type: "ClusterIP"
+    # 服务端口 (默认: 8000)
+    port: 8000
+    # 目标端口 (默认: 8000)
+    target_port: 8000
+
+  # Ingress配置
+  ingress:
+    # 是否启用Ingress (默认: true)
+    enabled: true
+    # Ingress类名 (默认: "nginx")
+    class_name: "nginx"
+    # 主机名 (默认: null)
+    host: null
+    # TLS配置
+    tls_enabled: false
+    # TLS密钥名 (默认: null)
+    tls_secret_name: null
+    # 路径前缀 (默认: "/")
+    path_prefix: "/"
+
+  # ConfigMap和Secret
+  configmap:
+    # ConfigMap名称 (默认: "agi-config")
+    name: "agi-config"
+  secret:
+    # Secret名称 (默认: "agi-secret")
+    name: "agi-secret"
+
+  # 节点选择器和容忍度
+  node_selector:
+    # GPU节点标签 (默认: "nvidia.com/gpu.present=true")
+    gpu_node: "nvidia.com/gpu.present=true"
+
+  tolerations:
+    # GPU污点容忍 (默认: [])
+    - key: "nvidia.com/gpu"
+      operator: "Exists"
+      effect: "NoSchedule"
+
+  # 亲和性配置
+  affinity:
+    # Pod反亲和性，确保Pod分散在不同节点
+    pod_anti_affinity:
+      required_during_scheduling:
+        - label_selector:
+            match_labels:
+              app: "agi-unified-api"
+          topology_key: "kubernetes.io/hostname"
+
+# -----------------------------------------------------------------------------
+# 负载均衡配置
+# -----------------------------------------------------------------------------
+load_balancer:
+  # 负载均衡类型: "none", "nginx", "traefik", "envoy", "aws_alb", "aws_nlb",
+  #   "gcp_lb", "cloudflare"
+  type: "nginx"
+
+  # 负载均衡算法: "round_robin"(轮询), "least_conn"(最少连接),
+  #   "ip_hash"(IP哈希), "random"(随机), "weighted"(加权)
+  algorithm: "round_robin"
+
+  # 会话保持
+  session_affinity:
+    # 是否启用会话保持 (默认: false)
+    enabled: false
+    # 会话保持超时，秒 (默认: 3600)
+    timeout: 3600
+    # Cookie名称 (默认: "AGI_SESSION")
+    cookie_name: "AGI_SESSION"
+
+  # 连接配置
+  connections:
+    # 空闲连接超时，秒 (默认: 60)
+    idle_timeout: 60
+    # 最大连接数 (默认: 10000)
+    max_connections: 10000
+    # 最大每个后端连接数 (默认: 1000)
+    max_connections_per_backend: 1000
+    # 连接队列大小 (默认: 1024)
+    backlog: 1024
+
+  # 限流配置
+  throttling:
+    # 全局速率限制，请求/秒 (默认: 1000)
+    global_rate: 1000
+    # 每IP速率限制，请求/秒 (默认: 100)
+    per_ip_rate: 100
+    # 突发请求数 (默认: 50)
+    burst: 50
+
+  # 健康检查
+  health_check:
+    # 检查路径 (默认: "/health")
+    path: "/health"
+    # 检查间隔，秒 (默认: 10)
+    interval: 10
+    # 超时时间，秒 (默认: 5)
+    timeout: 5
+    # 不健康阈值 (默认: 3)
+    unhealthy_threshold: 3
+    # 健康阈值 (默认: 2)
+    healthy_threshold: 2
+
+  # 后端服务列表
+  backends: []
+
+# -----------------------------------------------------------------------------
+# SSL/TLS 配置
+# -----------------------------------------------------------------------------
+ssl:
+  # 是否启用SSL/TLS (默认: false)
+  enabled: false
+
+  # SSL模式: "full"(全链路加密), "flexible"(灵活模式),
+  #   "strict"(严格模式), "off"(关闭)
+  mode: "full"
+
+  # 证书来源: "letsencrypt"(自动签发), "custom"(自定义证书),
+  #   "vault"(从Vault获取), "aws_acm"(AWS Certificate Manager)
+  certificate_source: "letsencrypt"
+
+  # Let's Encrypt配置
+  letsencrypt:
+    # 邮箱地址 (默认: null)
+    email: null
+    # 证书类型: "rsa", "ecdsa" (默认: "ecdsa")
+    key_type: "ecdsa"
+    # 密钥长度 (默认: 2048)
+    key_size: 2048
+
+  # 自定义证书配置
+  custom:
+    # 证书文件路径 (默认: null)
+    cert_path: null
+    # 私钥文件路径 (默认: null)
+    key_path: null
+    # CA证书链路径 (默认: null)
+    ca_chain_path: null
+
+  # TLS版本配置
+  tls_versions:
+    min_version: "TLSv1.2"    # 最低TLS版本 (默认: "TLSv1.2")
+    max_version: "TLSv1.3"    # 最高TLS版本 (默认: "TLSv1.3")
+
+  # 密码套件 (默认: null，使用系统默认)
+  cipher_suites: null
+
+  # HTTP严格传输安全 (HSTS)
+  hsts:
+    # 是否启用HSTS (默认: true)
+    enabled: true
+    # 最大年龄，秒 (默认: 31536000，即1年)
+    max_age: 31536000
+    # 是否包含子域名 (默认: false)
+    include_subdomains: false
+    # 是否预加载 (默认: false)
+    preload: false
+
+# -----------------------------------------------------------------------------
+# 监控与告警配置
+# -----------------------------------------------------------------------------
+monitoring:
+  # 是否启用监控 (默认: true)
+  enabled: true
+
+  # Prometheus指标
+  prometheus:
+    # 是否暴露Prometheus指标 (默认: true)
+    enabled: true
+    # 指标暴露路径 (默认: "/metrics")
+    metrics_path: "/metrics"
+    # 指标暴露端口 (默认: 9090)
+    metrics_port: 9090
+
+    # 自定义指标
+    custom_metrics:
+      # 是否收集推理延迟指标 (默认: true)
+      inference_latency: true
+      # 是否收集吞吐量指标 (默认: true)
+      throughput: true
+      # 是否收集GPU利用率指标 (默认: true)
+      gpu_utilization: true
+      # 是否收集模型缓存命中率 (默认: true)
+      cache_hit_rate: true
+      # 是否收集请求错误率 (默认: true)
+      error_rate: true
+
+  # 健康检查端点
+  health:
+    # 健康检查路径 (默认: "/health")
+    endpoint: "/health"
+    # 就绪检查路径 (默认: "/ready")
+    ready_endpoint: "/ready"
+    # 存活检查路径 (默认: "/live")
+    live_endpoint: "/live"
+
+  # 日志收集
+  logging:
+    # 日志级别: "DEBUG", "INFO", "WARNING", "ERROR" (默认: "INFO")
+    level: "INFO"
+    # 日志格式: "json"(结构化JSON), "text"(纯文本) (默认: "json")
+    format: "json"
+    # 是否输出到stdout (默认: true)
+    stdout: true
+    # 是否输出到文件 (默认: true)
+    file_output: true
+    # 日志文件路径 (默认: "./logs/service.log")
+    file_path: "./logs/service.log"
+    # 日志轮转大小，MB (默认: 100)
+    rotation_size_mb: 100
+    # 保留日志文件数量 (默认: 10)
+    rotation_backups: 10
+
+  # 分布式追踪
+  tracing:
+    # 是否启用分布式追踪 (默认: false)
+    enabled: false
+    # 追踪后端: "jaeger", "zipkin", "otlp", "datadog"
+    #   (默认: "jaeger")
+    backend: "jaeger"
+    # 采样率 0.0-1.0 (默认: 0.1)
+    sampling_rate: 0.1
+    # Jaeger Agent地址 (默认: "localhost:6831")
+    jaeger_agent: "localhost:6831"
+
+  # 告警配置
+  alerting:
+    # 是否启用告警 (默认: true)
+    enabled: true
+
+    # 告警规则
+    rules:
+      # 高延迟告警
+      - name: "high_latency"
+        condition: "inference_latency_p99 > 5.0"
+        severity: "warning"
+        message: "推理P99延迟超过5秒"
+      # 错误率告警
+      - name: "high_error_rate"
+        condition: "error_rate > 0.05"
+        severity: "critical"
+        message: "请求错误率超过5%"
+      # GPU显存告警
+      - name: "gpu_memory_high"
+        condition: "gpu_memory_usage > 0.95"
+        severity: "warning"
+        message: "GPU显存使用率超过95%"
+      # 服务不可用告警
+      - name: "service_down"
+        condition: "up == 0"
+        severity: "critical"
+        message: "服务实例不可用"
+
+    # 通知渠道
+    notifications:
+      # Webhook通知
+      webhook:
+        enabled: false
+        url: null
+      # 邮件通知
+      email:
+        enabled: false
+        smtp_host: null
+        smtp_port: 587
+        recipients: []
+      # Slack通知
+      slack:
+        enabled: false
+        webhook_url: null
+        channel: "#alerts"
+      # 钉钉通知
+      dingtalk:
+        enabled: false
+        webhook_url: null
+      # 企业微信通知
+      wecom:
+        enabled: false
+        webhook_url: null
+
+# -----------------------------------------------------------------------------
+# 安全配置
+# -----------------------------------------------------------------------------
+security:
+  # 是否启用安全功能 (默认: true)
+  enabled: true
+
+  # 内容安全过滤
+  content_filter:
+    # 是否启用内容过滤 (默认: true)
+    enabled: true
+    # 过滤类型: "keyword"(关键词), "ml"(模型检测), "hybrid"(混合)
+    #   (默认: "hybrid")
+    type: "hybrid"
+
+  # 请求验证
+  request_validation:
+    # 最大输入长度 (默认: 32768)
+    max_input_length: 32768
+    # 允许的内容类型 (默认: ["application/json"])
+    allowed_content_types: ["application/json"]
+    # 是否验证请求体Schema (默认: true)
+    validate_schema: true
+
+  # IP白名单 (默认: []，表示不限制)
+  ip_whitelist: []
+
+  # IP黑名单 (默认: [])
+  ip_blacklist: []
+
+# =============================================================================
+# 多环境配置覆盖
+# =============================================================================
+
+environments:
+  # 开发环境 - 本地Docker单容器
+  dev:
+    api:
+      host: "127.0.0.1"
+      port: 8000
+      workers: 1
+      cors_enabled: true
+      cors_origins: ["*"]
+      docs_enabled: true
+      auth_type: "none"
+      rate_limiting:
+        enabled: false
+      cache:
+        enabled: false
+    inference:
+      engine: "pytorch"
+      precision: "fp16"
+      max_batch_size: 8
+      gpu_memory_utilization: 0.8
+    docker:
+      enabled: true
+      base_image: "nvidia/cuda:12.1.0-runtime-ubuntu22.04"
+      resources:
+        cpu_limit: 2
+        memory_limit: "4g"
+        gpus: ['"device=0"']
+      restart_policy: "no"
+      network:
+        mode: "host"
+    kubernetes:
+      enabled: false
+    load_balancer:
+      type: "none"
+    ssl:
+      enabled: false
+    monitoring:
+      enabled: true
+      prometheus:
+        enabled: true
+      tracing:
+        enabled: false
+      alerting:
+        enabled: false
+    security:
+      enabled: false
+
+  # 测试环境 - Docker Compose多服务
+  test:
+    api:
+      host: "0.0.0.0"
+      port: 8000
+      workers: 2
+      cors_enabled: true
+      cors_origins: ["*"]
+      docs_enabled: true
+      auth_type: "api_key"
+      rate_limiting:
+        enabled: true
+        requests_per_minute: 120
+        tokens_per_minute: 200000
+    inference:
+      engine: "vllm"
+      precision: "bf16"
+      max_batch_size: 16
+      gpu_memory_utilization: 0.85
+    docker:
+      enabled: true
+      compose_path: "./deployment/docker/docker-compose.yml"
+      resources:
+        cpu_limit: 4
+        memory_limit: "8g"
+        gpus: ["all"]
+      healthcheck:
+        enabled: true
+    kubernetes:
+      enabled: false
+    load_balancer:
+      type: "nginx"
+      algorithm: "round_robin"
+    ssl:
+      enabled: false
+    monitoring:
+      enabled: true
+      prometheus:
+        enabled: true
+      logging:
+        level: "DEBUG"
+      tracing:
+        enabled: true
+        sampling_rate: 1.0
+      alerting:
+        enabled: true
+    security:
+      enabled: true
+
+  # 生产环境 - K8s集群 + 负载均衡 + SSL
+  prod:
+    api:
+      host: "0.0.0.0"
+      port: 8000
+      workers: null
+      request_timeout: 60
+      max_request_size_mb: 200
+      cors_enabled: true
+      cors_origins: ["https://*.example.com"]
+      docs_enabled: false
+      auth_type: "jwt"
+      rate_limiting:
+        enabled: true
+        requests_per_minute: 300
+        tokens_per_minute: 500000
+        backend: "redis"
+      cache:
+        enabled: true
+        backend: "redis"
+        ttl: 600
+    inference:
+      engine: "vllm"
+      precision: "bf16"
+      max_batch_size: 64
+      max_input_tokens: 8192
+      max_output_tokens: 4096
+      gpu_memory_utilization: 0.92
+      tensor_parallel_size: 2
+    docker:
+      enabled: true
+      image_tag: "stable"
+      resources:
+        cpu_limit: 8
+        memory_limit: "16g"
+        gpus: ["all"]
+      restart_policy: "always"
+      logging:
+        driver: "json-file"
+        max_size: "50m"
+        max_file: 5
+    kubernetes:
+      enabled: true
+      deployment:
+        replicas: 3
+        strategy: "rolling_update"
+      resources:
+        requests:
+          cpu: "4"
+          memory: "8Gi"
+          gpu: "1"
+        limits:
+          cpu: "8"
+          memory: "16Gi"
+          gpu: "1"
+      hpa:
+        enabled: true
+        min_replicas: 3
+        max_replicas: 20
+        target_cpu_utilization: 70
+      service:
+        type: "LoadBalancer"
+      ingress:
+        enabled: true
+        class_name: "nginx"
+        tls_enabled: true
+    load_balancer:
+      type: "nginx"
+      algorithm: "least_conn"
+      session_affinity:
+        enabled: true
+        timeout: 3600
+      connections:
+        max_connections: 50000
+        max_connections_per_backend: 5000
+      throttling:
+        global_rate: 5000
+        per_ip_rate: 200
+    ssl:
+      enabled: true
+      mode: "strict"
+      certificate_source: "letsencrypt"
+      letsencrypt:
+        email: "admin@example.com"
+      hsts:
+        enabled: true
+        max_age: 31536000
+        include_subdomains: true
+        preload: true
+    monitoring:
+      enabled: true
+      prometheus:
+        enabled: true
+      logging:
+        level: "INFO"
+        format: "json"
+      tracing:
+        enabled: true
+        sampling_rate: 0.05
+      alerting:
+        enabled: true
+        notifications:
+          slack:
+            enabled: true
+            channel: "#prod-alerts"
+          email:
+            enabled: true
+            recipients: ["oncall@example.com"]
+    security:
+      enabled: true
+      content_filter:
+        enabled: true
+        type: "hybrid"
+      request_validation:
+        validate_schema: true

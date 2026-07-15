@@ -1,0 +1,38 @@
+# AGI Unified Framework - Computer Use Module Dependencies
+# 小龙虾智能体系统依赖
+
+# Core GUI Automation
+pyautogui>=0.9.54
+pyperclip>=1.8.2
+
+# Screen Capture
+mss>=9.0.1
+Pillow>=10.0.0
+
+# OCR
+pytesseract>=0.3.10
+
+# Image Processing
+opencv-python>=4.8.0
+numpy>=1.24.0
+
+# HTTP Client
+aiohttp>=3.8.0
+requests>=2.31.0
+
+# Platform-specific (Windows)
+pywin32>=306; platform_system=="Windows"
+psutil>=5.9.0; platform_system=="Windows"
+
+# Platform-specific (Linux)
+python-xlib>=0.33; platform_system=="Linux"
+
+# Platform-specific (macOS)
+pyobjc>=10.0; platform_system=="Darwin"
+
+# Desktop Application
+customtkinter>=5.2.0
+
+# Utilities
+pydantic>=2.0.0
+python-dotenv>=1.0.0

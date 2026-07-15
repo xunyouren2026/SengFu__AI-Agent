@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AGI 统一框架 - 初始设置</title>
+    <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+        .setup-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 600px;
+            padding: 40px;
+            position: relative;
+        }
+        .setup-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .setup-header h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .setup-header p {
+            color: #666;
+            font-size: 14px;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 30px;
+        }
+        .step-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ddd;
+            transition: all 0.3s;
+        }
+        .step-dot.active { background: #667eea; transform: scale(1.2); }
+        .step-dot.done { background: #10b981; }
+        .step { display: none; }
+        .step.active { display: block; }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: #444;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+        .form-group input:focus, .form-group select:focus {
+            border-color: #667eea;
+        }
+        .form-group .hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+        .provider-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .provider-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 12px;
+        }
+        .provider-card:hover { border-color: #667eea; }
+        .provider-card.selected { border-color: #667eea; background: #f0f0ff; }
+        .provider-card .icon { font-size: 24px; margin-bottom: 4px; }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            width: 100%;
+        }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #64748b;
+            margin-right: 10px;
+        }
+        .btn-skip {
+            background: none;
+            color: #999;
+            font-size: 13px;
+            margin-top: 10px;
+            cursor: pointer;
+            border: none;
+            text-decoration: underline;
+        }
+        .btn-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .success-icon {
+            font-size: 64px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .skip-notice {
+            background: #fffbeb;
+            border: 1px solid #fbbf24;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 13px;
+            color: #92400e;
+            margin-top: 15px;
+        }
+        .skip-notice strong { color: #b45309; }
+    </style>
+</head>
+<body>
+    <div class="setup-container">
+        <div class="setup-header">
+            <h1>🚀 欢迎使用 AGI 统一框架</h1>
+            <p>只需3步，即可开始使用</p>
+        </div>
+        
+        <div class="step-indicator">
+            <div class="step-dot active" id="dot1"></div>
+            <div class="step-dot" id="dot2"></div>
+            <div class="step-dot" id="dot3"></div>
+        </div>
+        
+        <!-- 步骤1: 选择LLM提供商 -->
+        <div class="step active" id="step1">
+            <h2 style="font-size:18px; margin-bottom:15px;">选择 AI 模型提供商</h2>
+            <p style="font-size:13px; color:#666; margin-bottom:15px;">选择一个LLM提供商，或稍后在"模型设置"中配置</p>
+            
+            <div class="provider-cards">
+                <div class="provider-card" onclick="selectProvider('deepseek')">
+                    <div class="icon">🔮</div>
+                    <div>DeepSeek</div>
+                </div>
+                <div class="provider-card" onclick="selectProvider('openai')">
+                    <div class="icon">🤖</div>
+                    <div>OpenAI</div>
+                </div>
+                <div class="provider-card" onclick="selectProvider('zhipuai')">
+                    <div class="icon">🧠</div>
+                    <div>智谱AI</div>
+                </div>
+                <div class="provider-card" onclick="selectProvider('moonshot')">
+                    <div class="icon">🌙</div>
+                    <div>Moonshot</div>
+                </div>
+                <div class="provider-card" onclick="selectProvider('qwen')">
+                    <div class="icon">☁️</div>
+                    <div>通义千问</div>
+                </div>
+                <div class="provider-card" onclick="selectProvider('doubao')">
+                    <div class="icon">🫘</div>
+                    <div>豆包</div>
+                </div>
+            </div>
+            
+            <div class="form-group" id="apiKeyGroup" style="display:none;">
+                <label for="apiKey">API Key</label>
+                <input type="password" id="apiKey" placeholder="sk-xxxxxxxxxxxxxxxx">
+                <div class="hint">您的API密钥将安全存储在本地</div>
+            </div>
+            
+            <div class="form-group" id="baseUrlGroup" style="display:none;">
+                <label for="baseUrl">API 地址（可选）</label>
+                <input type="text" id="baseUrl" placeholder="https://api.deepseek.com/v1">
+                <div class="hint">留空使用默认地址</div>
+            </div>
+            
+            <div class="skip-notice">
+                <strong>💡 提示：</strong>您也可以稍后在 <a href="pages/model-settings.html">模型设置</a> 页面中配置多个提供商。
+            </div>
+            
+            <div class="btn-row">
+                <button class="btn btn-skip" onclick="skipSetup()">跳过设置</button>
+                <button class="btn btn-primary" onclick="nextStep(2)">下一步 →</button>
+            </div>
+        </div>
+        
+        <!-- 步骤2: 基本设置 -->
+        <div class="step" id="step2">
+            <h2 style="font-size:18px; margin-bottom:15px;">基本设置</h2>
+            
+            <div class="form-group">
+                <label for="username">管理员用户名</label>
+                <input type="text" id="username" placeholder="admin" value="admin">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">管理员密码</label>
+                <input type="password" id="password" placeholder="设置登录密码">
+                <div class="hint">用于保护管理后台</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="language">界面语言</label>
+                <select id="language">
+                    <option value="zh-CN">简体中文</option>
+                    <option value="en-US">English</option>
+                </select>
+            </div>
+            
+            <div class="btn-row">
+                <button class="btn btn-secondary" onclick="prevStep(1)">← 上一步</button>
+                <button class="btn btn-primary" onclick="nextStep(3)">下一步 →</button>
+            </div>
+        </div>
+        
+        <!-- 步骤3: 完成 -->
+        <div class="step" id="step3">
+            <div class="success-icon">🎉</div>
+            <h2 style="font-size:18px; text-align:center; margin-bottom:10px;">设置完成！</h2>
+            <p style="text-align:center; color:#666; font-size:14px; margin-bottom:20px;">
+                AGI 统一框架已准备就绪
+            </p>
+            
+            <div style="background:#f0fdf4; border:1px solid #86efac; border-radius:8px; padding:15px; margin-bottom:20px;">
+                <div style="font-weight:600; color:#166534; margin-bottom:8px;">✅ 已完成配置</div>
+                <ul style="font-size:13px; color:#15803d; padding-left:20px;">
+                    <li id="summaryProvider">AI模型提供商</li>
+                    <li id="summaryUser">管理员账户</li>
+                    <li id="summaryLang">界面语言</li>
+                </ul>
+            </div>
+            
+            <div style="background:#eff6ff; border:1px solid #93c5fd; border-radius:8px; padding:15px; margin-bottom:20px;">
+                <div style="font-weight:600; color:#1e40af; margin-bottom:8px;">📖 快速开始</div>
+                <ul style="font-size:13px; color:#1d4ed8; padding-left:20px;">
+                    <li><a href="pages/chat.html" style="color:#2563eb;">开始对话</a> - 与AI模型交互</li>
+                    <li><a href="pages/dashboard.html" style="color:#2563eb;">仪表盘</a> - 查看系统概览</li>
+                    <li><a href="pages/model-settings.html" style="color:#2563eb;">模型设置</a> - 管理AI提供商</li>
+                    <li><a href="pages/help.html" style="color:#2563eb;">帮助文档</a> - 了解更多功能</li>
+                </ul>
+            </div>
+            
+            <button class="btn btn-primary" onclick="finishSetup()">进入系统 →</button>
+        </div>
+    </div>
+    
+    <script>
+        let selectedProvider = null;
+        let currentStep = 1;
+        
+        function selectProvider(provider) {
+            selectedProvider = provider;
+            document.querySelectorAll('.provider-card').forEach(c => c.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            document.getElementById('apiKeyGroup').style.display = 'block';
+            document.getElementById('baseUrlGroup').style.display = 'block';
+            
+            // 设置默认API地址
+            const urls = {
+                'deepseek': 'https://api.deepseek.com/v1',
+                'openai': 'https://api.openai.com/v1',
+                'zhipuai': 'https://open.bigmodel.cn/api/paas/v4',
+                'moonshot': 'https://api.moonshot.cn/v1',
+                'qwen': 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+                'doubao': 'https://ark.cn-beijing.volces.com/api/v3',
+            };
+            document.getElementById('baseUrl').placeholder = urls[provider] || '';
+        }
+        
+        function nextStep(step) {
+            if (step === 2 && !selectedProvider) {
+                // 没选提供商也可以继续
+            }
+            
+            document.getElementById('step' + currentStep).classList.remove('active');
+            document.getElementById('step' + step).classList.add('active');
+            document.getElementById('dot' + currentStep).classList.remove('active');
+            document.getElementById('dot' + currentStep).classList.add('done');
+            document.getElementById('dot' + step).classList.add('active');
+            currentStep = step;
+            
+            if (step === 3) {
+                // 生成摘要
+                const names = {
+                    'deepseek': 'DeepSeek', 'openai': 'OpenAI', 'zhipuai': '智谱AI',
+                    'moonshot': 'Moonshot', 'qwen': '通义千问', 'doubao': '豆包'
+                };
+                document.getElementById('summaryProvider').textContent = 
+                    'AI模型: ' + (names[selectedProvider] || '未配置');
+                document.getElementById('summaryUser').textContent = 
+                    '管理员: ' + (document.getElementById('username').value || 'admin');
+                document.getElementById('summaryLang').textContent = 
+                    '语言: ' + (document.getElementById('language').value === 'zh-CN' ? '简体中文' : 'English');
+                
+                // 保存配置到localStorage
+                saveConfig();
+            }
+        }
+        
+        function prevStep(step) {
+            document.getElementById('step' + currentStep).classList.remove('active');
+            document.getElementById('step' + step).classList.add('active');
+            document.getElementById('dot' + currentStep).classList.remove('active');
+            document.getElementById('dot' + step).classList.remove('done');
+            document.getElementById('dot' + step).classList.add('active');
+            currentStep = step;
+        }
+        
+        function saveConfig() {
+            const config = {
+                provider: selectedProvider || '',
+                apiKey: document.getElementById('apiKey').value || '',
+                baseUrl: document.getElementById('baseUrl').value || '',
+                username: document.getElementById('username').value || 'admin',
+                password: document.getElementById('password').value || '',
+                language: document.getElementById('language').value || 'zh-CN',
+                setupCompleted: true,
+                setupDate: new Date().toISOString(),
+            };
+            localStorage.setItem('agi_framework_config', JSON.stringify(config));
+        }
+        
+        function skipSetup() {
+            const config = {
+                provider: '',
+                apiKey: '',
+                baseUrl: '',
+                username: 'admin',
+                password: '',
+                language: 'zh-CN',
+                setupCompleted: true,
+                setupDate: new Date().toISOString(),
+            };
+            localStorage.setItem('agi_framework_config', JSON.stringify(config));
+            window.location.href = 'index.html';
+        }
+        
+        function finishSetup() {
+            window.location.href = 'index.html';
+        }
+        
+        // 检查是否已完成设置
+        (function() {
+            const config = JSON.parse(localStorage.getItem('agi_framework_config') || '{}');
+            if (config.setupCompleted) {
+                window.location.href = 'index.html';
+            }
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,599 @@
+"""
+MockMessageBus - 模拟对象
+
+模块路径: testing/mocks/mock_message_bus.py
+"""
+
+import os
+import sys
+import json
+import time
+import random
+import tempfile
+import shutil
+from pathlib import Path
+from typing import Dict, List, Optional, Any, Union, Callable
+from dataclasses import dataclass, field
+from unittest.mock import Mock, MagicMock, patch, AsyncMock
+import asyncio
+
+import pytest
+import numpy as np
+
+try:
+    import torch
+    import torch.nn as nn
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+    pytest.skip("PyTorch not available", allow_module_level=True)
+
+class MockMockMessageBus:
+    """模拟MockMessageBus"""
+    
+    def __init__(self):
+        self.calls = []
+        self.responses = []
+        self._setup_defaults()
+    
+    def _setup_defaults(self):
+        self.default_response = {"result": "mock"}
+    
+    def __call__(self, *args, **kwargs):
+        self.calls.append((args, kwargs))
+        if self.responses:
+            return self.responses.pop(0)
+        return self.default_response
+    
+    def mock_method_1(self, input_data):
+        """模拟方法1"""
+        return {"mock_result_1": True}
+    
+    def mock_method_2(self, input_data):
+        """模拟方法2"""
+        return {"mock_result_2": True}
+    
+    def mock_method_3(self, input_data):
+        """模拟方法3"""
+        return {"mock_result_3": True}
+    
+    def mock_method_4(self, input_data):
+        """模拟方法4"""
+        return {"mock_result_4": True}
+    
+    def mock_method_5(self, input_data):
+        """模拟方法5"""
+        return {"mock_result_5": True}
+    
+    def mock_method_6(self, input_data):
+        """模拟方法6"""
+        return {"mock_result_6": True}
+    
+    def mock_method_7(self, input_data):
+        """模拟方法7"""
+        return {"mock_result_7": True}
+    
+    def mock_method_8(self, input_data):
+        """模拟方法8"""
+        return {"mock_result_8": True}
+    
+    def mock_method_9(self, input_data):
+        """模拟方法9"""
+        return {"mock_result_9": True}
+    
+    def mock_method_10(self, input_data):
+        """模拟方法10"""
+        return {"mock_result_10": True}
+    
+    def mock_method_11(self, input_data):
+        """模拟方法11"""
+        return {"mock_result_11": True}
+    
+    def mock_method_12(self, input_data):
+        """模拟方法12"""
+        return {"mock_result_12": True}
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

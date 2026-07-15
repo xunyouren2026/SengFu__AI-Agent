@@ -1,0 +1,47 @@
+{
+  "name": "UFO AGI 统一框架",
+  "short_name": "UFO",
+  "description": "AGI统一框架 - 多智能体协作平台",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#3b82f6",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities", "developer tools"],
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "scope": "/",
+  "id": "/",
+  "shortcuts": [
+    {
+      "name": "聊天",
+      "short_name": "聊天",
+      "description": "打开AI聊天界面",
+      "url": "/pages/chat.html",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "仪表板",
+      "short_name": "仪表板",
+      "description": "查看系统仪表板",
+      "url": "/pages/dashboard.html",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

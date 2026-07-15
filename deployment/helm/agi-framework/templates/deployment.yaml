@@ -1,0 +1,275 @@
+{{/* =============================================================================
+AGI Unified Framework - API Deployment Template
+============================================================================= */}}
+{{- if .Values.api.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "agi-framework.api.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "agi-framework.api.labels" . | nindent 4 }}
+  annotations:
+    # 配置变更时触发滚动更新
+    checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    checksum/secrets: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+spec:
+  {{- if not .Values.api.autoscaling.enabled }}
+  replicas: {{ .Values.api.replicaCount }}
+  {{- end }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  selector:
+    matchLabels:
+      {{- include "agi-framework.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        {{- include "agi-framework.api.labels" . | nindent 8 }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8000"
+        {{- if .Values.api.podAnnotations }}
+        {{- toYaml .Values.api.podAnnotations | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- include "agi-framework.podSecurityContext" .Values.api | nindent 6 }}
+      
+      serviceAccountName: {{ include "agi-framework.serviceAccountName" . }}
+      
+      {{- if .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.global.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      
+      {{- if .Values.api.initContainers }}
+      initContainers:
+        {{- toYaml .Values.api.initContainers | nindent 8 }}
+      {{- end }}
+      
+      containers:
+        - name: api
+          image: {{ include "agi-framework.image" .Values.api.image }}
+          imagePullPolicy: {{ .Values.api.image.pullPolicy }}
+          
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+          
+          env:
+            {{- include "agi-framework.env" . | nindent 12 }}
+            {{- if .Values.api.env }}
+            {{- toYaml .Values.api.env | nindent 12 }}
+            {{- end }}
+          
+          {{- if or .Values.api.envFromSecrets .Values.api.envFromConfigMaps }}
+          envFrom:
+            {{- range .Values.api.envFromSecrets }}
+            - secretRef:
+                name: {{ .name }}
+            {{- end }}
+            {{- range .Values.api.envFromConfigMaps }}
+            - configMapRef:
+                name: {{ .name }}
+            {{- end }}
+          {{- end }}
+          
+          {{- include "agi-framework.resources" .Values.api | nindent 10 }}
+          
+          {{- include "agi-framework.livenessProbe" .Values.api | nindent 10 }}
+          
+          {{- include "agi-framework.readinessProbe" .Values.api | nindent 10 }}
+          
+          {{- include "agi-framework.securityContext" .Values.api | nindent 10 }}
+          
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: logs
+              mountPath: /app/logs
+            {{- if .Values.api.persistence.enabled }}
+            - name: data
+              mountPath: {{ .Values.api.persistence.mountPath }}
+            {{- end }}
+            {{- if .Values.api.extraVolumeMounts }}
+            {{- toYaml .Values.api.extraVolumeMounts | nindent 12 }}
+            {{- end }}
+      
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: logs
+          emptyDir:
+            sizeLimit: 1Gi
+        {{- if .Values.api.persistence.enabled }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "agi-framework.pvc.name" . }}
+        {{- end }}
+        {{- if .Values.api.extraVolumes }}
+        {{- toYaml .Values.api.extraVolumes | nindent 8 }}
+        {{- end }}
+      
+      {{- include "agi-framework.affinity" .Values.api | nindent 6 }}
+      
+      {{- include "agi-framework.tolerations" .Values.api | nindent 6 }}
+      
+      {{- include "agi-framework.topologySpreadConstraints" .Values.api | nindent 6 }}
+      
+      terminationGracePeriodSeconds: 60
+{{- end }}
+
+---
+{{/* =============================================================================
+AGI Unified Framework - Worker Deployment Template
+============================================================================= */}}
+{{- if .Values.worker.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "agi-framework.worker.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "agi-framework.worker.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.worker.autoscaling.enabled }}
+  replicas: {{ .Values.worker.replicaCount }}
+  {{- end }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      {{- include "agi-framework.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: worker
+  template:
+    metadata:
+      labels:
+        {{- include "agi-framework.worker.labels" . | nindent 8 }}
+    spec:
+      {{- include "agi-framework.podSecurityContext" .Values.worker | nindent 6 }}
+      
+      serviceAccountName: {{ include "agi-framework.serviceAccountName" . }}
+      
+      {{- if .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.global.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      
+      containers:
+        - name: worker
+          image: {{ include "agi-framework.image" .Values.worker.image }}
+          imagePullPolicy: {{ .Values.worker.image.pullPolicy }}
+          command:
+            {{- toYaml .Values.worker.command | nindent 12 }}
+          
+          env:
+            {{- include "agi-framework.env" . | nindent 12 }}
+            {{- if .Values.worker.env }}
+            {{- toYaml .Values.worker.env | nindent 12 }}
+            {{- end }}
+          
+          {{- if .Values.worker.envFromSecrets }}
+          envFrom:
+            {{- range .Values.worker.envFromSecrets }}
+            - secretRef:
+                name: {{ .name }}
+            {{- end }}
+          {{- end }}
+          
+          {{- include "agi-framework.resources" .Values.worker | nindent 10 }}
+          
+          {{- include "agi-framework.securityContext" .Values.worker | nindent 10 }}
+          
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: logs
+              mountPath: /app/logs
+      
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: logs
+          emptyDir:
+            sizeLimit: 2Gi
+      
+      terminationGracePeriodSeconds: 120
+{{- end }}
+
+---
+{{/* =============================================================================
+AGI Unified Framework - Beat Deployment Template
+============================================================================= */}}
+{{- if .Values.beat.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "agi-framework.beat.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "agi-framework.beat.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.beat.replicaCount }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "agi-framework.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: scheduler
+  template:
+    metadata:
+      labels:
+        {{- include "agi-framework.beat.labels" . | nindent 8 }}
+    spec:
+      {{- include "agi-framework.podSecurityContext" .Values.beat | nindent 6 }}
+      
+      serviceAccountName: {{ include "agi-framework.serviceAccountName" . }}
+      
+      {{- if .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.global.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      
+      containers:
+        - name: beat
+          image: {{ include "agi-framework.image" .Values.beat.image }}
+          imagePullPolicy: {{ .Values.beat.image.pullPolicy }}
+          command:
+            {{- toYaml .Values.beat.command | nindent 12 }}
+          
+          env:
+            {{- include "agi-framework.env" . | nindent 12 }}
+          
+          {{- include "agi-framework.resources" .Values.beat | nindent 10 }}
+          
+          {{- include "agi-framework.securityContext" .Values.beat | nindent 10 }}
+          
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            {{- if .Values.beat.persistence.enabled }}
+            - name: beat-data
+              mountPath: {{ .Values.beat.persistence.mountPath }}
+            {{- end }}
+      
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        {{- if .Values.beat.persistence.enabled }}
+        - name: beat-data
+          persistentVolumeClaim:
+            claimName: {{ include "agi-framework.beat.name" . }}-data
+        {{- end }}
+{{- end }}

@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AGI Unified Framework - 模型管理</title>
+<style>
+:root{--bg-primary:#0f1117;--bg-secondary:#1a1d27;--bg-tertiary:#242836;--bg-card:#1e2230;--bg-card-hover:#262b3d;--bg-input:#161923;--bg-overlay:rgba(0,0,0,0.6);--text-primary:#e8eaed;--text-secondary:#9aa0b0;--text-muted:#6b7280;--text-inverse:#0f1117;--border-color:#2d3348;--border-focus:#4f8cff;--accent-primary:#4f8cff;--accent-primary-hover:#3a75f0;--accent-success:#34d399;--accent-warning:#fbbf24;--accent-danger:#f87171;--accent-info:#60a5fa;--shadow-sm:0 1px 3px rgba(0,0,0,0.3);--shadow-md:0 4px 12px rgba(0,0,0,0.4);--shadow-lg:0 8px 24px rgba(0,0,0,0.5);--radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-full:9999px;--transition-fast:0.15s ease;--transition-normal:0.25s ease;--sidebar-width:260px;--navbar-height:60px;--font-mono:'SF Mono','Cascadia Code','Fira Code',Consolas,monospace}
+[data-theme="light"]{--bg-primary:#f5f7fa;--bg-secondary:#ffffff;--bg-tertiary:#eef1f6;--bg-card:#ffffff;--bg-card-hover:#f0f3f8;--bg-input:#f0f2f5;--bg-overlay:rgba(0,0,0,0.3);--text-primary:#1a1d27;--text-secondary:#5a6170;--text-muted:#9aa0b0;--text-inverse:#ffffff;--border-color:#dde1ea;--shadow-sm:0 1px 3px rgba(0,0,0,0.08);--shadow-md:0 4px 12px rgba(0,0,0,0.1);--shadow-lg:0 8px 24px rgba(0,0,0,0.12)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px;scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Helvetica Neue',Helvetica,Arial,sans-serif;background:var(--bg-primary);color:var(--text-primary);line-height:1.6;overflow:hidden;height:100vh}
+a{color:var(--accent-primary);text-decoration:none}a:hover{color:var(--accent-primary-hover)}
+button{cursor:pointer;font-family:inherit;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit;font-size:inherit;color:var(--text-primary)}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border-color);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--text-muted)}
+.app-container{display:flex;flex-direction:column;height:100vh}
+.navbar{display:flex;align-items:center;justify-content:space-between;height:var(--navbar-height);padding:0 24px;background:var(--bg-secondary);border-bottom:1px solid var(--border-color);z-index:100;flex-shrink:0}
+.navbar-brand{display:flex;align-items:center;gap:12px}
+.navbar-logo{width:36px;height:36px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--accent-primary),#a855f7);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff}
+.navbar-title{font-size:18px;font-weight:600}.navbar-subtitle{font-size:12px;color:var(--text-muted)}
+.navbar-actions{display:flex;align-items:center;gap:12px}
+.navbar-search{display:flex;align-items:center;gap:8px;background:var(--bg-input);border:1px solid var(--border-color);border-radius:var(--radius-full);padding:6px 16px;width:280px;transition:border-color var(--transition-fast)}
+.navbar-search:focus-within{border-color:var(--accent-primary)}
+.navbar-search input{border:none;background:none;outline:none;flex:1;color:var(--text-primary)}.navbar-search input::placeholder{color:var(--text-muted)}
+.navbar-search svg{width:16px;height:16px;color:var(--text-muted)}
+.theme-toggle{width:36px;height:36px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;background:var(--bg-tertiary);border:1px solid var(--border-color);transition:all var(--transition-fast)}
+.theme-toggle:hover{background:var(--bg-card-hover);border-color:var(--accent-primary)}.theme-toggle svg{width:18px;height:18px}
+.main-layout{display:flex;flex:1;overflow:hidden}
+.sidebar{width:var(--sidebar-width);flex-shrink:0;background:var(--bg-secondary);border-right:1px solid var(--border-color);display:flex;flex-direction:column;overflow:hidden;transition:transform var(--transition-normal)}
+.sidebar-header{padding:16px;border-bottom:1px solid var(--border-color)}.sidebar-header h3{font-size:13px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px}
+.sidebar-nav{flex:1;overflow-y:auto;padding:8px}
+.nav-section{margin-bottom:8px}
+.nav-section-title{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;cursor:pointer;border-radius:var(--radius-sm);transition:background var(--transition-fast)}
+.nav-section-title:hover{background:var(--bg-tertiary)}.nav-section-title svg{width:14px;height:14px;transition:transform var(--transition-fast)}
+.nav-section.collapsed .nav-section-title svg{transform:rotate(-90deg)}.nav-section.collapsed .nav-section-items{display:none}
+.nav-section-items{padding:2px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 12px;margin:1px 0;border-radius:var(--radius-sm);font-size:13px;color:var(--text-secondary);transition:all var(--transition-fast);cursor:pointer}
+.nav-item:hover{background:var(--bg-tertiary);color:var(--text-primary)}.nav-item.active{background:rgba(79,140,255,0.12);color:var(--accent-primary);font-weight:500}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.nav-item .badge{margin-left:auto;font-size:11px;padding:1px 8px;border-radius:var(--radius-full);background:var(--bg-tertiary);color:var(--text-muted);font-weight:500}
+.nav-item.active .badge{background:rgba(79,140,255,0.2);color:var(--accent-primary)}
+.sidebar-footer{padding:12px;border-top:1px solid var(--border-color)}
+.content{flex:1;overflow-y:auto;padding:24px}
+.page{display:none;animation:fadeIn 0.3s ease}.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}.page-title{font-size:22px;font-weight:700}.page-description{font-size:13px;color:var(--text-secondary);margin-top:4px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;transition:all var(--transition-fast);white-space:nowrap}
+.btn svg{width:16px;height:16px}
+.btn-primary{background:var(--accent-primary);color:#fff}.btn-primary:hover{background:var(--accent-primary-hover);transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.btn-secondary{background:var(--bg-tertiary);border:1px solid var(--border-color)}.btn-secondary:hover{background:var(--bg-card-hover);border-color:var(--text-muted)}
+.btn-success{background:var(--accent-success);color:#fff}.btn-danger{background:var(--accent-danger);color:#fff}
+.btn-ghost{color:var(--text-secondary)}.btn-ghost:hover{background:var(--bg-tertiary);color:var(--text-primary)}
+.btn-sm{padding:4px 12px;font-size:12px}.btn-sm svg{width:14px;height:14px}
+.btn-icon{width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius-sm)}.btn-icon svg{width:16px;height:16px}.btn-icon:hover{background:var(--bg-tertiary)}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.model-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-md);padding:20px;transition:all var(--transition-normal);position:relative;overflow:hidden}
+.model-card:hover{border-color:var(--accent-primary);box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.model-card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.model-card-info{flex:1}.model-card-name{font-size:16px;font-weight:600;margin-bottom:4px}.model-card-provider{font-size:12px;color:var(--text-muted)}
+.model-card-status{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:var(--radius-full);font-size:11px;font-weight:500}
+.status-online{background:rgba(52,211,153,0.15);color:var(--accent-success)}.status-offline{background:rgba(248,113,113,0.15);color:var(--accent-danger)}
+.status-dot{width:6px;height:6px;border-radius:50%}.status-online .status-dot{background:var(--accent-success)}.status-offline .status-dot{background:var(--accent-danger)}
+.model-card-specs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0;padding:12px 0;border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color)}
+.spec-item{display:flex;flex-direction:column;gap:2px}.spec-label{font-size:11px;color:var(--text-muted)}.spec-value{font-size:13px;font-weight:500}
+.model-card-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--radius-full);font-size:11px;background:var(--bg-tertiary);color:var(--text-secondary)}
+.tag.active{background:rgba(79,140,255,0.15);color:var(--accent-primary)}
+.model-card-actions{display:flex;gap:8px}.model-card-actions .btn{flex:1;justify-content:center}
+.form-container{max-width:800px}
+.form-section{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-md);margin-bottom:20px;overflow:hidden}
+.form-section-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;cursor:pointer;user-select:none;transition:background var(--transition-fast)}
+.form-section-header:hover{background:var(--bg-card-hover)}
+.form-section-title{display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px}.form-section-title svg{width:18px;height:18px;color:var(--accent-primary)}
+.form-section-header .toggle-icon{width:20px;height:20px;color:var(--text-muted);transition:transform var(--transition-fast)}
+.form-section.collapsed .toggle-icon{transform:rotate(-90deg)}.form-section.collapsed .form-section-body{display:none}
+.form-section-body{padding:0 20px 20px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}.form-row.full{grid-template-columns:1fr}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-label{font-size:13px;font-weight:500;color:var(--text-secondary);display:flex;align-items:center;gap:6px}
+.form-label .required{color:var(--accent-danger)}.form-label .hint{font-size:11px;color:var(--text-muted);font-weight:400}
+.form-input,.form-select,.form-textarea{padding:9px 14px;background:var(--bg-input);border:1px solid var(--border-color);border-radius:var(--radius-sm);color:var(--text-primary);outline:none;transition:border-color var(--transition-fast),box-shadow var(--transition-fast)}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent-primary);box-shadow:0 0 0 3px rgba(79,140,255,0.15)}
+.form-input::placeholder{color:var(--text-muted)}.form-input.error{border-color:var(--accent-danger)}
+.form-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239aa0b0' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+.form-textarea{min-height:100px;resize:vertical;font-family:var(--font-mono);font-size:13px}
+.form-hint{font-size:11px;color:var(--text-muted);margin-top:2px}
+.toggle-group{display:flex;align-items:center;justify-content:space-between;padding:8px 0}.toggle-label{font-size:13px;color:var(--text-secondary)}
+.toggle-switch{position:relative;width:44px;height:24px;background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:var(--radius-full);cursor:pointer;transition:all var(--transition-fast)}
+.toggle-switch.active{background:var(--accent-primary);border-color:var(--accent-primary)}
+.toggle-switch::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform var(--transition-fast);box-shadow:var(--shadow-sm)}
+.toggle-switch.active::after{transform:translateX(20px)}
+.range-group{display:flex;flex-direction:column;gap:6px}.range-header{display:flex;justify-content:space-between;align-items:center}
+.range-value{font-size:13px;font-weight:600;color:var(--accent-primary);font-family:var(--font-mono)}
+input[type="range"]{-webkit-appearance:none;width:100%;height:6px;background:var(--bg-tertiary);border-radius:3px;outline:none}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent-primary);cursor:pointer;box-shadow:var(--shadow-sm);transition:transform var(--transition-fast)}
+input[type="range"]::-webkit-slider-thumb:hover{transform:scale(1.2)}
+.json-editor{background:var(--bg-input);border:1px solid var(--border-color);border-radius:var(--radius-sm);overflow:hidden}
+.json-editor-toolbar{display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--bg-tertiary);border-bottom:1px solid var(--border-color)}
+.json-editor textarea{width:100%;min-height:200px;padding:12px;background:transparent;border:none;outline:none;color:var(--text-primary);font-family:var(--font-mono);font-size:13px;line-height:1.5;resize:vertical}
+.modal-overlay{position:fixed;inset:0;background:var(--bg-overlay);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;visibility:hidden;transition:all var(--transition-normal)}
+.modal-overlay.active{opacity:1;visibility:visible}
+.modal{background:var(--bg-secondary);border:1px solid var(--border-color);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:90%;max-width:700px;max-height:85vh;display:flex;flex-direction:column;transform:scale(0.95) translateY(10px);transition:transform var(--transition-normal)}
+.modal-overlay.active .modal{transform:scale(1) translateY(0)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--border-color)}
+.modal-title{font-size:18px;font-weight:600}
+.modal-close{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-sm)}.modal-close:hover{background:var(--bg-tertiary)}
+.modal-body{padding:24px;overflow-y:auto;flex:1}
+.modal-footer{display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:16px 24px;border-top:1px solid var(--border-color)}
+.test-input-area{margin-bottom:16px}
+.test-input-area textarea{width:100%;min-height:120px;padding:14px;background:var(--bg-input);border:1px solid var(--border-color);border-radius:var(--radius-md);color:var(--text-primary);font-size:14px;line-height:1.6;resize:vertical;outline:none}
+.test-input-area textarea:focus{border-color:var(--accent-primary)}
+.test-response-area{background:var(--bg-input);border:1px solid var(--border-color);border-radius:var(--radius-md);padding:16px;min-height:200px;font-size:14px;line-height:1.7;white-space:pre-wrap;font-family:var(--font-mono)}
+.test-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border-color)}
+.stat-card{text-align:center;padding:12px;background:var(--bg-tertiary);border-radius:var(--radius-sm)}
+.stat-label{font-size:11px;color:var(--text-muted);margin-bottom:4px}.stat-value{font-size:16px;font-weight:700;font-family:var(--font-mono)}
+.stat-value.cost{color:var(--accent-warning)}.stat-value.time{color:var(--accent-info)}.stat-value.tokens{color:var(--accent-success)}
+.preset-filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.preset-filter-btn{padding:6px 16px;border-radius:var(--radius-full);font-size:13px;background:var(--bg-tertiary);border:1px solid var(--border-color);color:var(--text-secondary);transition:all var(--transition-fast)}
+.preset-filter-btn:hover{border-color:var(--accent-primary);color:var(--text-primary)}
+.preset-filter-btn.active{background:var(--accent-primary);color:#fff;border-color:var(--accent-primary)}
+.preset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.preset-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-md);padding:16px;display:flex;flex-direction:column;gap:10px;transition:all var(--transition-fast)}
+.preset-card:hover{border-color:var(--accent-primary)}.preset-card-header{display:flex;align-items:center;justify-content:space-between}
+.preset-card-name{font-weight:600;font-size:14px}.preset-card-provider{font-size:12px;color:var(--text-muted)}
+.preset-card-desc{font-size:12px;color:var(--text-secondary);line-height:1.5}
+.preset-card-specs{display:flex;gap:12px;font-size:11px;color:var(--text-muted)}.preset-card-actions{display:flex;gap:8px;margin-top:4px}
+.compare-selector{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px;padding:16px;background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-md)}
+.compare-slot{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--bg-tertiary);border:2px dashed var(--border-color);border-radius:var(--radius-sm);min-width:200px;cursor:pointer;transition:all var(--transition-fast)}
+.compare-slot.filled{border-style:solid;border-color:var(--accent-primary)}.compare-slot:hover{border-color:var(--accent-primary)}
+.compare-slot .remove-slot{margin-left:auto;color:var(--text-muted)}.compare-slot .remove-slot:hover{color:var(--accent-danger)}
+.compare-results{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.compare-result-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-md);overflow:hidden}
+.compare-result-header{padding:12px 16px;background:var(--bg-tertiary);border-bottom:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between}
+.compare-result-header h4{font-size:14px}.compare-result-body{padding:16px;min-height:200px;white-space:pre-wrap;font-size:13px;line-height:1.6}
+.compare-result-footer{padding:12px 16px;border-top:1px solid var(--border-color);display:flex;gap:16px;font-size:12px;color:var(--text-muted)}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;text-align:center}
+.empty-state svg{width:80px;height:80px;color:var(--text-muted);margin-bottom:16px;opacity:0.5}.empty-state h3{font-size:18px;margin-bottom:8px;color:var(--text-secondary)}.empty-state p{font-size:13px;color:var(--text-muted);margin-bottom:24px;max-width:400px}
+.spinner{width:24px;height:24px;border:3px solid var(--border-color);border-top-color:var(--accent-primary);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn.loading{pointer-events:none;opacity:0.7}.btn.loading .spinner{width:16px;height:16px;border-width:2px}
+.toast-container{position:fixed;top:80px;right:24px;z-index:2000;display:flex;flex-direction:column;gap:8px}
+.toast{display:flex;align-items:center;gap:10px;padding:12px 20px;border-radius:var(--radius-md);background:var(--bg-secondary);border:1px solid var(--border-color);box-shadow:var(--shadow-lg);min-width:280px;animation:slideInRight 0.3s ease}
+.toast.success{border-left:4px solid var(--accent-success)}.toast.error{border-left:4px solid var(--accent-danger)}.toast.warning{border-left:4px solid var(--accent-warning)}.toast.info{border-left:4px solid var(--accent-info)}
+.toast-message{flex:1;font-size:13px}.toast-close{color:var(--text-muted)}.toast-close:hover{color:var(--text-primary)}
+@keyframes slideInRight{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@media(max-width:768px){.sidebar{position:fixed;left:0;top:var(--navbar-height);bottom:0;z-index:50;transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.mobile-overlay{position:fixed;inset:0;top:var(--navbar-height);background:var(--bg-overlay);z-index:49;display:none}.mobile-overlay.active{display:block}.content{padding:16px}.card-grid{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}.navbar-search{width:180px}.test-stats{grid-template-columns:1fr 1fr}.compare-results{grid-template-columns:1fr}.modal{width:95%;max-height:90vh}}
+@media(max-width:480px){.navbar-search{display:none}.page-header{flex-direction:column;align-items:flex-start;gap:12px}}
+.hidden{display:none!important}.text-center{text-align:center}.text-muted{color:var(--text-muted)}.text-success{color:var(--accent-success)}.text-danger{color:var(--accent-danger)}.text-warning{color:var(--accent-warning)}
+.mt-8{margin-top:8px}.mt-16{margin-top:16px}.mt-24{margin-top:24px}.mb-8{margin-bottom:8px}.mb-16{margin-bottom:16px}
+.flex{display:flex}.flex-center{display:flex;align-items:center;justify-content:center}.gap-8{gap:8px}.gap-12{gap:12px}.gap-16{gap:16px}
+.provider-icon{width:28px;height:28px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff}
+.provider-zhipu{background:linear-gradient(135deg,#3b82f6,#1d4ed8)}.provider-tongyi{background:linear-gradient(135deg,#6366f1,#4f46e5)}
+.provider-wenxin{background:linear-gradient(135deg,#2563eb,#1e40af)}.provider-spark{background:linear-gradient(135deg,#0ea5e9,#0284c7)}
+.provider-baichuan{background:linear-gradient(135deg,#8b5cf6,#7c3aed)}.provider-minimax{background:linear-gradient(135deg,#ec4899,#db2777)}
+.provider-moonshot{background:linear-gradient(135deg,#f59e0b,#d97706)}.provider-deepseek{background:linear-gradient(135deg,#10b981,#059669)}
+.provider-custom{background:linear-gradient(135deg,#6b7280,#4b5563)}.provider-openai{background:linear-gradient(135deg,#10a37f,#0d8c6d)}
+.provider-claude{background:linear-gradient(135deg,#d97706,#b45309)}
+</style>
+</head>
+<body>
+<div class="app-container" id="app">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <button class="btn-icon" id="menuToggle" style="display:none;" onclick="toggleSidebar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+      <div class="navbar-logo">AGI</div>
+      <div><div class="navbar-title">AGI Unified Framework</div><div class="navbar-subtitle">模型管理控制台</div></div>
+    </div>
+    <div class="navbar-actions">
+      <div class="navbar-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" placeholder="搜索模型..." id="globalSearch" oninput="handleGlobalSearch(this.value)">
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()" title="切换主题">
+        <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+      <button class="btn btn-primary" onclick="showPage('add')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        添加模型
+      </button>
+    </div>
+  </nav>
+  <div class="main-layout">
+    <div class="mobile-overlay" id="mobileOverlay" onclick="toggleSidebar()"></div>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header"><h3>导航菜单</h3></div>
+      <nav class="sidebar-nav">
+        <div class="nav-section"><div class="nav-section-items">
+          <div class="nav-item active" data-page="list" onclick="showPage('list')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            全部模型 <span class="badge" id="totalModelCount">0</span>
+          </div>
+          <div class="nav-item" data-page="add" onclick="showPage('add')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>添加模型
+          </div>
+          <div class="nav-item" data-page="presets" onclick="showPage('presets')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>预置模型库
+          </div>
+          <div class="nav-item" data-page="compare" onclick="showPage('compare')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg>模型对比
+          </div>
+        </div></div>
+        <div class="nav-section" id="providerNavSection">
+          <div class="nav-section-title" onclick="toggleNavSection(this)">
+            <span>按提供商分组</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="nav-section-items" id="providerNavItems"></div>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title" onclick="toggleNavSection(this)">
+            <span>自定义模型</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="nav-section-items">
+            <div class="nav-item" data-page="custom" onclick="filterByProvider('custom')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 019 9 9 9 0 01-9 9"/><path d="M12 3a9 9 0 00-9 9 9 9 0 009 9"/></svg>
+              自定义配置 <span class="badge" id="customModelCount">0</span>
+            </div>
+          </div>
+        </div>
+      </nav>
+      <div class="sidebar-footer"><div style="font-size:11px;color:var(--text-muted);text-align:center;">AGI Unified Framework v1.0<br><span style="color:var(--accent-primary);">模型管理模块</span></div></div>
+    </aside>
+    <main class="content" id="mainContent">
+      <!-- Page: Model List -->
+      <div class="page active" id="page-list">
+        <div class="page-header">
+          <div><h1 class="page-title">模型列表</h1><p class="page-description">管理所有已配置的AI模型</p></div>
+          <div class="flex gap-8">
+            <select class="form-select" id="statusFilter" onchange="renderModelList()" style="width:120px;"><option value="all">全部状态</option><option value="online">在线</option><option value="offline">离线</option></select>
+            <select class="form-select" id="sortFilter" onchange="renderModelList()" style="width:120px;"><option value="name">按名称</option><option value="provider">按提供商</option><option value="status">按状态</option><option value="price">按价格</option></select>
+          </div>
+        </div>
+        <div class="card-grid" id="modelCardGrid"></div>
+        <div class="empty-state hidden" id="emptyState">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          <h3>暂无模型配置</h3>
+          <p>点击"添加模型"按钮配置你的第一个AI模型，或从预置模型库中快速导入</p>
+          <div class="flex gap-12">
+            <button class="btn btn-primary" onclick="showPage('add')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>添加模型</button>
+            <button class="btn btn-secondary" onclick="showPage('presets')">浏览预置模型</button>
+          </div>
+        </div>
+      </div>
+      <!-- Page: Add/Edit Model -->
+      <div class="page" id="page-add">
+        <div class="page-header">
+          <div><h1 class="page-title" id="formTitle">添加模型</h1><p class="page-description" id="formDescription">配置新的AI模型接入</p></div>
+          <button class="btn btn-secondary" onclick="showPage('list')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>返回列表</button>
+        </div>
+        <div class="form-container">
+          <form id="modelForm" onsubmit="return false;">
+            <!-- Basic Info -->
+            <div class="form-section">
+              <div class="form-section-header" onclick="toggleFormSection(this)">
+                <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>基本信息</div>
+                <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              <div class="form-section-body">
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">模型ID <span class="required">*</span></label><input type="text" class="form-input" id="modelId" placeholder="例如: glm-4-plus" required><span class="form-hint">模型的唯一标识符</span></div>
+                  <div class="form-group"><label class="form-label">显示名称 <span class="required">*</span></label><input type="text" class="form-input" id="modelDisplayName" placeholder="例如: GLM-4 Plus"><span class="form-hint">在界面中显示的名称</span></div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">提供商 <span class="required">*</span></label>
+                    <select class="form-select" id="modelProvider" required><option value="">请选择提供商</option><option value="zhipu">智谱AI (GLM)</option><option value="tongyi">通义千问 (Qwen)</option><option value="wenxin">百度文心 (ERNIE)</option><option value="spark">讯飞星火 (Spark)</option><option value="baichuan">百川智能 (Baichuan)</option><option value="minimax">MiniMax</option><option value="moonshot">月之暗面 (Moonshot)</option><option value="deepseek">DeepSeek</option><option value="openai">OpenAI</option><option value="claude">Anthropic (Claude)</option><option value="custom">自定义</option></select>
+                  </div>
+                  <div class="form-group"><label class="form-label">模型版本</label><input type="text" class="form-input" id="modelVersion" placeholder="例如: v1.0"></div>
+                </div>
+                <div class="form-row full"><div class="form-group"><label class="form-label">模型描述</label><textarea class="form-textarea" id="modelDescription" placeholder="简要描述模型特点和用途..." style="min-height:60px;"></textarea></div></div>
+              </div>
+            </div>
+            <!-- API Config -->
+            <div class="form-section">
+              <div class="form-section-header" onclick="toggleFormSection(this)">
+                <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>API配置</div>
+                <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              <div class="form-section-body">
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">API基础URL <span class="required">*</span></label><input type="url" class="form-input" id="apiBaseUrl" placeholder="https://open.bigmodel.cn/api/paas/v4" required><span class="form-hint">API服务的基础地址</span></div>
+                  <div class="form-group"><label class="form-label">API密钥 <span class="required">*</span></label>
+                    <div style="position:relative;"><input type="password" class="form-input" id="apiKey" placeholder="输入API密钥" required style="padding-right:40px;">
+                    <button type="button" class="btn-icon" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);" onclick="togglePasswordVisibility('apiKey',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">协议类型</label><select class="form-select" id="protocolType"><option value="openai">OpenAI 兼容</option><option value="claude">Claude 兼容</option><option value="custom">自定义协议</option></select><span class="form-hint">选择API通信协议格式</span></div>
+                  <div class="form-group"><label class="form-label">备用API URL</label><input type="url" class="form-input" id="apiBackupUrl" placeholder="https://backup-api.example.com"></div>
+                </div>
+              </div>
+            </div>
+            <!-- Auth Config -->
+            <div class="form-section">
+              <div class="form-section-header" onclick="toggleFormSection(this)">
+                <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>认证配置</div>
+                <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              <div class="form-section-body">
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">认证类型</label><select class="form-select" id="authType" onchange="updateAuthFields()"><option value="bearer">Bearer Token</option><option value="oauth2">OAuth 2.0</option><option value="hmac">HMAC-SHA256</option><option value="custom_header">自定义 Header</option><option value="url_param">URL 参数</option></select></div>
+                  <div class="form-group" id="authHeaderGroup"><label class="form-label">Header名称</label><input type="text" class="form-input" id="authHeader" value="Authorization" placeholder="Authorization"></div>
+                </div>
+                <div class="form-row" id="oauthFields" style="display:none;"><div class="form-group"><label class="form-label">OAuth Token URL</label><input type="url" class="form-input" id="oauthTokenUrl" placeholder="https://auth.example.com/token"></div><div class="form-group"><label class="form-label">Client ID</label><input type="text" class="form-input" id="oauthClientId" placeholder="client_id"></div></div>
+                <div class="form-row" id="hmacFields" style="display:none;"><div class="form-group"><label class="form-label">Access Key</label><input type="text" class="form-input" id="hmacAccessKey" placeholder="Access Key ID"></div><div class="form-group"><label class="form-label">Secret Key</label><input type="password" class="form-input" id="hmacSecretKey" placeholder="Secret Access Key"></div></div>
+                <div class="form-row" id="customHeaderFields" style="display:none;"><div class="form-group"><label class="form-label">自定义Header名称</label><input type="text" class="form-input" id="customHeaderName" placeholder="X-API-Key"></div><div class="form-group"><label class="form-label">自定义Header值</label><input type="text" class="form-input" id="customHeaderValue" placeholder="your-api-key"></div></div>
+                <div class="form-row" id="urlParamFields" style="display:none;"><div class="form-group"><label class="form-label">参数名称</label><input type="text" class="form-input" id="urlParamName" placeholder="api_key"></div><div class="form-group"><label class="form-label">参数值</label><input type="text" class="form-input" id="urlParamValue" placeholder="your-api-key"></div></div>
+              </div>
+            </div>
+            <!-- Model Capabilities -->
+            <div class="form-section">
+              <div class="form-section-header" onclick="toggleFormSection(this)">
+                <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>模型能力</div>
+                <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              <div class="form-section-body">
+                <div class="form-row">
+                  <div class="form-group"><div class="range-group"><div class="range-header"><label class="form-label">最大上下文长度</label><span class="range-value" id="contextLengthValue">128K</span></div><input type="range" id="contextLength" min="1024" max="1048576" value="131072" step="1024" oninput="updateRangeDisplay('contextLength','contextLengthValue','K',1024)"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);"><span>1K</span><span>1M</span></div></div></div>
+                  <div class="form-group"><div class="range-group"><div class="range-header"><label class="form-label">最大输出长度</label><span class="range-value" id="maxOutputValue">4K</span></div><input type="range" id="maxOutput" min="256" max="131072" value="4096" step="256" oninput="updateRangeDisplay('maxOutput','maxOutputValue','K',1024)"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);"><span>256</span><span>128K</span></div></div></div>
+                </div>
+                <div style="border-top:1px solid var(--border-color);padding-top:16px;margin-top:8px;">
+                  <div class="toggle-group"><span class="toggle-label">流式输出 (Streaming)</span><div class="toggle-switch active" id="toggleStreaming" onclick="toggleSwitch(this)"></div></div>
+                  <div class="toggle-group"><span class="toggle-label">视觉理解 (Vision)</span><div class="toggle-switch" id="toggleVision" onclick="toggleSwitch(this)"></div></div>
+                  <div class="toggle-group"><span class="toggle-label">函数调用 (Function Calling)</span><div class="toggle-switch" id="toggleFunctionCall" onclick="toggleSwitch(this)"></div></div>
+                  <div class="toggle-group"><span class="toggle-label">Embedding 向量化</span><div class="toggle-switch" id="toggleEmbedding" onclick="toggleSwitch(this)"></div></div>
+                  <div class="toggle-group"><span class="toggle-label">JSON Mode</span><div class="toggle-switch" id="toggleJsonMode" onclick="toggleSwitch(this)"></div></div>
+                </div>
+              </div>
+            </div>
+            <!-- Request Mapping (Advanced) -->
+            <div class="form-section collapsed">
+              <div class="form-section-header" onclick="toggleFormSection(this)">
+                <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>请求映射 <span style="font-weight:400;color:var(--text-muted);font-size:12px;">(高级)</span></div>
+                <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              <div class="form-section-body">
+                <div class="form-group mb-16"><label class="form-label">请求字段映射</label><div class="json-editor"><div class="json-editor-toolbar"><button type="button" class="btn btn-ghost btn-sm" onclick="formatJson('requestMapping')">格式化</button><button type="button" class="btn btn-ghost btn-sm" onclick="resetJson('requestMapping')">重置</button><button type="button" class="btn btn-ghost btn-sm" onclick="validateJson('requestMapping')">验证</button></div><textarea id="requestMapping" placeholder='{"messages":"$.messages","model":"$.model_id","temperature":"$.params.temperature"}'></textarea></div></div>
+                <div class="form-group"><label class="form-label">响应字段映射</label><div class="json-editor"><div class="json-editor-toolbar"><button type="button" class="btn btn-ghost btn-sm" onclick="formatJson('responseMapping')">格式化</button><button type="button" class="btn btn-ghost btn-sm" onclick="resetJson('responseMapping')">重置</button><button type="button" class="btn btn-ghost btn-sm" onclick="validateJson('responseMapping')">验证</button></div><textarea id="responseMapping" placeholder='{"content":"$.choices[0].message.content","usage.prompt_tokens":"$.usage.prompt_tokens"}'></textarea></div></div>
+              </div>
+            </div>
+            <!-- Default Parameters (Advanced) -->
+            <div class="form-section collapsed">
+              <div class="form-section-header" onclick="toggleFormSection(this)">
+                <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 010 4h-.09c-.658.003-1.25.396-1.51 1z"/></svg>默认参数 <span style="font-weight:400;color:var(--text-muted);font-size:12px;">(高级)</span></div>
+                <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              <div class="form-section-body">
+                <div class="form-row">
+                  <div class="form-group"><div class="range-group"><div class="range-header"><label class="form-label">Temperature</label><span class="range-value" id="tempValue">0.7</span></div><input type="range" id="defaultTemp" min="0" max="2" step="0.1" value="0.7" oninput="document.getElementById('tempValue').textContent=this.value"></div></div>
+                  <div class="form-group"><div class="range-group"><div class="range-header"><label class="form-label">Top P</label><span class="range-value" id="topPValue">0.9</span></div><input type="range" id="defaultTopP" min="0" max="1" step="0.05" value="0.9" oninput="document.getElementById('topPValue').textContent=this.value"></div></div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><div class="range-group"><div class="range-header"><label class="form-label">Top K</label><span class="range-value" id="topKValue">40</span></div><input type="range" id="defaultTopK" min="1" max="100" step="1" value="40" oninput="document.getElementById('topKValue').textContent=this.value"></div></div>
+                  <div class="form-group"><div class="range-group"><div class="range-header"><label class="form-label">Frequency Penalty</label><span class="range-value" id="freqPenValue">0.0</span></div><input type="range" id="defaultFreqPen" min="-2" max="2" step="0.1" value="0" oninput="document.getElementById('freqPenValue').textContent=this.value"></div></div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><div class="range-group"><div class="range-header"><label class="form-label">Presence Penalty</label><span class="range-value" id="presPenValue">0.0</span></div><input type="range" id="defaultPresPen" min="-2" max="2" step="0.1" value="0" oninput="document.getElementById('presPenValue').textContent=this.value"></div></div>
+                  <div class="form-group"><label class="form-label">停止序列</label><input type="text" class="form-input" id="defaultStop" placeholder='例如: "\n", "###"'></div>
+                </div>
+              </div>
+            </div>
+            <!-- Cost Config -->
+            <div class="form-section">
+              <div class="form-section-header" onclick="toggleFormSection(this)">
+                <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>成本配置</div>
+                <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              <div class="form-section-body">
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">输入价格 (元/千Token)</label><input type="number" class="form-input" id="inputPrice" placeholder="0.05" step="0.001" min="0"></div>
+                  <div class="form-group"><label class="form-label">输出价格 (元/千Token)</label><input type="number" class="form-input" id="outputPrice" placeholder="0.05" step="0.001" min="0"></div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">计费单位</label><select class="form-select" id="billingUnit"><option value="1000">千Token (1K)</option><option value="1000000">百万Token (1M)</option></select></div>
+                  <div class="form-group"><label class="form-label">币种</label><select class="form-select" id="currency"><option value="CNY">人民币 (CNY)</option><option value="USD">美元 (USD)</option></select></div>
+                </div>
+              </div>
+            </div>
+            <!-- Limits Config -->
+            <div class="form-section">
+              <div class="form-section-header" onclick="toggleFormSection(this)">
+                <div class="form-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>限制配置</div>
+                <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              <div class="form-section-body">
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">RPM限制 (每分钟请求数)</label><input type="number" class="form-input" id="rpmLimit" placeholder="60" min="1"><span class="form-hint">0 表示不限制</span></div>
+                  <div class="form-group"><label class="form-label">TPM限制 (每分钟Token数)</label><input type="number" class="form-input" id="tpmLimit" placeholder="100000" min="0"><span class="form-hint">0 表示不限制</span></div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">请求超时时间 (秒)</label><input type="number" class="form-input" id="timeout" placeholder="30" min="1" max="300" value="30"></div>
+                  <div class="form-group"><label class="form-label">重试次数</label><input type="number" class="form-input" id="retryCount" placeholder="3" min="0" max="10" value="3"></div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group"><label class="form-label">并发限制</label><input type="number" class="form-input" id="concurrencyLimit" placeholder="5" min="1" max="100" value="5"></div>
+                  <div class="form-group"><label class="form-label">每日Token上限</label><input type="number" class="form-input" id="dailyTokenLimit" placeholder="0" min="0"><span class="form-hint">0 表示不限制</span></div>
+                </div>
+              </div>
+            </div>
+            <!-- Form Actions -->
+            <div style="display:flex;gap:12px;justify-content:flex-end;padding:20px 0;">
+              <button type="button" class="btn btn-secondary" onclick="resetForm()">重置表单</button>
+              <button type="button" class="btn btn-secondary" id="testConnectionBtn" onclick="testConnection()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>测试连接</button>
+              <button type="button" class="btn btn-primary" onclick="saveModel()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>保存模型</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <!-- Page: Presets -->
+      <div class="page" id="page-presets">
+        <div class="page-header">
+          <div><h1 class="page-title">预置模型库</h1><p class="page-description">快速导入主流国产AI模型配置</p></div>
+          <div class="navbar-search" style="width:240px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input type="text" placeholder="搜索预置模型..." id="presetSearch" oninput="filterPresets(this.value)"></div>
+        </div>
+        <div class="preset-filters" id="presetFilters">
+          <button class="preset-filter-btn active" data-provider="all" onclick="filterPresetByProvider('all',this)">全部</button>
+          <button class="preset-filter-btn" data-provider="zhipu" onclick="filterPresetByProvider('zhipu',this)">智谱AI</button>
+          <button class="preset-filter-btn" data-provider="tongyi" onclick="filterPresetByProvider('tongyi',this)">通义千问</button>
+          <button class="preset-filter-btn" data-provider="wenxin" onclick="filterPresetByProvider('wenxin',this)">百度文心</button>
+          <button class="preset-filter-btn" data-provider="spark" onclick="filterPresetByProvider('spark',this)">讯飞星火</button>
+          <button class="preset-filter-btn" data-provider="baichuan" onclick="filterPresetByProvider('baichuan',this)">百川智能</button>
+          <button class="preset-filter-btn" data-provider="minimax" onclick="filterPresetByProvider('minimax',this)">MiniMax</button>
+          <button class="preset-filter-btn" data-provider="moonshot" onclick="filterPresetByProvider('moonshot',this)">月之暗面</button>
+          <button class="preset-filter-btn" data-provider="deepseek" onclick="filterPresetByProvider('deepseek',this)">DeepSeek</button>
+          <button class="preset-filter-btn" data-provider="openai" onclick="filterPresetByProvider('openai',this)">OpenAI</button>
+          <button class="preset-filter-btn" data-provider="claude" onclick="filterPresetByProvider('claude',this)">Claude</button>
+        </div>
+        <div class="preset-grid" id="presetGrid"></div>
+      </div>
+      <!-- Page: Compare -->
+      <div class="page" id="page-compare">
+        <div class="page-header"><div><h1 class="page-title">模型对比</h1><p class="page-description">选择多个模型，使用相同Prompt进行对比测试</p></div></div>
+        <div class="compare-selector" id="compareSelector">
+          <div style="font-size:13px;color:var(--text-secondary);font-weight:500;width:100%;margin-bottom:4px;">选择模型 (2-4个):</div>
+          <div class="compare-slot" id="compareSlot0" onclick="openCompareModelSelect(0)"><span class="text-muted">点击选择模型</span></div>
+          <div class="compare-slot" id="compareSlot1" onclick="openCompareModelSelect(1)"><span class="text-muted">点击选择模型</span></div>
+          <div class="compare-slot" id="compareSlot2" onclick="openCompareModelSelect(2)"><span class="text-muted">点击选择模型 (可选)</span></div>
+          <div class="compare-slot" id="compareSlot3" onclick="openCompareModelSelect(3)"><span class="text-muted">点击选择模型 (可选)</span></div>
+        </div>
+        <div class="form-group mb-16"><label class="form-label">测试Prompt</label><textarea class="form-textarea" id="comparePrompt" placeholder="输入测试Prompt，将同时发送给所有选中的模型..." style="min-height:100px;"></textarea></div>
+        <div style="display:flex;gap:12px;margin-bottom:24px;">
+          <button class="btn btn-primary" onclick="runComparison()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>开始对比</button>
+          <button class="btn btn-secondary" onclick="clearComparison()">清空结果</button>
+        </div>
+        <div class="compare-results" id="compareResults"></div>
+      </div>
+    </main>
+  </div>
+</div>
+<!-- Test Dialog -->
+<div class="modal-overlay" id="testModal">
+  <div class="modal" style="max-width:750px;">
+    <div class="modal-header"><h3 class="modal-title">模型测试</h3><button class="modal-close" onclick="closeTestModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+    <div class="modal-body">
+      <div class="form-group mb-16"><label class="form-label">选择模型</label><select class="form-select" id="testModelSelect"><option value="">请选择要测试的模型</option></select></div>
+      <div class="test-input-area"><label class="form-label mb-8">测试Prompt</label><textarea id="testPrompt" placeholder="输入测试内容...">你好，请介绍一下你自己。</textarea></div>
+      <div style="display:flex;gap:8px;margin-bottom:16px;"><button class="btn btn-primary" id="sendTestBtn" onclick="sendTestRequest()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>发送测试</button><button class="btn btn-secondary" onclick="clearTestResult()">清空</button></div>
+      <div class="test-response-area" id="testResponseArea"><span class="text-muted">响应结果将显示在这里...</span></div>
+      <div class="test-stats hidden" id="testStats">
+        <div class="stat-card"><div class="stat-label">耗时</div><div class="stat-value time" id="statTime">-</div></div>
+        <div class="stat-card"><div class="stat-label">输入Token</div><div class="stat-value tokens" id="statInputTokens">-</div></div>
+        <div class="stat-card"><div class="stat-label">输出Token</div><div class="stat-value tokens" id="statOutputTokens">-</div></div>
+        <div class="stat-card"><div class="stat-label">估算成本</div><div class="stat-value cost" id="statCost">-</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Compare Model Select Dialog -->
+<div class="modal-overlay" id="compareSelectModal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header"><h3 class="modal-title">选择对比模型</h3><button class="modal-close" onclick="closeCompareSelectModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+    <div class="modal-body" id="compareSelectList"></div>
+  </div>
+</div>
+<!-- Confirm Delete Dialog -->
+<div class="modal-overlay" id="deleteConfirmModal">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header"><h3 class="modal-title">确认删除</h3><button class="modal-close" onclick="closeDeleteConfirm()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+    <div class="modal-body"><p style="font-size:14px;">确定要删除模型 <strong id="deleteModelName"></strong> 吗？此操作不可撤销。</p></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeDeleteConfirm()">取消</button><button class="btn btn-danger" onclick="confirmDelete()">删除</button></div>
+  </div>
+</div>
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+/* ==================== State ==================== */
+var STATE={models:[],editingModelId:null,currentPage:'list',currentProviderFilter:null,compareSlots:[null,null,null,null],compareSelectSlotIndex:null,deleteTargetId:null,searchQuery:''};
+var PROVIDERS={zhipu:{name:'智谱AI',css:'provider-zhipu',l:'ZP'},tongyi:{name:'通义千问',css:'provider-tongyi',l:'TY'},wenxin:{name:'百度文心',css:'provider-wenxin',l:'WX'},spark:{name:'讯飞星火',css:'provider-spark',l:'XF'},baichuan:{name:'百川智能',css:'provider-baichuan',l:'BC'},minimax:{name:'MiniMax',css:'provider-minimax',l:'MM'},moonshot:{name:'月之暗面',css:'provider-moonshot',l:'YK'},deepseek:{name:'DeepSeek',css:'provider-deepseek',l:'DS'},openai:{name:'OpenAI',css:'provider-openai',l:'OA'},claude:{name:'Anthropic',css:'provider-claude',l:'CL'},custom:{name:'自定义',css:'provider-custom',l:'CU'}};
+
+/* ==================== Preset Models (35) ==================== */
+var PRESETS=[
+{id:'glm-4-plus',name:'GLM-4 Plus',p:'zhipu',desc:'智谱旗舰大模型，综合能力最强',ctx:131072,out:4096,ip:0.05,op:0.05,cap:['streaming','function_call','json_mode'],url:'https://open.bigmodel.cn/api/paas/v4'},
+{id:'glm-4-long',name:'GLM-4 Long',p:'zhipu',desc:'超长上下文模型，支持1M tokens',ctx:1048576,out:4096,ip:0.001,op:0.001,cap:['streaming','function_call'],url:'https://open.bigmodel.cn/api/paas/v4'},
+{id:'glm-4-flash',name:'GLM-4 Flash',p:'zhipu',desc:'免费高速模型，适合高并发场景',ctx:131072,out:4096,ip:0,op:0,cap:['streaming','function_call'],url:'https://open.bigmodel.cn/api/paas/v4'},
+{id:'glm-4v-plus',name:'GLM-4V Plus',p:'zhipu',desc:'多模态视觉理解模型',ctx:8192,out:4096,ip:0.05,op:0.05,cap:['streaming','vision','function_call'],url:'https://open.bigmodel.cn/api/paas/v4'},
+{id:'glm-4-alltools',name:'GLM-4 AllTools',p:'zhipu',desc:'全能工具模型，支持代码解释和网页浏览',ctx:131072,out:4096,ip:0.05,op:0.05,cap:['streaming','function_call','vision','json_mode'],url:'https://open.bigmodel.cn/api/paas/v4'},
+{id:'qwen-max',name:'Qwen Max',p:'tongyi',desc:'通义千问旗舰模型，推理能力领先',ctx:131072,out:8192,ip:0.04,op:0.12,cap:['streaming','function_call','vision','json_mode'],url:'https://dashscope.aliyuncs.com/compatible-mode/v1'},
+{id:'qwen-plus',name:'Qwen Plus',p:'tongyi',desc:'高性能均衡模型，性价比高',ctx:131072,out:8192,ip:0.008,op:0.02,cap:['streaming','function_call','json_mode'],url:'https://dashscope.aliyuncs.com/compatible-mode/v1'},
+{id:'qwen-turbo',name:'Qwen Turbo',p:'tongyi',desc:'快速响应模型，适合实时对话',ctx:131072,out:8192,ip:0.003,op:0.006,cap:['streaming','function_call'],url:'https://dashscope.aliyuncs.com/compatible-mode/v1'},
+{id:'qwen-vl-max',name:'Qwen-VL Max',p:'tongyi',desc:'视觉理解旗舰模型',ctx:32768,out:4096,ip:0.02,op:0.06,cap:['streaming','vision'],url:'https://dashscope.aliyuncs.com/compatible-mode/v1'},
+{id:'qwen-long',name:'Qwen Long',p:'tongyi',desc:'长文本处理模型，支持千万级tokens',ctx:10485760,out:8192,ip:0.0005,op:0.002,cap:['streaming'],url:'https://dashscope.aliyuncs.com/compatible-mode/v1'},
+{id:'ernie-4.0-8k',name:'ERNIE 4.0',p:'wenxin',desc:'百度文心大模型4.0，理解生成能力全面升级',ctx:8192,out:4096,ip:0.03,op:0.06,cap:['streaming','function_call'],url:'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop'},
+{id:'ernie-4.0-turbo-8k',name:'ERNIE 4.0 Turbo',p:'wenxin',desc:'文心4.0加速版，响应更快',ctx:8192,out:4096,ip:0.02,op:0.04,cap:['streaming','function_call'],url:'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop'},
+{id:'ernie-speed-128k',name:'ERNIE Speed',p:'wenxin',desc:'高速推理模型，性价比极高',ctx:131072,out:4096,ip:0.001,op:0.002,cap:['streaming'],url:'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop'},
+{id:'ernie-x1-8k',name:'ERNIE X1',p:'wenxin',desc:'百度最新一代大模型',ctx:8192,out:4096,ip:0.04,op:0.08,cap:['streaming','function_call','vision'],url:'https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop'},
+{id:'spark-4.0-ultra',name:'Spark 4.0 Ultra',p:'spark',desc:'讯飞星火4.0旗舰版，综合能力顶尖',ctx:131072,out:8192,ip:0.03,op:0.06,cap:['streaming','function_call','vision','json_mode'],url:'https://spark-api-open.xf-yun.com/v1'},
+{id:'spark-4.0',name:'Spark 4.0',p:'spark',desc:'星火4.0标准版，能力均衡',ctx:131072,out:4096,ip:0.015,op:0.03,cap:['streaming','function_call'],url:'https://spark-api-open.xf-yun.com/v1'},
+{id:'spark-lite',name:'Spark Lite',p:'spark',desc:'轻量级模型，适合简单任务',ctx:8192,out:2048,ip:0,op:0,cap:['streaming'],url:'https://spark-api-open.xf-yun.com/v1'},
+{id:'baichuan4',name:'Baichuan 4',p:'baichuan',desc:'百川第四代大模型，中文理解领先',ctx:32768,out:4096,ip:0.04,op:0.04,cap:['streaming','function_call'],url:'https://api.baichuan-ai.com/v1'},
+{id:'baichuan3-turbo',name:'Baichuan 3 Turbo',p:'baichuan',desc:'百川3加速版，推理速度快',ctx:32768,out:4096,ip:0.008,op:0.008,cap:['streaming'],url:'https://api.baichuan-ai.com/v1'},
+{id:'abab-7',name:'MiniMax abab 7',p:'minimax',desc:'MiniMax旗舰模型，长文本和角色扮演',ctx:131072,out:8192,ip:0.01,op:0.01,cap:['streaming','function_call'],url:'https://api.minimax.chat/v1'},
+{id:'abab-6.5s',name:'MiniMax abab 6.5s',p:'minimax',desc:'MiniMax高速模型',ctx:65536,out:4096,ip:0.005,op:0.005,cap:['streaming'],url:'https://api.minimax.chat/v1'},
+{id:'moonshot-v1-128k',name:'Moonshot v1 128K',p:'moonshot',desc:'Kimi大模型，超长上下文处理',ctx:131072,out:4096,ip:0.012,op:0.012,cap:['streaming','function_call'],url:'https://api.moonshot.cn/v1'},
+{id:'moonshot-v1-32k',name:'Moonshot v1 32K',p:'moonshot',desc:'Kimi标准版',ctx:32768,out:4096,ip:0.008,op:0.008,cap:['streaming','function_call'],url:'https://api.moonshot.cn/v1'},
+{id:'moonshot-v1-auto',name:'Moonshot v1 Auto',p:'moonshot',desc:'Kimi自动上下文版本',ctx:131072,out:4096,ip:0.012,op:0.012,cap:['streaming','function_call'],url:'https://api.moonshot.cn/v1'},
+{id:'deepseek-chat',name:'DeepSeek Chat',p:'deepseek',desc:'DeepSeek通用对话模型',ctx:65536,out:8192,ip:0.001,op:0.002,cap:['streaming','function_call','json_mode'],url:'https://api.deepseek.com/v1'},
+{id:'deepseek-reasoner',name:'DeepSeek Reasoner',p:'deepseek',desc:'DeepSeek推理模型(R1)，深度思考',ctx:65536,out:8192,ip:0.004,op:0.016,cap:['streaming'],url:'https://api.deepseek.com/v1'},
+{id:'deepseek-coder',name:'DeepSeek Coder',p:'deepseek',desc:'DeepSeek代码生成模型',ctx:65536,out:8192,ip:0.001,op:0.002,cap:['streaming','function_call','json_mode'],url:'https://api.deepseek.com/v1'},
+{id:'gpt-4o',name:'GPT-4o',p:'openai',desc:'OpenAI多模态旗舰模型',ctx:131072,out:16384,ip:0.035,op:0.105,cap:['streaming','function_call','vision','json_mode'],url:'https://api.openai.com/v1'},
+{id:'gpt-4o-mini',name:'GPT-4o Mini',p:'openai',desc:'OpenAI轻量模型，性价比高',ctx:131072,out:16384,ip:0.00015,op:0.0006,cap:['streaming','function_call','vision','json_mode'],url:'https://api.openai.com/v1'},
+{id:'o1-preview',name:'o1-preview',p:'openai',desc:'OpenAI推理模型',ctx:131072,out:32768,ip:0.01,op:0.03,cap:['streaming','function_call'],url:'https://api.openai.com/v1'},
+{id:'claude-sonnet-4-20250514',name:'Claude Sonnet 4',p:'claude',desc:'Anthropic高性能模型',ctx:200000,out:16384,ip:0.003,op:0.015,cap:['streaming','function_call','vision','json_mode'],url:'https://api.anthropic.com/v1'},
+{id:'claude-opus-4-20250514',name:'Claude Opus 4',p:'claude',desc:'Anthropic旗舰模型，深度推理',ctx:200000,out:16384,ip:0.015,op:0.075,cap:['streaming','function_call','vision','json_mode'],url:'https://api.anthropic.com/v1'},
+{id:'claude-haiku-3.5-20241022',name:'Claude Haiku 3.5',p:'claude',desc:'Anthropic快速模型',ctx:200000,out:8192,ip:0.0008,op:0.004,cap:['streaming','function_call','vision'],url:'https://api.anthropic.com/v1'}
+];
+
+/* ==================== Init ==================== */
+function init(){loadModels();loadTheme();renderModelList();renderPresets();updateProviderNav();updateModelCounts();checkResponsive();window.addEventListener('resize',checkResponsive)}
+function checkResponsive(){var t=document.getElementById('menuToggle');if(window.innerWidth<=768){t.style.display='flex'}else{t.style.display='none';document.getElementById('sidebar').classList.remove('open');document.getElementById('mobileOverlay').classList.remove('active')}}
+
+/* ==================== Theme ==================== */
+function loadTheme(){var s=localStorage.getItem('agi_theme')||'dark';document.documentElement.setAttribute('data-theme',s);updateThemeIcon(s)}
+function toggleTheme(){var c=document.documentElement.getAttribute('data-theme'),n=c==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('agi_theme',n);updateThemeIcon(n)}
+function updateThemeIcon(t){var i=document.getElementById('themeIcon');i.innerHTML=t==='dark'?'<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>':'<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'}
+
+/* ==================== Nav ==================== */
+function showPage(p){STATE.currentPage=p;STATE.currentProviderFilter=null;document.querySelectorAll('.page').forEach(function(e){e.classList.remove('active')});document.getElementById('page-'+p).classList.add('active');document.querySelectorAll('.nav-item').forEach(function(e){e.classList.remove('active')});var n=document.querySelector('.nav-item[data-page="'+p+'"]');if(n)n.classList.add('active');if(p==='list')renderModelList();if(p==='presets')renderPresets();if(p==='add'&&!STATE.editingModelId){document.getElementById('formTitle').textContent='添加模型';document.getElementById('formDescription').textContent='配置新的AI模型接入'}if(window.innerWidth<=768){document.getElementById('sidebar').classList.remove('open');document.getElementById('mobileOverlay').classList.remove('active')}}
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('mobileOverlay').classList.toggle('active')}
+function toggleNavSection(el){el.parentElement.classList.toggle('collapsed')}
+function filterByProvider(p){STATE.currentProviderFilter=p;showPage('list');renderModelList()}
+
+/* ==================== CRUD ==================== */
+function loadModels(){try{var s=localStorage.getItem('agi_models');STATE.models=s?JSON.parse(s):[]}catch(e){STATE.models=[]}}
+function saveModels(){localStorage.setItem('agi_models',JSON.stringify(STATE.models));updateModelCounts();updateProviderNav()}
+function genId(){return 'mdl_'+Date.now().toString(36)+Math.random().toString(36).substr(2,6)}
+function getFormData(){return{id:STATE.editingModelId||genId(),modelId:V('modelId'),displayName:V('modelDisplayName'),provider:V('modelProvider'),version:V('modelVersion'),description:V('modelDescription'),apiBaseUrl:V('apiBaseUrl'),apiKey:V('apiKey'),protocolType:V('protocolType'),apiBackupUrl:V('apiBackupUrl'),authType:V('authType'),authHeader:V('authHeader'),contextLength:parseInt($('contextLength').value),maxOutput:parseInt($('maxOutput').value),capabilities:{streaming:$('toggleStreaming').classList.contains('active'),vision:$('toggleVision').classList.contains('active'),functionCall:$('toggleFunctionCall').classList.contains('active'),embedding:$('toggleEmbedding').classList.contains('active'),jsonMode:$('toggleJsonMode').classList.contains('active')},requestMapping:V('requestMapping'),responseMapping:V('responseMapping'),defaultParams:{temperature:parseFloat($('defaultTemp').value),topP:parseFloat($('defaultTopP').value),topK:parseInt($('defaultTopK').value),frequencyPenalty:parseFloat($('defaultFreqPen').value),presencePenalty:parseFloat($('defaultPresPen').value),stop:V('defaultStop')},inputPrice:parseFloat($('inputPrice').value)||0,outputPrice:parseFloat($('outputPrice').value)||0,billingUnit:parseInt($('billingUnit').value),currency:V('currency'),rpmLimit:parseInt($('rpmLimit').value)||0,tpmLimit:parseInt($('tpmLimit').value)||0,timeout:parseInt($('timeout').value)||30,retryCount:parseInt($('retryCount').value)||3,concurrencyLimit:parseInt($('concurrencyLimit').value)||5,dailyTokenLimit:parseInt($('dailyTokenLimit').value)||0,enabled:true,status:'online',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()}}
+function $(id){return document.getElementById(id)}
+function V(id){return $(id).value.trim()}
+function validateForm(){var req=[{id:'modelId'},{id:'modelDisplayName'},{id:'modelProvider'},{id:'apiBaseUrl'},{id:'apiKey'}];var ok=true;req.forEach(function(f){var e=$(f.id);if(!e.value.trim()){e.classList.add('error');ok=false;e.addEventListener('input',function(){e.classList.remove('error')},{once:true})}else{e.classList.remove('error')}});if(!ok)showToast('请填写所有必填字段','error');return ok}
+function saveModel(){if(!validateForm())return;var d=getFormData();if(STATE.editingModelId){var i=STATE.models.findIndex(function(m){return m.id===STATE.editingModelId});if(i!==-1){d.createdAt=STATE.models[i].createdAt;d.status=STATE.models[i].status;STATE.models[i]=d}showToast('模型已更新: '+d.displayName,'success')}else{if(STATE.models.some(function(m){return m.modelId===d.modelId})){showToast('模型ID已存在','error');return}STATE.models.push(d);showToast('模型已添加: '+d.displayName,'success')}saveModels();resetForm();showPage('list')}
+
+function editModel(id){var m=STATE.models.find(function(m){return m.id===id});if(!m)return;STATE.editingModelId=id;document.getElementById('formTitle').textContent='编辑模型';document.getElementById('formDescription').textContent='修改模型配置: '+m.displayName;$('modelId').value=m.modelId;$('modelDisplayName').value=m.displayName;$('modelProvider').value=m.provider;$('modelVersion').value=m.version||'';$('modelDescription').value=m.description||'';$('apiBaseUrl').value=m.apiBaseUrl;$('apiKey').value=m.apiKey;$('protocolType').value=m.protocolType||'openai';$('apiBackupUrl').value=m.apiBackupUrl||'';$('authType').value=m.authType||'bearer';$('authHeader').value=m.authHeader||'Authorization';$('contextLength').value=m.contextLength;$('maxOutput').value=m.maxOutput;updateRangeDisplay('contextLength','contextLengthValue','K',1024);updateRangeDisplay('maxOutput','maxOutputValue','K',1024);var c=m.capabilities||{};setT('toggleStreaming',c.streaming!==false);setT('toggleVision',!!c.vision);setT('toggleFunctionCall',!!c.functionCall);setT('toggleEmbedding',!!c.embedding);setT('toggleJsonMode',!!c.jsonMode);$('requestMapping').value=m.requestMapping||'';$('responseMapping').value=m.responseMapping||'';var p=m.defaultParams||{};$('defaultTemp').value=p.temperature!=null?p.temperature:0.7;$('tempValue').textContent=p.temperature!=null?p.temperature:0.7;$('defaultTopP').value=p.topP!=null?p.topP:0.9;$('topPValue').textContent=p.topP!=null?p.topP:0.9;$('defaultTopK').value=p.topK!=null?p.topK:40;$('topKValue').textContent=p.topK!=null?p.topK:40;$('defaultFreqPen').value=p.frequencyPenalty!=null?p.frequencyPenalty:0;$('freqPenValue').textContent=p.frequencyPenalty!=null?p.frequencyPenalty:0;$('defaultPresPen').value=p.presencePenalty!=null?p.presencePenalty:0;$('presPenValue').textContent=p.presencePenalty!=null?p.presencePenalty:0;$('defaultStop').value=p.stop||'';$('inputPrice').value=m.inputPrice||'';$('outputPrice').value=m.outputPrice||'';$('billingUnit').value=m.billingUnit||'1000';$('currency').value=m.currency||'CNY';$('rpmLimit').value=m.rpmLimit||'';$('tpmLimit').value=m.tpmLimit||'';$('timeout').value=m.timeout||30;$('retryCount').value=m.retryCount!=null?m.retryCount:3;$('concurrencyLimit').value=m.concurrencyLimit||5;$('dailyTokenLimit').value=m.dailyTokenLimit||'';updateAuthFields();showPage('add')}
+
+function deleteModel(id){var m=STATE.models.find(function(m){return m.id===id});if(!m)return;STATE.deleteTargetId=id;$('deleteModelName').textContent=m.displayName;$('deleteConfirmModal').classList.add('active')}
+function confirmDelete(){if(!STATE.deleteTargetId)return;var m=STATE.models.find(function(m){return m.id===STATE.deleteTargetId});STATE.models=STATE.models.filter(function(m){return m.id!==STATE.deleteTargetId});saveModels();closeDeleteConfirm();renderModelList();showToast('模型已删除: '+(m?m.displayName:''),'success')}
+function closeDeleteConfirm(){$('deleteConfirmModal').classList.remove('active');STATE.deleteTargetId=null}
+function toggleModelEnabled(id){var m=STATE.models.find(function(m){return m.id===id});if(!m)return;m.enabled=!m.enabled;m.updatedAt=new Date().toISOString();saveModels();renderModelList();showToast(m.displayName+(m.enabled?' 已启用':' 已禁用'),m.enabled?'success':'warning')}
+function resetForm(){STATE.editingModelId=null;$('modelForm').reset();$('contextLength').value=131072;$('maxOutput').value=4096;updateRangeDisplay('contextLength','contextLengthValue','K',1024);updateRangeDisplay('maxOutput','maxOutputValue','K',1024);$('tempValue').textContent='0.7';$('topPValue').textContent='0.9';$('topKValue').textContent='40';$('freqPenValue').textContent='0.0';$('presPenValue').textContent='0.0';setT('toggleStreaming',true);setT('toggleVision',false);setT('toggleFunctionCall',false);setT('toggleEmbedding',false);setT('toggleJsonMode',false);$('requestMapping').value='';$('responseMapping').value='';document.querySelectorAll('.form-input.error').forEach(function(e){e.classList.remove('error')});$('formTitle').textContent='添加模型';$('formDescription').textContent='配置新的AI模型接入';updateAuthFields()}
+
+/* ==================== Render List ==================== */
+function renderModelList(){var g=$('modelCardGrid'),e=$('emptyState'),ms=STATE.models.slice();if(STATE.currentProviderFilter)ms=ms.filter(function(m){return m.provider===STATE.currentProviderFilter});var sf=$('statusFilter').value;if(sf==='online')ms=ms.filter(function(m){return m.enabled});if(sf==='offline')ms=ms.filter(function(m){return !m.enabled});if(STATE.searchQuery){var q=STATE.searchQuery.toLowerCase();ms=ms.filter(function(m){return m.modelId.toLowerCase().indexOf(q)!==-1||m.displayName.toLowerCase().indexOf(q)!==-1||(m.description||'').toLowerCase().indexOf(q)!==-1||(PROVIDERS[m.provider]?PROVIDERS[m.provider].name.toLowerCase().indexOf(q)!==-1:false)})}var s=$('sortFilter').value;if(s==='name')ms.sort(function(a,b){return a.displayName.localeCompare(b.displayName)});if(s==='provider')ms.sort(function(a,b){return a.provider.localeCompare(b.provider)});if(s==='status')ms.sort(function(a,b){return(b.enabled?1:0)-(a.enabled?1:0)});if(s==='price')ms.sort(function(a,b){return(a.inputPrice+a.outputPrice)-(b.inputPrice+b.outputPrice)});if(!ms.length){g.innerHTML='';e.classList.remove('hidden');return}e.classList.add('hidden');g.innerHTML=ms.map(function(m){var pv=PROVIDERS[m.provider]||PROVIDERS.custom,c=m.capabilities||{},tags=[];if(c.streaming)tags.push('流式');if(c.vision)tags.push('视觉');if(c.functionCall)tags.push('函数调用');if(c.embedding)tags.push('Embedding');if(c.jsonMode)tags.push('JSON');return '<div class="model-card" style="'+(!m.enabled?'opacity:0.6;':'')+'"><div class="model-card-header"><div class="model-card-info"><div class="model-card-name">'+esc(m.displayName)+'</div><div class="model-card-provider"><span class="provider-icon '+pv.css+'" style="display:inline-flex;width:18px;height:18px;font-size:9px;margin-right:4px;vertical-align:middle;">'+pv.l+'</span>'+pv.name+'</div></div><span class="model-card-status '+(m.enabled?'status-online':'status-offline')+'"><span class="status-dot"></span>'+(m.enabled?'在线':'离线')+'</span></div><div class="model-card-specs"><div class="spec-item"><span class="spec-label">上下文长度</span><span class="spec-value">'+fmtTok(m.contextLength)+'</span></div><div class="spec-item"><span class="spec-label">最大输出</span><span class="spec-value">'+fmtTok(m.maxOutput)+'</span></div><div class="spec-item"><span class="spec-label">输入价格</span><span class="spec-value">'+(m.inputPrice>0?m.inputPrice.toFixed(3)+' 元/K':'免费')+'</span></div><div class="spec-item"><span class="spec-label">输出价格</span><span class="spec-value">'+(m.outputPrice>0?m.outputPrice.toFixed(3)+' 元/K':'免费')+'</span></div></div>'+(tags.length?'<div class="model-card-tags">'+tags.map(function(t){return '<span class="tag active">'+t+'</span>'}).join('')+'</div>':'')+'<div class="model-card-actions"><button class="btn btn-sm btn-secondary" onclick="toggleModelEnabled(\''+m.id+'\')">'+(m.enabled?'禁用':'启用')+'</button><button class="btn btn-sm btn-secondary" onclick="openTestModal(\''+m.id+'\')">测试</button><button class="btn btn-sm btn-primary" onclick="editModel(\''+m.id+'\')">编辑</button><button class="btn btn-sm btn-danger" onclick="deleteModel(\''+m.id+'\')">删除</button></div></div>'}).join('')}
+
+/* ==================== Render Presets ==================== */
+function renderPresets(filter){var g=$('presetGrid'),ps=PRESETS.slice(),sv=($('presetSearch')&&$('presetSearch').value||'').toLowerCase();if(filter&&filter!=='all')ps=ps.filter(function(p){return p.p===filter});if(sv)ps=ps.filter(function(p){return p.name.toLowerCase().indexOf(sv)!==-1||p.id.toLowerCase().indexOf(sv)!==-1||p.desc.toLowerCase().indexOf(sv)!==-1||(PROVIDERS[p.p]?PROVIDERS[p.p].name.toLowerCase().indexOf(sv)!==-1:false)});g.innerHTML=ps.map(function(p){var pv=PROVIDERS[p.p]||PROVIDERS.custom,imp=STATE.models.some(function(m){return m.modelId===p.id});return '<div class="preset-card"><div class="preset-card-header"><div><div class="preset-card-name"><span class="provider-icon '+pv.css+'" style="display:inline-flex;width:20px;height:20px;font-size:10px;margin-right:6px;vertical-align:middle;">'+pv.l+'</span>'+esc(p.name)+'</div><div class="preset-card-provider">'+pv.name+'</div></div></div><div class="preset-card-desc">'+esc(p.desc)+'</div><div class="preset-card-specs"><span>上下文: '+fmtTok(p.ctx)+'</span><span>输出: '+fmtTok(p.out)+'</span><span>'+(p.ip>0?p.ip+'元/K输入':'免费')+'</span></div><div class="preset-card-actions">'+(imp?'<span class="text-muted" style="font-size:12px;">已导入</span>':'<button class="btn btn-sm btn-primary" onclick="importPreset(\''+p.id+'\')">一键导入</button>')+'<button class="btn btn-sm btn-secondary" onclick="importPresetAndEdit(\''+p.id+'\')">导入并编辑</button></div></div>'}).join('')}
+function filterPresets(){var af=document.querySelector('.preset-filter-btn.active');renderPresets(af?af.dataset.provider:'all')}
+function filterPresetByProvider(p,btn){document.querySelectorAll('.preset-filter-btn').forEach(function(b){b.classList.remove('active')});btn.classList.add('active');renderPresets(p)}
+
+function importPreset(pid){var pr=PRESETS.find(function(p){return p.id===pid});if(!pr)return;if(STATE.models.some(function(m){return m.modelId===pr.id})){showToast('该模型已存在','warning');return}var m={id:genId(),modelId:pr.id,displayName:pr.name,provider:pr.p,description:pr.desc,apiBaseUrl:pr.url,apiKey:'',protocolType:'openai',authType:'bearer',authHeader:'Authorization',contextLength:pr.ctx,maxOutput:pr.out,capabilities:{streaming:pr.cap.indexOf('streaming')!==-1,vision:pr.cap.indexOf('vision')!==-1,functionCall:pr.cap.indexOf('function_call')!==-1,embedding:pr.cap.indexOf('embedding')!==-1,jsonMode:pr.cap.indexOf('json_mode')!==-1},requestMapping:'',responseMapping:'',defaultParams:{temperature:0.7,topP:0.9,topK:40,frequencyPenalty:0,presencePenalty:0,stop:''},inputPrice:pr.ip,outputPrice:pr.op,billingUnit:1000,currency:'CNY',rpmLimit:0,tpmLimit:0,timeout:30,retryCount:3,concurrencyLimit:5,dailyTokenLimit:0,enabled:true,status:'online',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};STATE.models.push(m);saveModels();renderPresets();updateModelCounts();showToast('已导入: '+pr.name+' (请配置API密钥)','success')}
+function importPresetAndEdit(pid){importPreset(pid);var m=STATE.models.find(function(m){return m.modelId===pid});if(m)editModel(m.id)}
+
+/* ==================== Test Dialog ==================== */
+function openTestModal(mid){var s=$('testModelSelect');s.innerHTML='<option value="">请选择要测试的模型</option>';STATE.models.filter(function(m){return m.enabled}).forEach(function(m){var o=document.createElement('option');o.value=m.id;o.textContent=m.displayName+' ('+m.modelId+')';if(m.id===mid)o.selected=true;s.appendChild(o)});$('testResponseArea').innerHTML='<span class="text-muted">响应结果将显示在这里...</span>';$('testStats').classList.add('hidden');$('testModal').classList.add('active')}
+function closeTestModal(){$('testModal').classList.remove('active')}
+function clearTestResult(){$('testResponseArea').innerHTML='<span class="text-muted">响应结果将显示在这里...</span>';$('testStats').classList.add('hidden')}
+function sendTestRequest(){var mid=$('testModelSelect').value,prompt=$('testPrompt').value.trim();if(!mid){showToast('请选择模型','warning');return}if(!prompt){showToast('请输入测试内容','warning');return}var m=STATE.models.find(function(m){return m.id===mid});if(!m){showToast('模型不存在','error');return}if(!m.apiKey){showToast('请先配置API密钥','warning');return}var btn=$('sendTestBtn');btn.classList.add('loading');btn.disabled=true;$('testResponseArea').innerHTML='<div class="flex-center" style="padding:40px;"><div class="spinner"></div></div>';$('testStats').classList.add('hidden');var st=performance.now(),ep=m.apiBaseUrl.replace(/\/+$/,'')+'/chat/completions',h={'Content-Type':'application/json'};if(m.authType==='bearer')h['Authorization']='Bearer '+m.apiKey;else if(m.authType==='custom_header')h[m.authHeader||'X-API-Key']=m.apiKey;else h['Authorization']='Bearer '+m.apiKey;var body={model:m.modelId,messages:[{role:'user',content:prompt}],stream:false,temperature:(m.defaultParams&&m.defaultParams.temperature)||0.7,max_tokens:Math.min(m.maxOutput,1024)};fetch(ep,{method:'POST',headers:h,body:JSON.stringify(body)}).then(function(r){var el=((performance.now()-st)/1000).toFixed(2);return r.json().then(function(d){if(d.error)throw new Error(d.error.message||JSON.stringify(d.error));var c=(d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)||'无响应内容',u=d.usage||{},it=u.prompt_tokens||0,ot=u.completion_tokens||0,cost=((it/1000)*(m.inputPrice||0))+((ot/1000)*(m.outputPrice||0));$('testResponseArea').textContent=c;$('testStats').classList.remove('hidden');$('statTime').textContent=el+'s';$('statInputTokens').textContent=it;$('statOutputTokens').textContent=ot;$('statCost').textContent=cost.toFixed(4)+' '+(m.currency||'CNY');showToast('测试完成','success')}).catch(function(e){var el=((performance.now()-st)/1000).toFixed(2);$('testResponseArea').innerHTML='<span class="text-danger">请求失败 ('+el+'s): '+esc(e.message)+'</span>';showToast('测试失败: '+e.message,'error')})}).catch(function(e){var el=((performance.now()-st)/1000).toFixed(2);$('testResponseArea').innerHTML='<span class="text-danger">网络错误 ('+el+'s): '+esc(e.message)+'</span>';showToast('测试失败: '+e.message,'error')}).finally(function(){btn.classList.remove('loading');btn.disabled=false})}
+
+/* ==================== Test Connection ==================== */
+function testConnection(){var btn=$('testConnectionBtn'),url=V('apiBaseUrl'),key=V('apiKey');if(!url||!key){showToast('请先填写API基础URL和密钥','warning');return}btn.classList.add('loading');btn.disabled=true;fetch(url.replace(/\/+$/,'')+'/models',{headers:{'Authorization':'Bearer '+key}}).then(function(r){if(r.ok)showToast('连接成功! API服务可用','success');else return r.text().then(function(t){showToast('连接失败: HTTP '+r.status+' - '+t.substring(0,100),'error')})}).catch(function(e){showToast('连接失败: '+e.message,'error')}).finally(function(){btn.classList.remove('loading');btn.disabled=false})}
+
+/* ==================== Compare ==================== */
+function openCompareModelSelect(si){STATE.compareSelectSlotIndex=si;var l=$('compareSelectList'),ems=STATE.models.filter(function(m){return m.enabled});if(!ems.length){l.innerHTML='<p class="text-muted text-center">暂无可用模型</p>'}else{l.innerHTML=ems.map(function(m){var pv=PROVIDERS[m.provider]||PROVIDERS.custom;return '<div class="nav-item" style="margin:4px 0;cursor:pointer;" onclick="selectCompareModel(\''+m.id+'\')"><span class="provider-icon '+pv.css+'" style="width:24px;height:24px;font-size:10px;">'+pv.l+'</span><div><div style="font-weight:500;">'+esc(m.displayName)+'</div><div style="font-size:11px;color:var(--text-muted);">'+m.modelId+'</div></div></div>'}).join('')}$('compareSelectModal').classList.add('active')}
+function closeCompareSelectModal(){$('compareSelectModal').classList.remove('active')}
+function selectCompareModel(mid){var si=STATE.compareSelectSlotIndex;if(si===null)return;STATE.compareSlots[si]=mid;var m=STATE.models.find(function(m){return m.id===mid}),sl=$('compareSlot'+si);if(m){var pv=PROVIDERS[m.provider]||PROVIDERS.custom;sl.innerHTML='<span class="provider-icon '+pv.css+'" style="width:22px;height:22px;font-size:10px;">'+pv.l+'</span><span style="font-weight:500;">'+esc(m.displayName)+'</span><button class="remove-slot btn-icon" onclick="event.stopPropagation();removeCompareSlot('+si+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M18 6L6 18M6 6l12 12"/></svg></button>';sl.classList.add('filled')}closeCompareSelectModal()}
+function removeCompareSlot(i){STATE.compareSlots[i]=null;$('compareSlot'+i).innerHTML='<span class="text-muted">点击选择模型'+(i>=2?' (可选)':'')+'</span>';$('compareSlot'+i).classList.remove('filled')}
+function runComparison(){var sl=STATE.compareSlots.filter(function(s){return s!==null});if(sl.length<2){showToast('请至少选择2个模型','warning');return}var prompt=$('comparePrompt').value.trim();if(!prompt){showToast('请输入测试Prompt','warning');return}var rd=$('compareResults');rd.innerHTML=sl.map(function(id){var m=STATE.models.find(function(m){return m.id===id});return '<div class="compare-result-card" id="cr-'+id+'"><div class="compare-result-header"><h4>'+esc(m?m.displayName:'未知')+'</h4><div class="spinner" style="width:16px;height:16px;border-width:2px;"></div></div><div class="compare-result-body"><span class="text-muted">请求中...</span></div><div class="compare-result-footer"></div></div>'}).join('');Promise.allSettled(sl.map(function(id){var m=STATE.models.find(function(m){return m.id===id});if(!m)return Promise.resolve();var card=$('cr-'+id),st=performance.now(),ep=m.apiBaseUrl.replace(/\/+$/,'')+'/chat/completions';return fetch(ep,{method:'POST',headers:{'Authorization':'Bearer '+m.apiKey,'Content-Type':'application/json'},body:JSON.stringify({model:m.modelId,messages:[{role:'user',content:prompt}],stream:false,max_tokens:Math.min(m.maxOutput,1024)})}).then(function(r){var el=((performance.now()-st)/1000).toFixed(2);return r.json().then(function(d){var c=(d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)||'无响应',u=d.usage||{},cost=((u.prompt_tokens||0)/1000)*(m.inputPrice||0)+((u.completion_tokens||0)/1000)*(m.outputPrice||0);card.querySelector('.compare-result-header').innerHTML='<h4>'+esc(m.displayName)+'</h4><span class="text-success" style="font-size:12px;">'+el+'s</span>';card.querySelector('.compare-result-body').textContent=c;card.querySelector('.compare-result-footer').innerHTML='<span>延迟: '+el+'s</span><span>输入: '+(u.prompt_tokens||0)+'</span><span>输出: '+(u.completion_tokens||0)+'</span><span>成本: '+cost.toFixed(4)+' 元</span>'})}).catch(function(e){card.querySelector('.compare-result-header').innerHTML='<h4>'+esc(m.displayName)+'</h4><span class="text-danger" style="font-size:12px;">失败</span>';card.querySelector('.compare-result-body').innerHTML='<span class="text-danger">请求失败: '+esc(e.message)+'</span>'})})).then(function(){showToast('对比测试完成','success')})}
+function clearComparison(){STATE.compareSlots=[null,null,null,null];for(var i=0;i<4;i++)removeCompareSlot(i);$('comparePrompt').value='';$('compareResults').innerHTML=''}
+
+/* ==================== Sidebar Nav ==================== */
+function updateProviderNav(){var c=$('providerNavItems'),pc={};STATE.models.forEach(function(m){pc[m.provider]=(pc[m.provider]||0)+1});c.innerHTML=Object.keys(PROVIDERS).filter(function(p){return p!=='custom'}).map(function(p){var pv=PROVIDERS[p];return '<div class="nav-item" onclick="filterByProvider(\''+p+'\')"><span class="provider-icon '+pv.css+'" style="width:20px;height:20px;font-size:9px;">'+pv.l+'</span>'+pv.name+'<span class="badge">'+(pc[p]||0)+'</span></div>'}).join('')}
+function updateModelCounts(){$('totalModelCount').textContent=STATE.models.length;$('customModelCount').textContent=STATE.models.filter(function(m){return m.provider==='custom'}).length}
+
+/* ==================== Search ==================== */
+function handleGlobalSearch(q){STATE.searchQuery=q;if(STATE.currentPage==='list')renderModelList();else showPage('list')}
+
+/* ==================== Form Helpers ==================== */
+function toggleFormSection(h){h.parentElement.classList.toggle('collapsed')}
+function toggleSwitch(el){el.classList.toggle('active')}
+function setT(id,v){var el=$(id);if(v)el.classList.add('active');else el.classList.remove('active')}
+function togglePasswordVisibility(id,btn){var i=$(id);if(i.type==='password'){i.type='text';btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'}else{i.type='password';btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'}}
+function updateRangeDisplay(iid,did,u,d){var v=parseInt($(iid).value);$(did).textContent=v>=d?(v/d)+u:v.toString()}
+function updateAuthFields(){var t=$('authType').value;$('oauthFields').style.display=t==='oauth2'?'grid':'none';$('hmacFields').style.display=t==='hmac'?'grid':'none';$('customHeaderFields').style.display=t==='custom_header'?'grid':'none';$('urlParamFields').style.display=t==='url_param'?'grid':'none';$('authHeaderGroup').style.display=(t==='bearer'||t==='custom_header')?'flex':'none'}
+function formatJson(id){var el=$(id);try{el.value=JSON.stringify(JSON.parse(el.value),null,2);showToast('JSON已格式化','success')}catch(e){showToast('JSON格式错误: '+e.message,'error')}}
+function resetJson(id){$(id).value='';showToast('已重置','info')}
+function validateJson(id){try{JSON.parse($(id).value);showToast('JSON格式正确','success')}catch(e){showToast('JSON格式错误: '+e.message,'error')}}
+
+/* ==================== Toast ==================== */
+function showToast(msg,type){type=type||'info';var c=$('toastContainer'),t=document.createElement('div');t.className='toast '+type;var icons={success:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',error:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',warning:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'};t.innerHTML=(icons[type]||icons.info)+'<span class="toast-message">'+esc(msg)+'</span><button class="toast-close" onclick="this.parentElement.remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M18 6L6 18M6 6l12 12"/></svg></button>';c.appendChild(t);setTimeout(function(){if(t.parentElement)t.remove()},4000)}
+
+/* ==================== Utils ==================== */
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function fmtTok(n){if(n>=1048576)return(n/1048576)+'M';if(n>=1024)return(n/1024)+'K';return n.toString()}
+
+/* ==================== Start ==================== */
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+"""
+Window Management Module
+
+Provides cross-platform window API simulation for Win32, X11, and macOS.
+"""
+
+from .win32_api import (
+    Win32Error,
+    Rect,
+    Point,
+    WindowStyle,
+    WindowClass,
+    Win32Constants,
+    WindowHandle,
+    WindowManager,
+    MessageSender,
+    Win32API,
+)
+
+from .x11_api import (
+    X11EventType,
+    X11WindowClass,
+    X11EventMask,
+    X11Gravity,
+    X11Geometry,
+    X11Event,
+    X11Atom,
+    AtomManager,
+    PropertyManager,
+    EWMHProtocol,
+    X11Window,
+    X11Display,
+    X11EventHandler,
+)
+
+from .macos_api import (
+    NSWindowStyle,
+    NSWindowLevel,
+    NSBackingStoreType,
+    AXRole,
+    AXNotification,
+    NSRect,
+    CGPoint,
+    CGSize,
+    WindowInfo,
+    NSWindowManager,
+    AccessibilityElement,
+    WorkspaceManager,
+    NotificationPoster,
+    MacOSAPI,
+)
+
+__all__ = [
+    "Win32Error",
+    "Rect",
+    "Point",
+    "WindowStyle",
+    "WindowClass",
+    "Win32Constants",
+    "WindowHandle",
+    "WindowManager",
+    "MessageSender",
+    "Win32API",
+    "X11EventType",
+    "X11WindowClass",
+    "X11EventMask",
+    "X11Gravity",
+    "X11Geometry",
+    "X11Event",
+    "X11Atom",
+    "AtomManager",
+    "PropertyManager",
+    "EWMHProtocol",
+    "X11Window",
+    "X11Display",
+    "X11EventHandler",
+    "NSWindowStyle",
+    "NSWindowLevel",
+    "NSBackingStoreType",
+    "AXRole",
+    "AXNotification",
+    "NSRect",
+    "CGPoint",
+    "CGSize",
+    "WindowInfo",
+    "NSWindowManager",
+    "AccessibilityElement",
+    "WorkspaceManager",
+    "NotificationPoster",
+    "MacOSAPI",
+]
